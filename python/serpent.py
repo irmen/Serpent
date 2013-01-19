@@ -27,10 +27,9 @@ Caveat: when serializing, set literals are converted into tuples on Python <3.2.
 of the ast module in earlier python versions. Python <3.2 will fail to read serpent data produced
 by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
 
-@TODO: tests.
 @TODO: java and C# implementations, including deserializers.
-@XXX: jython bug: timedelta doesn't have total_seconds() method
-@XXX: ipy bug: base-64 encoding crashes
+@TODO: jython bug: timedelta doesn't have total_seconds() method (http://bugs.jython.org/issue2010)
+@TODO: ipy bug: base-64 encoding crashes
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
@@ -50,6 +49,7 @@ __all__ = ["serialize", "deserialize"]
 
 def serialize(obj, indent=False):
     return Serializer(indent).serialize(obj)
+
 
 def deserialize(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
@@ -137,7 +137,7 @@ class Serializer(object):
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
-        header ="# serpent utf-8 python{0}.{1}\n".format(*sys.version_info)
+        header = "# serpent utf-8 python{0}.{1}\n".format(*sys.version_info)
         out = [header.encode("utf-8")]
         self._serialize(obj, out, 0)
         return b"".join(out)
