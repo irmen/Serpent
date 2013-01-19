@@ -1,8 +1,19 @@
 """
 Serpent: ast.literal_eval() compatible object tree serialization.
 Serializes an object tree into bytes (utf-8 encoded string) that can be decoded and then
-passed as-is to ast.literal_eval() to turn them back into the original object tree.
-Compatible with Python 2.6-3.x.
+passed as-is to ast.literal_eval() to rebuild it as the original object tree.
+As such it is safe to send serpent data to other machines over the network for instance
+(because only 'safe' literals are encoded).
+
+Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+
+Serpent contains a few custom serializers for several special Python types:
+ bytes, bytearrays, memoryview, buffer  --> base-64 (more efficient than default repr of bytearray)
+ uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
+ decimal.Decimal  --> number (*see below)
+ array.array  --> list
+ Exception  --> dict with some fields of the exception (message, args)
+ all other types  --> dict with  __getstate__  or vars() of the object
 
 BIG GOTCHA:
 For python 2.x it will add a 'u' in front of the unicode literals.
@@ -16,14 +27,16 @@ decides if it can reliably deserialize it. It will raise an error if it can't.
 A possible improvement is to ast.walk() the tree and monkeypatch the string literals
 if the deserializer detects an invalid version combination....?
 OR...... compile with compiler flag unicode_literal and treat ALL strings as unicode...?
+(and get rid of the u-prefix then)
 
-@TODO: IronPython has str==unicode; strs are not encoded properly.
 @TODO: test.
+@TODO: array of chars -> encode as a simple string rather than a list of chars
 @TODO: decide if decimal should rather be encoded as string, to avoid losing precision?
-@TODO: java and C# implementations.
+@TODO: java and C# implementations, including deserializers.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
+See http://opensource.org/licenses/MIT
 """
 import ast
 import base64
@@ -31,13 +44,12 @@ import sys
 import types
 if sys.platform=="cli":
     from io import BytesIO   # IronPython
+elif sys.version_info < (3, 0):
+    from cStringIO import StringIO as BytesIO   # python 2.x
 else:
-    try:
-        from cStringIO import StringIO as BytesIO   # python 2.x
-    except ImportError:
-        from io import BytesIO   # python 3.x
+    from io import BytesIO   # python 3.x
 
-__all__ = ["serialize", "deserialize", "Bytes"]
+__all__ = ["serialize", "deserialize"]
 
 
 def serialize(obj, indent=False):
@@ -67,7 +79,7 @@ def deserialize(serialized_bytes):
     return ast.literal_eval(string)
 
 
-class Bytes(object):
+class BytesWrapper(object):
     """Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data."""
     def __init__(self, data):
         self.data = data
@@ -79,16 +91,16 @@ class Bytes(object):
         }
     @staticmethod
     def from_bytes(data):
-        return Bytes(data)
+        return BytesWrapper(data)
     @staticmethod
     def from_bytearray(data):
-        return Bytes(data)
+        return BytesWrapper(data)
     @staticmethod
     def from_memoryview(data):
-        return Bytes(data.tobytes())
+        return BytesWrapper(data.tobytes())
     @staticmethod
     def from_buffer(data):
-        return Bytes(data)
+        return BytesWrapper(data)
 
 
 class StreamSerializer(object):
@@ -103,21 +115,22 @@ class StreamSerializer(object):
     }
 
     translate_types = {
-        bytes: Bytes.from_bytes,
-        bytearray: Bytes.from_bytearray,
-        memoryview: Bytes.from_memoryview,
-        }
+        bytes: BytesWrapper.from_bytes,
+        bytearray: BytesWrapper.from_bytearray,
+        memoryview: BytesWrapper.from_memoryview,
+    }
 
+    # do some dynamic changes to the types configuration if needed
     if bytes is str:
         del translate_types[bytes]
-    if sys.version_info < (3, 0):
-        # fix some Python 2.x types
-        if hasattr(types, "BufferType"):
-            translate_types[types.BufferType] = Bytes.from_buffer
+    if hasattr(types, "BufferType"):
+        translate_types[types.BufferType] = BytesWrapper.from_buffer
+    if sys.platform=="cli":
+        repr_types.remove(str)  # IronPython needs special str treatment
 
     def __init__(self, out, indent=False):
         """
-        Create the serializer.
+        Initialize the serializer. It is not thread safe.
         out=bytestream that the output should be written to,
         indent=indent the output over multiple lines (default=false)
         """
@@ -146,18 +159,22 @@ class StreamSerializer(object):
             method = "ser_{0}_{1}".format(module, t.__name__)
             getattr(self, method, self.ser_default_class)(obj, out, level)
 
+    def ser_builtins_str(self, str_obj, out, level):
+        # for IronPython where str==unicode and repr() yields undesired result
+        self.ser_builtins_unicode(str_obj, out, level)
+
     def ser_builtins_unicode(self, unicode_obj, out, level):
         # for python 2.x.
         # Note: adds 'u' in front of the literal. SEE NOTE AT TOP OF FILE FOR DISCUSSION.
         z = unicode_obj.encode("utf-8")
-        z = z.replace(b"\\", b"\\\\")  # double-escape the backslashes
-        if b"'" not in z:
-            z = b"u'" + z + b"'"
+        z = z.replace("\\", "\\\\")  # double-escape the backslashes
+        if "'" not in z:
+            z = "u'" + z + "'"
         elif '"' not in z:
-            z = b'u"' + z + b'"'
+            z = 'u"' + z + '"'
         else:
-            z = z.replace(b"'", b"\\'")
-            z = b"u'" + z + b"'"
+            z = z.replace("'", "\\'")
+            z = "u'" + z + "'"
         out.write(z)
     
     def ser_builtins_long(self, long_obj, out, level):
