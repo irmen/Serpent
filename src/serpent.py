@@ -109,14 +109,14 @@ class BytesWrapper(object):
 
 class StreamSerializer(object):
     """Serpent stream serializer. Serialize an object tree to a byte stream."""
-    repr_types = {
+    repr_types = set([
         str,
         int,
         float,
         complex,
         bool,
         type(None)
-    }
+    ])
 
     translate_types = {
         bytes: BytesWrapper.from_bytes,
