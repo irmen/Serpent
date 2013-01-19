@@ -18,9 +18,13 @@ Serpent handles several special Python types to make life easier:
  - Exception  --> dict with some fields of the exception (message, args)
  - all other types  --> dict with  __getstate__  or vars() of the object
 
-Small caveat: all str will be promoted to unicode. This is done because it is the default
+Caveat: set literals are converted into tuples on Python <3.2, because of a limitation of the ast module in earlier python versions.
+Caveat: all str will be promoted to unicode. This is done because it is the default
 anyway for Python 3.x, and it solves the problem of the str/unicode difference between different
 Python versions. Also it means the serialized output doesn't have those problematic 'u' prefixes on strings.
+Caveat: the serializer is not thread-safe. Make sure you're not making changes to the
+object tree that is being serialized, and don't use the same serializer in different threads.
+
 
 @TODO: tests.
 @TODO: java and C# implementations, including deserializers.
@@ -52,6 +56,8 @@ def serialize(obj, indent=False):
     StreamSerializer(out, indent).serialize(obj)
     return out.getvalue()
 
+def serialize_to_stream(obj, stream, indent=False):
+    StreamSerializer(stream, indent).serialize(obj)
 
 def deserialize(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
@@ -98,7 +104,11 @@ class BytesWrapper(object):
 
 
 class StreamSerializer(object):
-    """Serpent stream serializer. Serialize an object tree to a byte stream."""
+    """
+    Serpent stream serializer. Serialize an object tree to a byte stream.
+    It is not thread-safe: make sure you're not making changes to the
+    object tree that is being serialized.
+    """
     #noinspection PySetFunctionToLiteral
     repr_types = set([
         str,
@@ -128,7 +138,7 @@ class StreamSerializer(object):
 
     def __init__(self, out, indent=False):
         """
-        Initialize the serializer. It is not thread safe.
+        Initialize the serializer.
         out=bytestream that the output should be written to,
         indent=indent the output over multiple lines (default=false)
         """
@@ -180,9 +190,10 @@ class StreamSerializer(object):
     def ser_builtins_tuple(self, tuple_obj, out, level):
         if self.indent and tuple_obj:
             indent_chars = b"  " * level
+            indent_chars_inside = indent_chars + b"  "
             out.write(b"(\n")
             for elt in tuple_obj:
-                out.write(indent_chars + b"  ")
+                out.write(indent_chars_inside)
                 self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-1, 1)  # undo the last \n
@@ -201,9 +212,10 @@ class StreamSerializer(object):
     def ser_builtins_list(self, list_obj, out, level):
         if self.indent and list_obj:
             indent_chars = b"  " * level
+            indent_chars_inside = indent_chars + b"  "
             out.write(b"[\n")
             for elt in list_obj:
-                out.write(indent_chars + b"  ")
+                out.write(indent_chars_inside)
                 self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-2, 1)  # undo the last ,\n
@@ -220,9 +232,10 @@ class StreamSerializer(object):
     def ser_builtins_dict(self, dict_obj, out, level):
         if self.indent and dict_obj:
             indent_chars = b"  " * level
+            indent_chars_inside = indent_chars + b"  "
             out.write(b"{\n")
             for k, v in dict_obj.items():
-                out.write(indent_chars + b"  ")
+                out.write(indent_chars_inside)
                 self._serialize(k, out, level + 1)
                 out.write(b": ")
                 self._serialize(v, out, level + 1)
@@ -241,11 +254,17 @@ class StreamSerializer(object):
             out.write(b"}")
 
     def ser_builtins_set(self, set_obj, out, level):
+        if sys.version_info < (3, 2):
+            # set literals are not supported on python <3.2 (ast.literal_eval limitation)
+            # so we transform the set into a tuple.
+            self._serialize(tuple(set_obj), out, level)
+            return
         if self.indent and set_obj:
             indent_chars = b"  " * level
+            indent_chars_inside = indent_chars + b"  "
             out.write(b"{\n")
             for elt in set_obj:
-                out.write(indent_chars + b"  ")
+                out.write(indent_chars_inside)
                 self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-2, 1)  # undo the last ,\n
