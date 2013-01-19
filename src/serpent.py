@@ -18,6 +18,8 @@ if the deserializer detects an invalid version combination....?
 
 OR...... compile with compiler flag unicode_literal and treat ALL strings as unicode
 
+@TODO: IronPython has str==unicode; strs are not encoded properly.
+@TODO: test.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
@@ -25,10 +27,14 @@ This code is open-source, but licensed under the "MIT software license".
 import ast
 import base64
 import sys
-try:
-    from cStringIO import StringIO as BytesIO   # python 2.x 
-except ImportError:
-    from io import BytesIO   # python 3.x
+import types
+if sys.platform=="cli":
+    from io import BytesIO   # IronPython
+else:
+    try:
+        from cStringIO import StringIO as BytesIO   # python 2.x
+    except ImportError:
+        from io import BytesIO   # python 3.x
 
 __all__ = ["serialize", "deserialize", "Bytes"]
 
@@ -84,11 +90,12 @@ class StreamSerializer(object):
         memoryview: Bytes.from_memoryview,
         }
 
+    if bytes is str:
+        del translate_types[bytes]
     if sys.version_info < (3, 0):
         # fix some Python 2.x types
-        import types
-        del translate_types[bytes]  # bytes == str
-        translate_types[types.BufferType] = Bytes.from_buffer
+        if hasattr(types, "BufferType"):
+            translate_types[types.BufferType] = Bytes.from_buffer
 
     def __init__(self, out, indent=False):
         self.out = out
