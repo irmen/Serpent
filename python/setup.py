@@ -25,7 +25,7 @@ setup(
 
     Serpent is more sophisticated than a simple repr() + literal_eval():
 
-     - it serializes directly to a byte stream (utf-8 encoded), instead of a string
+     - it serializes directly to bytes (utf-8 encoded), instead of a string
      - it encodes byte-types as base-64 instead of inefficient escaping notation (this does mean you have
        to base-64 decode these strings manually on the receiving side to get your bytes back)
      - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal

@@ -28,6 +28,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"None", data)
 
 
+@unittest.skip("slow test, checks speed")
 class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {
