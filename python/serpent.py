@@ -8,18 +8,19 @@ As such it is safe to send serpent data to other machines over the network for i
 Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
 Serpent handles several special Python types to make life easier:
- bytes, bytearrays, memoryview, buffer  --> string (base-64)
- uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
- decimal.Decimal  --> string (to not lose precision)
- array.array typecode 'c'/'u' --> string/unicode
- array.array other typecode --> list
- Exception  --> dict with some fields of the exception (message, args)
- all other types  --> dict with  __getstate__  or vars() of the object
 
-Small caveat:
-Python 2.x will return unicode for all strings, even when it was a str when serializing.
-(in other words, strs are all promoted to unicode. This is normal for Python 3.x by the way,
-which only has unicode strings)
+ - str  --> promoted to unicode (see below why this is)
+ - bytes, bytearrays, memoryview, buffer  --> string, base-64  (you'll have to manually un-base64 them though)
+ - uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
+ - decimal.Decimal  --> string (to not lose precision)
+ - array.array typecode 'c'/'u' --> string/unicode
+ - array.array other typecode --> list
+ - Exception  --> dict with some fields of the exception (message, args)
+ - all other types  --> dict with  __getstate__  or vars() of the object
+
+Small caveat: all str will be promoted to unicode. This is done because it is the default
+anyway for Python 3.x, and it solves the problem of the str/unicode difference between different
+Python versions. Also it means the serialized output doesn't have those problematic 'u' prefixes on strings.
 
 @TODO: tests.
 @TODO: java and C# implementations, including deserializers.
@@ -28,12 +29,13 @@ Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
 See http://opensource.org/licenses/MIT
 """
+from __future__ import print_function, division
+import __future__
 import ast
 import base64
 import sys
 import types
 import os
-import __future__
 if sys.platform == "cli":
     from io import BytesIO   # IronPython
 elif sys.version_info < (3, 0):
@@ -41,6 +43,7 @@ elif sys.version_info < (3, 0):
 else:
     from io import BytesIO   # python 3.x
 
+__version__ = "0.2"
 __all__ = ["serialize", "deserialize"]
 
 
@@ -55,7 +58,7 @@ def deserialize(serialized_bytes):
     if sys.version_info < (3, 0) and sys.platform != "cli":
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
         if os.name == "java":
-            # XXX bug in Jython: unicode_literals is not working. So we manually convert all Str nodes to unicode
+            # Because of a bug in Jython we have to manually convert all Str nodes to unicode. See http://bugs.jython.org/issue2008
             serialized = ast.parse(serialized, "<serpent>", mode="eval")
             for node in ast.walk(serialized):
                 if isinstance(node, ast.Str) and type(node.s) is str:
@@ -151,15 +154,15 @@ class StreamSerializer(object):
             module = t.__module__
             if module == "__builtin__":
                 module = "builtins"  # python 2.x compatibility
-            method = "ser_{0}_{1}".format(module, t.__name__)
-            getattr(self, method, self.ser_default_class)(obj, out, level)
+            method_name = "ser_{0}_{1}".format(module, t.__name__)
+            getattr(self, method_name, self.ser_default_class)(obj, out, level)  # dispatch
 
     def ser_builtins_str(self, str_obj, out, level):
-        # for IronPython where str==unicode and repr() yields undesired result
+        # special case str, for IronPython where str==unicode and repr() yields undesired result
         self.ser_builtins_unicode(str_obj, out, level)
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
-        # for python 2.x.
+        # for python 2.x
         z = unicode_obj.encode("utf-8")
         z = z.replace("\\", "\\\\")  # double-escape the backslashes
         if "'" not in z:
