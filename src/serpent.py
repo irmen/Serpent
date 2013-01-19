@@ -32,10 +32,11 @@ import ast
 import base64
 import sys
 import types
+import os
+import __future__
 if sys.platform == "cli":
     from io import BytesIO   # IronPython
 elif sys.version_info < (3, 0):
-    import __future__
     from cStringIO import StringIO as BytesIO   # python 2.x
 else:
     from io import BytesIO   # python 3.x
@@ -51,9 +52,16 @@ def serialize(obj, indent=False):
 
 def deserialize(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
-    if sys.version_info < (3, 0):
+    if sys.version_info < (3, 0) and sys.platform != "cli":
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
-        serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+        if os.name == "java":
+            # XXX bug in Jython: unicode_literals is not working. So we manually convert all Str nodes to unicode
+            serialized = ast.parse(serialized, "<serpent>", mode="eval")
+            for node in ast.walk(serialized):
+                if isinstance(node, ast.Str) and type(node.s) is str:
+                    node.s = node.s.decode("utf-8")
+        else:
+            serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     return ast.literal_eval(serialized)
 
 
