@@ -120,8 +120,7 @@ class StreamSerializer(object):
 
     translate_types = {
         bytes: BytesWrapper.from_bytes,
-        bytearray: BytesWrapper.from_bytearray,
-        memoryview: BytesWrapper.from_memoryview,
+        bytearray: BytesWrapper.from_bytearray
     }
 
     # do some dynamic changes to the types configuration if needed
@@ -129,6 +128,10 @@ class StreamSerializer(object):
         del translate_types[bytes]
     if hasattr(types, "BufferType"):
         translate_types[types.BufferType] = BytesWrapper.from_buffer
+    try:
+        translate_types[memoryview] = BytesWrapper.from_memoryview
+    except NameError:
+        pass
     if sys.platform == "cli":
         repr_types.remove(str)  # IronPython needs special str treatment
 
