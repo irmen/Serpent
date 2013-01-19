@@ -16,21 +16,12 @@ Serpent handles several special Python types to make life easier:
  Exception  --> dict with some fields of the exception (message, args)
  all other types  --> dict with  __getstate__  or vars() of the object
 
-BIG GOTCHA:
-For python 2.x it will add a 'u' in front of the unicode literals.
-Without the 'u', python 2.x is unable to parse these strings correctly into unicode objects.
-This is a problem because it will break Python 3.0 to 3.2 (these don't understand the 'u').
-The other way round is a similar problem: Python 3.x will encode all strings as unicode,
-without a 'u' prefix. Python 2.x can't correctly parse these strings.
+Small caveat:
+Python 2.x will return unicode for all strings, even when it was a str when serializing.
+(in other words, strs are all promoted to unicode. This is normal for Python 3.x by the way,
+which only has unicode strings)
 
-For now, the deserializer checks the python version used to serialize the data and
-decides if it can reliably deserialize it. It will raise an error if it can't.
-A possible improvement is to ast.walk() the tree and monkeypatch the string literals
-if the deserializer detects an invalid version combination....?
-OR...... compile with compiler flag unicode_literal and treat ALL strings as unicode...?
-(and get rid of the u-prefix then)
-
-@TODO: test.
+@TODO: tests.
 @TODO: java and C# implementations, including deserializers.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
@@ -58,24 +49,18 @@ def serialize(obj, indent=False):
 
 
 def deserialize(serialized_bytes):
-    string = serialized_bytes.decode("utf-8")
-    if string.startswith("# serpent "):
+    serialized = serialized_bytes.decode("utf-8")
+    if serialized.startswith("# serpent "):
         # version check
-        header = string[:30]
+        header = serialized[:30]
         ser_version = header[header.index("python") + 6:].split()[0].split(".")
         ser_version = (int(ser_version[0]), int(ser_version[1]))
         my_version = sys.version_info[:2]
-        if ser_version[0] != my_version[0]:
-            # tackle possible version problem: major python versions are different
-            if my_version[0] == 2:
-                # python 2.x is reading a python 3.x structure, not yet supported
-                raise ValueError("serpent version mismatch, python-2.x cannot parse python-3.x serpent data yet")
-                # XXX ... ast.walk() to monkeypatch string literals when version mismatch? or compiler flags? (see GOTCHA at top of file)
-            if ser_version[0] == 2:
-                if my_version < (3, 3):
-                   # python 3.0-3.2 cannot parse strings with 'u' prefixes
-                    raise RuntimeError("upgrade to python-3.3 or later to be able to parse python-2.x serpent data")
-    return ast.literal_eval(string)
+        if my_version < (3, 0):
+            # python 2.x: parse with unicode_literals (promotes all strings to unicode)
+            import __future__
+            serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+    return ast.literal_eval(serialized)
 
 
 class BytesWrapper(object):
@@ -109,6 +94,7 @@ class BytesWrapper(object):
 
 class StreamSerializer(object):
     """Serpent stream serializer. Serialize an object tree to a byte stream."""
+    #noinspection PySetFunctionToLiteral
     repr_types = set([
         str,
         int,
@@ -172,16 +158,15 @@ class StreamSerializer(object):
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
         # for python 2.x.
-        # Note: adds 'u' in front of the literal. SEE NOTE AT TOP OF FILE FOR DISCUSSION.
         z = unicode_obj.encode("utf-8")
         z = z.replace("\\", "\\\\")  # double-escape the backslashes
         if "'" not in z:
-            z = "u'" + z + "'"
+            z = "'" + z + "'"
         elif '"' not in z:
-            z = 'u"' + z + '"'
+            z = '"' + z + '"'
         else:
             z = z.replace("'", "\\'")
-            z = "u'" + z + "'"
+            z = "'" + z + "'"
         out.write(z)
 
     def ser_builtins_long(self, long_obj, out, level):
