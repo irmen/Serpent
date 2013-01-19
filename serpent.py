@@ -48,10 +48,12 @@ __all__ = ["serialize", "deserialize"]
 
 
 def serialize(obj, indent=False):
+    """Serialize object tree to bytes"""
     return Serializer(indent).serialize(obj)
 
 
 def deserialize(serialized_bytes):
+    """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     serialized = serialized_bytes.decode("utf-8")
     if sys.version_info < (3, 0) and sys.platform != "cli":
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
