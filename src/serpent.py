@@ -35,6 +35,7 @@ import types
 if sys.platform == "cli":
     from io import BytesIO   # IronPython
 elif sys.version_info < (3, 0):
+    import __future__
     from cStringIO import StringIO as BytesIO   # python 2.x
 else:
     from io import BytesIO   # python 3.x
@@ -50,16 +51,9 @@ def serialize(obj, indent=False):
 
 def deserialize(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
-    if serialized.startswith("# serpent "):
-        # version check
-        header = serialized[:30]
-        ser_version = header[header.index("python") + 6:].split()[0].split(".")
-        ser_version = (int(ser_version[0]), int(ser_version[1]))
-        my_version = sys.version_info[:2]
-        if my_version < (3, 0):
-            # python 2.x: parse with unicode_literals (promotes all strings to unicode)
-            import __future__
-            serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+    if sys.version_info < (3, 0):
+        # python 2.x: parse with unicode_literals (promotes all strings to unicode)
+        serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     return ast.literal_eval(serialized)
 
 

@@ -2,12 +2,13 @@ import unittest
 import serpent
 import sys
 
+
 class TestBasics(unittest.TestCase):
     def test_header(self):
         ser = serpent.serialize(None).decode("utf-8")
         header, _, rest = ser.partition("\n")
         version = "%s.%s" % sys.version_info[:2]
-        self.assertEqual("# serpent utf-8 python"+version, header)
+        self.assertEqual("# serpent utf-8 python" + version, header)
 
     def test_primitives(self):
         ser = serpent.serialize(None)
