@@ -7,11 +7,12 @@ As such it is safe to send serpent data to other machines over the network for i
 
 Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
-Serpent contains a few custom serializers for several special Python types:
- bytes, bytearrays, memoryview, buffer  --> base-64 (more efficient than default repr of bytearray)
+Serpent handles several special Python types to make life easier:
+ bytes, bytearrays, memoryview, buffer  --> string (base-64)
  uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
- decimal.Decimal  --> number (*see below)
- array.array  --> list
+ decimal.Decimal  --> string (to not lose precision)
+ array.array typecode 'c'/'u' --> string/unicode
+ array.array other typecode --> list
  Exception  --> dict with some fields of the exception (message, args)
  all other types  --> dict with  __getstate__  or vars() of the object
 
@@ -30,8 +31,6 @@ OR...... compile with compiler flag unicode_literal and treat ALL strings as uni
 (and get rid of the u-prefix then)
 
 @TODO: test.
-@TODO: array of chars -> encode as a simple string rather than a list of chars
-@TODO: decide if decimal should rather be encoded as string, to avoid losing precision?
 @TODO: java and C# implementations, including deserializers.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
@@ -42,7 +41,7 @@ import ast
 import base64
 import sys
 import types
-if sys.platform=="cli":
+if sys.platform == "cli":
     from io import BytesIO   # IronPython
 elif sys.version_info < (3, 0):
     from cStringIO import StringIO as BytesIO   # python 2.x
@@ -63,7 +62,7 @@ def deserialize(serialized_bytes):
     if string.startswith("# serpent "):
         # version check
         header = string[:30]
-        ser_version = header[header.index("python")+6:].split()[0].split(".")
+        ser_version = header[header.index("python") + 6:].split()[0].split(".")
         ser_version = (int(ser_version[0]), int(ser_version[1]))
         my_version = sys.version_info[:2]
         if ser_version[0] != my_version[0]:
@@ -83,21 +82,26 @@ class BytesWrapper(object):
     """Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data."""
     def __init__(self, data):
         self.data = data
+
     def __getstate__(self):
         b64 = base64.b64encode(self.data)
         return {
             "data": b64 if type(b64) is str else b64.decode("ascii"),
             "encoding": "base64"
         }
+
     @staticmethod
     def from_bytes(data):
         return BytesWrapper(data)
+
     @staticmethod
     def from_bytearray(data):
         return BytesWrapper(data)
+
     @staticmethod
     def from_memoryview(data):
         return BytesWrapper(data.tobytes())
+
     @staticmethod
     def from_buffer(data):
         return BytesWrapper(data)
@@ -125,7 +129,7 @@ class StreamSerializer(object):
         del translate_types[bytes]
     if hasattr(types, "BufferType"):
         translate_types[types.BufferType] = BytesWrapper.from_buffer
-    if sys.platform=="cli":
+    if sys.platform == "cli":
         repr_types.remove(str)  # IronPython needs special str treatment
 
     def __init__(self, out, indent=False):
@@ -176,17 +180,17 @@ class StreamSerializer(object):
             z = z.replace("'", "\\'")
             z = "u'" + z + "'"
         out.write(z)
-    
+
     def ser_builtins_long(self, long_obj, out, level):
         out.write(str(long_obj).encode("utf-8"))        # for python 2.x
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
         if self.indent and tuple_obj:
-            indent_chars = b"  "*level
+            indent_chars = b"  " * level
             out.write(b"(\n")
             for elt in tuple_obj:
                 out.write(indent_chars + b"  ")
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-1, 1)  # undo the last \n
             if len(tuple_obj) > 1:
@@ -195,7 +199,7 @@ class StreamSerializer(object):
         else:
             out.write(b"(")
             for elt in tuple_obj:
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",")
             if len(tuple_obj) > 1:
                 out.seek(-1, 1)  # undo the last ,
@@ -203,18 +207,18 @@ class StreamSerializer(object):
 
     def ser_builtins_list(self, list_obj, out, level):
         if self.indent and list_obj:
-            indent_chars = b"  "*level
+            indent_chars = b"  " * level
             out.write(b"[\n")
             for elt in list_obj:
                 out.write(indent_chars + b"  ")
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-2, 1)  # undo the last ,\n
             out.write(b"\n" + indent_chars + b"]")
         else:
             out.write(b"[")
             for elt in list_obj:
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",")
             if list_obj:
                 out.seek(-1, 1)  # undo the last ,
@@ -222,22 +226,22 @@ class StreamSerializer(object):
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if self.indent and dict_obj:
-            indent_chars = b"  "*level
+            indent_chars = b"  " * level
             out.write(b"{\n")
             for k, v in dict_obj.items():
                 out.write(indent_chars + b"  ")
-                self._serialize(k, out, level+1)
+                self._serialize(k, out, level + 1)
                 out.write(b": ")
-                self._serialize(v, out, level+1)
+                self._serialize(v, out, level + 1)
                 out.write(b",\n")
             out.seek(-2, 1)  # undo the last ,\n
             out.write(b"\n" + indent_chars + b"}")
         else:
             out.write(b"{")
             for k, v in dict_obj.items():
-                self._serialize(k, out, level+1)
+                self._serialize(k, out, level + 1)
                 out.write(b":")
-                self._serialize(v, out, level+1)
+                self._serialize(v, out, level + 1)
                 out.write(b",")
             if dict_obj:
                 out.seek(-1, 1)  # undo the last ,
@@ -245,18 +249,18 @@ class StreamSerializer(object):
 
     def ser_builtins_set(self, set_obj, out, level):
         if self.indent and set_obj:
-            indent_chars = b"  "*level
+            indent_chars = b"  " * level
             out.write(b"{\n")
             for elt in set_obj:
                 out.write(indent_chars + b"  ")
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",\n")
             out.seek(-2, 1)  # undo the last ,\n
             out.write(b"\n" + indent_chars + b"}")
         elif set_obj:
             out.write(b"{")
             for elt in set_obj:
-                self._serialize(elt, out, level+1)
+                self._serialize(elt, out, level + 1)
                 out.write(b",")
             out.write(b"}")
         else:
@@ -267,11 +271,8 @@ class StreamSerializer(object):
         self.ser_builtins_set(set_obj, out, level)
 
     def ser_decimal_Decimal(self, decimal_obj, out, level):
-        # NOTE: the decimal is serialized as a normal number
-        # this means that the deserializer will loose precision!
-        # (the number will be parsed as a regular float)
-        # @TODO: decide if this should be serialized as a string instead?
-        out.write(str(decimal_obj).encode("utf-8"))
+        # decimal is serialized as a string to avoid losing precision
+        self._serialize(str(decimal_obj), out, level)
 
     def ser_datetime_datetime(self, datetime_obj, out, level):
         self._serialize(datetime_obj.isoformat(), out, level)
@@ -295,7 +296,12 @@ class StreamSerializer(object):
         self._serialize(value, out, level)
 
     def ser_array_array(self, array_obj, out, level):
-        self._serialize(array_obj.tolist(), out, level)
+        if array_obj.typecode == 'c':
+            self._serialize(array_obj.tostring(), out, level)
+        elif array_obj.typecode == 'u':
+            self._serialize(array_obj.tounicode(), out, level)
+        else:
+            self._serialize(array_obj.tolist(), out, level)
 
     def ser_default_class(self, obj, out, level):
         try:
