@@ -15,11 +15,12 @@ For now, the deserializer checks the python version used to serialize the data a
 decides if it can reliably deserialize it. It will raise an error if it can't.
 A possible improvement is to ast.walk() the tree and monkeypatch the string literals
 if the deserializer detects an invalid version combination....?
-
-OR...... compile with compiler flag unicode_literal and treat ALL strings as unicode
+OR...... compile with compiler flag unicode_literal and treat ALL strings as unicode...?
 
 @TODO: IronPython has str==unicode; strs are not encoded properly.
 @TODO: test.
+@TODO: decide if decimal should rather be encoded as string, to avoid losing precision?
+@TODO: java and C# implementations.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
@@ -47,11 +48,27 @@ def serialize(obj, indent=False):
 
 def deserialize(serialized_bytes):
     string = serialized_bytes.decode("utf-8")
-    # ... ast.walk() to monkeypatch string literals when version mismatch? (see GOTCHA at top of file)
+    if string.startswith("# serpent "):
+        # version check
+        header = string[:30]
+        ser_version = header[header.index("python")+6:].split()[0].split(".")
+        ser_version = (int(ser_version[0]), int(ser_version[1]))
+        my_version = sys.version_info[:2]
+        if ser_version[0] != my_version[0]:
+            # tackle possible version problem: major python versions are different
+            if my_version[0] == 2:
+                # python 2.x is reading a python 3.x structure, not yet supported
+                raise ValueError("serpent version mismatch, python-2.x cannot parse python-3.x serpent data yet")
+                # XXX ... ast.walk() to monkeypatch string literals when version mismatch? or compiler flags? (see GOTCHA at top of file)
+            if ser_version[0] == 2:
+                if my_version < (3, 3):
+                   # python 3.0-3.2 cannot parse strings with 'u' prefixes
+                    raise RuntimeError("upgrade to python-3.3 or later to be able to parse python-2.x serpent data")
     return ast.literal_eval(string)
 
 
 class Bytes(object):
+    """Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data."""
     def __init__(self, data):
         self.data = data
     def __getstate__(self):
@@ -75,6 +92,7 @@ class Bytes(object):
 
 
 class StreamSerializer(object):
+    """Serpent stream serializer. Serialize an object tree to a byte stream."""
     repr_types = {
         str,
         int,
@@ -98,6 +116,11 @@ class StreamSerializer(object):
             translate_types[types.BufferType] = Bytes.from_buffer
 
     def __init__(self, out, indent=False):
+        """
+        Create the serializer.
+        out=bytestream that the output should be written to,
+        indent=indent the output over multiple lines (default=false)
+        """
         self.out = out
         self.indent = indent
 
@@ -113,7 +136,7 @@ class StreamSerializer(object):
             obj = self.translate_types[t](obj)
             t = type(obj)
         if t in self.repr_types:
-            self._repr_obj(obj, out)
+            out.write(repr(obj).encode("utf-8"))    # just a simple repr() is enough for these objects
         elif isinstance(obj, BaseException):
             self.ser_exception_class(obj, out, level)
         else:
@@ -122,9 +145,6 @@ class StreamSerializer(object):
                 module = "builtins"  # python 2.x compatibility
             method = "ser_{0}_{1}".format(module, t.__name__)
             getattr(self, method, self.ser_default_class)(obj, out, level)
-
-    def _repr_obj(self, obj, out):
-        out.write(repr(obj).encode("utf-8"))
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
         # for python 2.x.
@@ -230,6 +250,10 @@ class StreamSerializer(object):
         self.ser_builtins_set(set_obj, out, level)
 
     def ser_decimal_Decimal(self, decimal_obj, out, level):
+        # NOTE: the decimal is serialized as a normal number
+        # this means that the deserializer will loose precision!
+        # (the number will be parsed as a regular float)
+        # @TODO: decide if this should be serialized as a string instead?
         out.write(str(decimal_obj).encode("utf-8"))
 
     def ser_datetime_datetime(self, datetime_obj, out, level):
@@ -267,5 +291,5 @@ class StreamSerializer(object):
                 value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
                 value["__class__"] = type(obj).__name__
             except TypeError:
-                raise TypeError("don't know how to serialize class " + str(type(obj)) + ", give it vars() or define an appropriate __getstate__")
+                raise TypeError("don't know how to serialize class " + str(type(obj)) + ". Give it vars() or an appropriate __getstate__")
         self._serialize(value, out, level)
