@@ -27,9 +27,7 @@ Caveat: when serializing, set literals are converted into tuples on Python <3.2.
 of the ast module in earlier python versions. Python <3.2 will fail to read serpent data produced
 by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
 
-@TODO: java and C# implementations, including deserializers.
-@TODO: jython bug: timedelta doesn't have total_seconds() method (http://bugs.jython.org/issue2010)
-@TODO: ipy bug: base-64 encoding crashes
+@TODO: java and C# implementations, both serializers and deserializers
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 This code is open-source, but licensed under the "MIT software license".
@@ -43,7 +41,7 @@ import sys
 import types
 import os
 
-__version__ = "0.2"
+__version__ = "0.3"
 __all__ = ["serialize", "deserialize"]
 
 
@@ -74,7 +72,12 @@ class BytesWrapper(object):
         self.data = data
 
     def __getstate__(self):
-        b64 = base64.b64encode(self.data)
+        if sys.platform == "cli":
+            b64 = base64.b64encode(str(self.data))  # weird IronPython bug?
+        elif os.name == "java" and type(self.data) is bytearray:
+            b64 = base64.b64encode(bytes(self.data))  # Jython bug http://bugs.jython.org/issue2011
+        else:
+            b64 = base64.b64encode(self.data)
         return {
             "data": b64 if type(b64) is str else b64.decode("ascii"),
             "encoding": "base64"
@@ -142,6 +145,8 @@ class Serializer(object):
         header = "# serpent utf-8 python{0}.{1}\n".format(*sys.version_info)
         out = [header.encode("utf-8")]
         self._serialize(obj, out, 0)
+        if sys.platform == "cli":
+            return "".join(out)
         return b"".join(out)
 
     def _serialize(self, obj, out, level):
@@ -284,7 +289,12 @@ class Serializer(object):
         self._serialize(datetime_obj.isoformat(), out, level)
 
     def ser_datetime_timedelta(self, timedelta_obj, out, level):
-        self._serialize(timedelta_obj.total_seconds(), out, level)
+        if os.name == "java":
+            # jython bug http://bugs.jython.org/issue2010
+            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds)*10**6 + timedelta_obj.microseconds) / 10**6
+        else:
+            secs = timedelta_obj.total_seconds()
+        self._serialize(secs, out, level)
 
     def ser_datetime_time(self, time_obj, out, level):
         self._serialize(str(time_obj), out, level)

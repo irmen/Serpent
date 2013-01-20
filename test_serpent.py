@@ -16,51 +16,62 @@ import array
 import serpent
 
 
+def strip_header(ser):
+    if sys.platform == "cli":
+        _, _, data = ser.partition("\n")
+    else:
+        _, _, data = ser.partition(b"\n")
+    return data
+
+
 class TestBasics(unittest.TestCase):
     def test_header(self):
         ser = serpent.serialize(None)
-        self.assertTrue(type(ser) is bytes)
-        header, _, rest = ser.partition(b"\n")
+        if sys.platform == "cli":
+            header, _, rest = ser.partition("\n")
+        else:
+            self.assertTrue(type(ser) is bytes)
+            header, _, rest = ser.partition(b"\n")
         hdr = "# serpent utf-8 python%s.%s" % sys.version_info[:2]
         hdr = hdr.encode("utf-8")
         self.assertEqual(hdr, header)
 
     def test_none(self):
         ser = serpent.serialize(None)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"None", data)
 
     def test_string(self):
         ser = serpent.serialize("hello")
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"'hello'", data)
         ser = serpent.serialize("quotes'\"")
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"'quotes\\'\"'", data)
         ser = serpent.serialize("quotes2'")
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
     def test_numbers(self):
         ser = serpent.serialize(12345)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"12345", data)
         ser = serpent.serialize(123456789123456789123456789)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"123456789123456789123456789", data)
         ser = serpent.serialize(99.1234)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"99.1234", data)
         ser = serpent.serialize(decimal.Decimal("1234.9999999999"))
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"'1234.9999999999'", data)
         ser = serpent.serialize(2+3j)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"(2+3j)", data)
 
     def test_others(self):
         ser = serpent.serialize(True)
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"True", data)
 
     def test_bytes(self):
@@ -93,18 +104,34 @@ class TestBasics(unittest.TestCase):
 
     def test_array(self):
         ser = serpent.serialize(array.array('u', u"unicode"))
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"'unicode'", data)
         ser = serpent.serialize(array.array('i', [44, 45, 46]))
-        _, _, data = ser.partition(b"\n")
+        data = strip_header(ser)
         self.assertEqual(b"[44,45,46]", data)
         if sys.version_info < (3, 0):
             ser = serpent.serialize(array.array('c', "normal"))
-            _, _, data = ser.partition(b"\n")
+            data = strip_header(ser)
             self.assertEqual(b"'normal'", data)
 
+    def test_time(self):
+        ser = serpent.serialize(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
+        data = strip_header(ser)
+        self.assertEqual(b"'2013-01-20T23:59:45.999888'", data)
+        ser = serpent.serialize(datetime.time(23, 59, 45, 999888))
+        data = strip_header(ser)
+        self.assertEqual(b"'23:59:45.999888'", data)
+        ser = serpent.serialize(datetime.time(23, 59, 45))
+        data = strip_header(ser)
+        self.assertEqual(b"'23:59:45'", data)
+        ser = serpent.serialize(datetime.timedelta(1, 4000, 999888, minutes=22))
+        data = strip_header(ser)
+        self.assertEqual(b"91720.999888", data)
+        ser = serpent.serialize(datetime.timedelta(seconds=12345))
+        data = strip_header(ser)
+        self.assertEqual(b"12345.0", data)
 
-@unittest.skip("slow test, checks speed")
+
 class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {
@@ -124,14 +151,14 @@ class TestSpeed(unittest.TestCase):
         }
 
     def test_ser_speed(self):
-        print("serialize without indent:", timeit.timeit(lambda: serpent.serialize(self.data, False), number=5000))
-        print("serialize with indent:", timeit.timeit(lambda: serpent.serialize(self.data, True), number=5000))
+        print("serialize without indent:", timeit.timeit(lambda: serpent.serialize(self.data, False), number=1000))
+        print("serialize with indent:", timeit.timeit(lambda: serpent.serialize(self.data, True), number=1000))
 
     def test_deser_speed(self):
         ser = serpent.serialize(self.data, False)
-        print("deserialize without indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=5000))
+        print("deserialize without indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=1000))
         ser = serpent.serialize(self.data, True)
-        print("deserialize with indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=5000))
+        print("deserialize with indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=1000))
 
 
 class TestIndent(unittest.TestCase):
