@@ -82,9 +82,10 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(bytearray(b"abcdef"))
         data = serpent.deserialize(ser)
         self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
-        ser = serpent.serialize(memoryview(b"abcdef"))
-        data = serpent.deserialize(ser)
-        self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
+        if sys.version_info >= (2, 7):
+            ser = serpent.serialize(memoryview(b"abcdef"))
+            data = serpent.deserialize(ser)
+            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
     def test_class(self):
         class Class1(object):
@@ -139,8 +140,8 @@ class TestSpeed(unittest.TestCase):
             "bytes": bytes(100),
             "list": [1, 2, 3, 4, 5, 6, 7, 8],
             "tuple": (1, 2, 3, 4, 5, 6, 7, 8),
-            "set": {1, 2, 3, 4, 5, 6, 7, 8, 9},
-            "dict": {i: str(i) * 4 for i in range(10)},
+            "set": set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            "dict": dict((i, str(i) * 4) for i in range(10)),
             "exc": ZeroDivisionError("fault"),
             "dates": [
                 datetime.datetime.now(),
@@ -185,7 +186,7 @@ class TestIndent(unittest.TestCase):
   2,
   3
 )""", ser)
-        data = {1}
+        data = set([1])
         ser = serpent.serialize(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         if sys.version_info < (3, 2):

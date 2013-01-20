@@ -74,7 +74,7 @@ class BytesWrapper(object):
     def __getstate__(self):
         if sys.platform == "cli":
             b64 = base64.b64encode(str(self.data))  # weird IronPython bug?
-        elif os.name == "java" and type(self.data) is bytearray:
+        elif (os.name == "java" or sys.version_info < (2, 7)) and type(self.data) is bytearray:
             b64 = base64.b64encode(bytes(self.data))  # Jython bug http://bugs.jython.org/issue2011
         else:
             b64 = base64.b64encode(self.data)
@@ -132,6 +132,8 @@ class Serializer(object):
         pass
     if sys.platform == "cli":
         repr_types.remove(str)  # IronPython needs special str treatment
+    if sys.version_info < (2, 7):
+        repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
     def __init__(self, indent=False):
         """
@@ -168,6 +170,10 @@ class Serializer(object):
     def ser_builtins_str(self, str_obj, out, level):
         # special case str, for IronPython where str==unicode and repr() yields undesired result
         self.ser_builtins_unicode(str_obj, out, level)
+
+    def ser_builtins_float(self, float_obj, out, level):
+        # special case float, for Python < 2.7, to not print the float roundoff errors
+        out.append(str(float_obj))
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
         # for python 2.x
@@ -289,7 +295,7 @@ class Serializer(object):
         self._serialize(datetime_obj.isoformat(), out, level)
 
     def ser_datetime_timedelta(self, timedelta_obj, out, level):
-        if os.name == "java":
+        if os.name == "java" or sys.version_info < (2, 7):
             # jython bug http://bugs.jython.org/issue2010
             secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds)*10**6 + timedelta_obj.microseconds) / 10**6
         else:
