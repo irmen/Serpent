@@ -22,14 +22,20 @@ setup(
     Because it only serializes literals and recreates the objects using ast.literal_eval(),
     the serialized data is safe to transport to other machines over the network for instance.
 
+    API:
+
+    - ``ser_bytes = serpent.serialize(obj, indent=False)``      # serialize obj tree to bytes
+    - ``obj = serpent.deserialize(ser_bytes)``     # deserialize bytes back into object tree
+    - You can use ``ast.literal_eval`` yourself to deserialize, but ``serpent.deserialize`` works around a few corner cases. See source for details.
+
     Serpent is more sophisticated than a simple repr() + literal_eval():
 
-     - it serializes directly to bytes (utf-8 encoded), instead of a string
-     - it encodes byte-types as base-64 instead of inefficient escaping notation (this does mean you have
-       to base-64 decode these strings manually on the receiving side to get your bytes back)
-     - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal
-     - it tries to serialize all other types in a sensible manner into a dict (you can control this with __getstate__ on your own types)
-     - it can create a pretty-printed (indented) output for readability purposes
+    - it serializes directly to bytes (utf-8 encoded), instead of a string
+    - it encodes byte-types as base-64 instead of inefficient escaping notation (this does mean you have
+      to base-64 decode these strings manually on the receiving side to get your bytes back)
+    - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal
+    - it tries to serialize all other types in a sensible manner into a dict (you can control this with __getstate__ on your own types)
+    - it can create a pretty-printed (indented) output for readability purposes
 
     It works on with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
     """,
