@@ -26,6 +26,7 @@ object tree that is being serialized, and don't use the same serializer in diffe
 Caveat: when serializing, set literals are converted into tuples on Python <3.2. This is because of a limitation
 of the ast module in earlier python versions. Python <3.2 will fail to read serpent data produced
 by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
+Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal_eval in 2.6)
 
 @TODO: java and C# implementations, both serializers and deserializers
 

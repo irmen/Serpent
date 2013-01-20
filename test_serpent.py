@@ -138,7 +138,7 @@ class TestSpeed(unittest.TestCase):
         self.data = {
             "str": "hello",
             "unicode": u"\u20ac",
-            "numbers": [123456789012345678901234567890, 999.1234, 4+5j, decimal.Decimal("1.99999999999999999991")],
+            "numbers": [123456789012345678901234567890, 999.1234, decimal.Decimal("1.99999999999999999991")],
             "bytes": bytearray(100),
             "list": [1, 2, 3, 4, 5, 6, 7, 8],
             "tuple": (1, 2, 3, 4, 5, 6, 7, 8),
