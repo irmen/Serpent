@@ -136,8 +136,10 @@ class TestBasics(unittest.TestCase):
 class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {
-            "simple": "hello",
-            "bytes": bytes(100),
+            "str": "hello",
+            "unicode": u"\u20ac",
+            "numbers": [123456789012345678901234567890, 999.1234, 4+5j, decimal.Decimal("1.99999999999999999991")],
+            "bytes": bytearray(100),
             "list": [1, 2, 3, 4, 5, 6, 7, 8],
             "tuple": (1, 2, 3, 4, 5, 6, 7, 8),
             "set": set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
@@ -145,7 +147,7 @@ class TestSpeed(unittest.TestCase):
             "exc": ZeroDivisionError("fault"),
             "dates": [
                 datetime.datetime.now(),
-                datetime.time(),
+                datetime.time(23, 59, 45, 999888),
                 datetime.timedelta(seconds=500)
             ],
             "uuid": uuid.uuid4()
