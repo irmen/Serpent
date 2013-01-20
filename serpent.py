@@ -55,7 +55,6 @@ def deserialize(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     serialized = serialized_bytes.decode("utf-8")
     if sys.version_info < (3, 0) and sys.platform != "cli":
-        # python 2.x: parse with unicode_literals (promotes all strings to unicode)
         if os.name == "java":
             # Because of a bug in Jython we have to manually convert all Str nodes to unicode. See http://bugs.jython.org/issue2008
             serialized = ast.parse(serialized, "<serpent>", mode="eval")
@@ -63,6 +62,7 @@ def deserialize(serialized_bytes):
                 if isinstance(node, ast.Str) and type(node.s) is str:
                     node.s = node.s.decode("utf-8")
         else:
+            # python 2.x: parse with unicode_literals (promotes all strings to unicode)
             serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     return ast.literal_eval(serialized)
 
