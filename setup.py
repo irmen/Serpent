@@ -10,10 +10,9 @@ from distutils.core import setup
 import serpent
 
 setup(
-    name='Serpent',
+    name='serpent',
     version=serpent.__version__,
     py_modules = ["serpent"],
-    url='http://packages.python.org/Serpent',
     license='MIT',
     author='Irmen de Jong',
     author_email='irmen@razorvine.net',
