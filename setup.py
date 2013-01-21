@@ -36,9 +36,12 @@ setup(
     - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal
     - it tries to serialize unrecognised types as a dict (you can control this with __getstate__ on your own types)
     - it can create a pretty-printed (indented) output for readability purposes
+    - it outputs the keys of sets and dicts in alphabetical order when pretty-printing
     - it works around a few quirks of ast.literal_eval() on the various Python implementations
 
-    It works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+    Serpent can't serialize object graphs though (when an object refers to itself); it will crash with a recursion error.
+
+    Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
     """,
     keywords="serialization",
     platforms="any",

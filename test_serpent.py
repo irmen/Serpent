@@ -171,6 +171,29 @@ class TestIndent(unittest.TestCase):
         _, _, ser = ser.partition("\n")
         self.assertEqual("12345", ser)
 
+    def test_indent_sorting(self):
+        # non-indented should not be sorted, indented should
+        data = {"e": 1, "d": 1, "c": 1, "b": 1, "a": 1}
+        ser = serpent.serialize(data, False)
+        ser = strip_header(ser)
+        self.assertNotEqual(b"{'a':1,'b':1,'c':1,'d':1,'e':1}", ser)
+        ser = serpent.serialize(data, True)
+        ser = strip_header(ser)
+        self.assertEqual(b"""{
+  'a': 1,
+  'b': 1,
+  'c': 1,
+  'd': 1,
+  'e': 1
+}""", ser)
+        data = set("irmen de jong")
+        ser = serpent.serialize(data, False)
+        ser = strip_header(ser)
+        self.assertNotEqual(b"' ','d','e','g','i','j','m','n','o','r'", ser[1:-1])
+        ser = serpent.serialize(data, True)
+        ser = strip_header(ser)
+        self.assertEqual(b"\n  ' ',\n  'd',\n  'e',\n  'g',\n  'i',\n  'j',\n  'm',\n  'n',\n  'o',\n  'r'\n", ser[1:-1])
+
     def test_indent_containers(self):
         data = [1, 2, 3]
         ser = serpent.serialize(data, indent=True).decode("utf-8")

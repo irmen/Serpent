@@ -42,7 +42,7 @@ import sys
 import types
 import os
 
-__version__ = "0.3"
+__version__ = "0.4"
 __all__ = ["serialize", "deserialize"]
 
 
@@ -239,7 +239,7 @@ class Serializer(object):
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
             out.append(b"{\n")
-            for k, v in dict_obj.items():
+            for k, v in sorted(dict_obj.items()):
                 out.append(indent_chars_inside)
                 self._serialize(k, out, level + 1)
                 out.append(b": ")
@@ -262,13 +262,15 @@ class Serializer(object):
         if sys.version_info < (3, 2):
             # set literals are not supported on python <3.2 (ast.literal_eval limitation)
             # so we transform the set into a tuple.
+            if self.indent:
+                set_obj = sorted(set_obj)
             self._serialize(tuple(set_obj), out, level)
             return
         if self.indent and set_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
             out.append(b"{\n")
-            for elt in set_obj:
+            for elt in sorted(set_obj):
                 out.append(indent_chars_inside)
                 self._serialize(elt, out, level + 1)
                 out.append(b",\n")
