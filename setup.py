@@ -37,7 +37,7 @@ setup(
     - it tries to serialize all other types in a sensible manner into a dict (you can control this with __getstate__ on your own types)
     - it can create a pretty-printed (indented) output for readability purposes
 
-    It works on with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+    It works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
     """,
     keywords="serialization",
     platforms="any",
