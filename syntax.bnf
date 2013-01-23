@@ -1,0 +1,40 @@
+
+expr = single | compound .
+single = int | float | complex | string | bool | none .
+compound = tuple | dict | list | set .
+
+int = ['-'] '0123456789'+ .
+float = <float????> . 
+complex = compound_complex | complexpart .
+compound_complex = '(' [float] complexpart ')' .
+complexpart = ['+'] float 'j' .
+
+string = singlequoted | doublequoted .
+singlequoted = '\'' stringvalue_escaped_singlequoted '\'' .
+doublequoted = '"' stringvalue_escaped_doublequotes '"' .
+bool = 'True' | 'False' .
+none = 'None' .
+
+tuple = tuple_empty | tuple_one | tuple_more .
+list = list_empty | list_one | list_more .
+set = set_one | set_more .
+dict = dict_empty | dict_one | dict_more .
+
+tuple_empty = '()' .
+tuple_one = '(' element_with_comma ')' .
+tuple_more = '(' element_with_comma+ expr ')' .
+
+list_empty = '[]' .
+list_one = '[' expr ']' .
+list_more = '[' element_with_comma+ expr ']' .
+
+set_one = '{' expr '}' .
+set_more = '{' element_with_comma+ expr '}' .
+
+dict_one = '{' keyvalue '}' .
+dict_more = '{' keyvalue_with_comma+ keyvalue '}' .
+keyvalue = expr ':' expr .
+keyvalue_with_comma = keyvalue ',' .
+element_with_comma = expr ',' .
+
+
