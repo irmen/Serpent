@@ -16,6 +16,8 @@
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <SourceAnalysisOverrideSettingsFile>C:\Users\Irmen\AppData\Roaming\ICSharpCode/SharpDevelop4\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
