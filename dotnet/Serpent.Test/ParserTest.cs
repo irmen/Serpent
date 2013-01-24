@@ -28,7 +28,8 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<double>(0.0004), p.Parse("4e-4").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<double>(40000), p.Parse("4e4").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(true), p.Parse("True").Root);
-			Assert.AreEqual(new Ast.PrimitiveNode<bool>(true), p.Parse("False").Root);
+			Assert.AreEqual(new Ast.PrimitiveNode<bool>(false), p.Parse("False").Root);
+			Assert.AreEqual(Ast.NoneNode.Instance, p.Parse("None").Root);
 		}
 		
 		[Test]
@@ -66,7 +67,8 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse("  42  ").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse("\t42\r\n").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse(" \t 42 \r \n ").Root);
-			Assert.AreEqual("blerp", p.Parse("  [  42 ,   43  ]   "));  // @todo will fail now
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("   string value    "), p.Parse("  '   string value    '   ").Root);
+			Assert.AreEqual(2, p.Parse("     [  42  ,  43  ]   ").Root);  // @todo will fail now
 		}
 	}
 }

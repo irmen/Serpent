@@ -167,6 +167,31 @@ compound        =  tuple | dict | list | set .
 		
 		Ast.SequenceNode ParseCompound(SeekableStringReader sr)
 		{
+			switch(sr.Peek())
+			{
+				case '[':
+					return ParseList(sr);
+				case '{':
+					return ParseSetOrDict(sr);
+				case '(':
+					return ParseTuple(sr);
+				default:
+					throw new ParseException("invalid sequencetype char");
+			}
+		}
+		
+		Ast.SequenceNode ParseTuple(SeekableStringReader sr)
+		{
+			throw new NotImplementedException();
+		}
+		
+		Ast.SequenceNode ParseSetOrDict(SeekableStringReader sr)
+		{
+			throw new NotImplementedException();
+		}
+		
+		Ast.SequenceNode ParseList(SeekableStringReader sr)
+		{
 			throw new NotImplementedException();
 		}
 		
@@ -202,35 +227,25 @@ compound        =  tuple | dict | list | set .
 		Ast.PrimitiveNode<int> ParseInt(SeekableStringReader sr)
 		{
 			// int =  ['-'] digitnonzero {digit} .
-			int sign=1;
-			if(sr.Peek()=='-')
-			{
-				sign = -1;
-				sr.Read();
-			}
-			
-			// @todo optimize ... sr.ReadUntilNot(.......)
-			StringBuilder intstring = new StringBuilder();
-			char nonzerodigit = sr.Read();
-			if(nonzerodigit<='1' || nonzerodigit>='9')
-				throw new ParseException("expected digit 1..9");
-			intstring.Append(nonzerodigit);
-			while(sr.HasMore())
-			{
-				char digit = sr.Read();
-				if(digit>='0' && digit<='9')
-					intstring.Append(digit);
-				else
-					break;
-			}
-			int value = int.Parse(intstring.ToString());
-			return new Ast.PrimitiveNode<int>(sign*value);
+			string numberstr = sr.ReadWhile('-','0','1','2','3','4','5','6','7','8','9');
+			if(numberstr.Length==0)
+				throw new ParseException("invalid int character");
+			return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
 		}
 
 		Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
 		{
-			sr.Read(2);
-			throw new ParseException("float not implemented");
+			string numberstr = sr.ReadWhile('-','+','.','e','E','0','1','2','3','4','5','6','7','8','9');
+			if(numberstr.Length==0)
+				throw new ParseException("invalid float character");
+			
+			// little bit of a hack:
+			// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
+			// in that case, we need to reject it as a float.
+			if(numberstr.IndexOfAny(new char[] {'.','e','E'}) < 0)
+				throw new ParseException("number is not a valid float");
+
+			return new Ast.PrimitiveNode<double>(double.Parse(numberstr, CultureInfo.InvariantCulture));
 		}
 
 		Ast.ComplexNumberNode ParseComplex(SeekableStringReader sr)
@@ -246,7 +261,7 @@ compound        =  tuple | dict | list | set .
 				double realpart = double.Parse(numberstr, CultureInfo.InvariantCulture);
 				double imaginarypart = ParseImaginaryPart(sr);
 				if(sr.Peek()!=')')
-					throw new ParseException("expected ) to close a complex number");
+					throw new ParseException("expected ) to end a complex number");
 				return new Ast.ComplexNumberNode()
 					{
 						Real = realpart,
@@ -268,18 +283,12 @@ compound        =  tuple | dict | list | set .
 		double ParseImaginaryPart(SeekableStringReader sr)
 		{
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-			char signchr = sr.Read();
-			double sign;
-			if(signchr=='+')
-				sign=1.0;
-			else if(signchr=='-')
-				sign=-1.0;
-			else
+			char signchr = sr.Peek();
+			if(signchr!='+' && signchr!='-')
 				throw new ParseException("expected +/- at start of imaginary part");
 			
 			string numberstr = sr.ReadUntil('j');
-			double value = double.Parse(numberstr, CultureInfo.CurrentCulture);
-			return sign*value;
+			return double.Parse(numberstr, CultureInfo.CurrentCulture);
 		}
 		
 		Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)

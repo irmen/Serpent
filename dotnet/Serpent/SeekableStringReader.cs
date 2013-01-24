@@ -82,26 +82,32 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public string ReadUntil(params char[] sentinels)
 		{
-			if(sentinels.Length==1)
+			int index = str.IndexOfAny(sentinels, cursor);
+			if(index>=0)
 			{
-				// optimize for 1 sentinel
-				int index = str.IndexOf(sentinels[0], cursor);
-				if(index>=0)
-				{
-					string result = str.Substring(cursor, index-cursor);
-					cursor = index+1;
-					return result;
-				}
-				throw new ParseException("'"+sentinels[0]+"' not found");
-			}
-			
-			int start = cursor;
-			while(cursor<str.Length)
-			{
-				if(Array.IndexOf(sentinels, str[cursor++])>=0)
-					return str.Substring(start, cursor-start-1);
+				string result = str.Substring(cursor, index-cursor);
+				cursor = index+1;
+				return result;
 			}
 			throw new ParseException("terminator not found");
+		}
+		
+		/// <summary>
+		/// Read everything as long as the char occurs in the accepted characters.
+		/// </summary>
+		/// <param name="characters"></param>
+		/// <returns></returns>
+		public string ReadWhile(params char[] accepted)
+		{
+			int start = cursor;
+			while(cursor < str.Length)
+			{
+				if(Array.IndexOf(accepted, str[cursor])>=0)
+					++cursor;
+				else
+					break;
+			}
+			return str.Substring(start, cursor-start);
 		}
 		
 		/// <summary>

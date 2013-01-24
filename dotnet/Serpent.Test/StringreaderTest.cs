@@ -61,7 +61,16 @@ namespace Razorvine.Serpent.Test
 			s.Rewind(int.MaxValue);
 			Assert.AreEqual("hell", s.ReadUntil('x', 'y', 'z', ' ', 'o'));
 			Assert.Throws<ParseException>(()=>s.ReadUntil('x', 'y', '@'));
-			
+		}
+
+		[Test]
+		public void TestReadWhile()
+		{
+			SeekableStringReader s = new SeekableStringReader("123.456 foo");
+			Assert.AreEqual("123.456", s.ReadWhile('0','1','2','3','4','5','6','7','8','9','.'));
+			Assert.AreEqual("", s.ReadWhile('@'));
+			Assert.AreEqual(" ", s.ReadWhile(' '));
+			Assert.AreEqual("foo", s.Rest());
 		}
 		
 		[Test]
