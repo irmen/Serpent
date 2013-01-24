@@ -108,7 +108,7 @@ namespace Razorvine.Serpent
 		/// <summary>
 		/// Rewind a number of characters.
 		/// </summary>
-		public void Rewind(int count=1)
+		public void Rewind(int count)
 		{
 			cursor = Math.Max(0, cursor-count);
 		}

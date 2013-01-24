@@ -90,7 +90,7 @@ namespace Razorvine.Serpent
 		
 		public class DictNode : INode
 		{
-			public IList<Tuple<INode, INode>> Elements = new List<Tuple<INode, INode>>();
+			public IList<KeyValuePair<INode, INode>> Elements = new List<KeyValuePair<INode, INode>>();
 			
 			public override bool Equals(object obj)
 			{
