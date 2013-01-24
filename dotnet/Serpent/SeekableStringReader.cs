@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Razorvine.Serpent
 {
@@ -10,14 +9,6 @@ namespace Razorvine.Serpent
 		private int cursor = 0;
 		private int bookmark = -1;
 	
-		
-		public class Error: Exception
-		{
-			public Error(string message) : base(message)
-			{
-			}
-		}
-
 		public SeekableStringReader(string str)
 		{
 			if(str==null)
@@ -37,6 +28,14 @@ namespace Razorvine.Serpent
 			cursor = parent.cursor;
 		}
 
+		/// <summary>
+		/// Is there more to read?
+		/// </summary>
+		public bool HasMore()
+		{
+			return cursor<str.Length;
+		}
+		
 		/// <summary>
 		/// What is the next character?
 		/// </summary>
@@ -67,10 +66,10 @@ namespace Razorvine.Serpent
 		public string Read(int count)
 		{
 			if(count<0)
-				throw new Error("use Rewind to seek back");
+				throw new ParseException("use Rewind to seek back");
 			int safecount = Math.Min(count, str.Length-cursor);
 			if(safecount==0 && count>0)
-				throw new Error("no more data");
+				throw new ParseException("no more data");
 			
 			string result = str.Substring(cursor, safecount);
 			cursor += safecount;
@@ -78,28 +77,56 @@ namespace Razorvine.Serpent
 		}
 		
 		/// <summary>
-		/// Read everything until the sentinel.
+		/// Read everything until one of the sentinel(s), which must exist in the string.
 		/// Sentinel char is read but not returned in the result.
 		/// </summary>
-		public string ReadUntil(char sentinel)
+		public string ReadUntil(params char[] sentinels)
 		{
-			int index = str.IndexOf(sentinel, cursor);
-			if(index>=0)
+			if(sentinels.Length==1)
 			{
-				string result = str.Substring(cursor, index-cursor);
-				cursor = index+1;
-				return result;
+				// optimize for 1 sentinel
+				int index = str.IndexOf(sentinels[0], cursor);
+				if(index>=0)
+				{
+					string result = str.Substring(cursor, index-cursor);
+					cursor = index+1;
+					return result;
+				}
+				throw new ParseException("'"+sentinels[0]+"' not found");
 			}
-			throw new Error("sentinel not found");
+			
+			int start = cursor;
+			while(cursor<str.Length)
+			{
+				if(Array.IndexOf(sentinels, str[cursor++])>=0)
+					return str.Substring(start, cursor-start-1);
+			}
+			throw new ParseException("terminator not found");
 		}
 		
+		/// <summary>
+		/// Read away any whitespace.
+		/// </summary>
+		public void SkipWhitespace()
+		{
+			while(HasMore())
+			{
+				char c=Read();
+				if(!Char.IsWhiteSpace(c))
+				{
+					Rewind(1);
+					return;
+				}
+			}
+		}
+
 		/// <summary>
 		/// Returns the rest of the data until the end.
 		/// </summary>
 		public string Rest()
 		{
 			if(cursor>=str.Length)
-				throw new Error("no more data");
+				throw new ParseException("no more data");
 			string result=str.Substring(cursor);
 			cursor = str.Length;
 			return result;
@@ -114,22 +141,19 @@ namespace Razorvine.Serpent
 		}
 
 		/// <summary>
-		/// Set a bookmark to rewind to later.
+		/// Return a bookmark to rewind to later.
 		/// </summary>
-		public void Bookmark()
+		public int Bookmark()
 		{
-			bookmark = cursor;
+			return cursor;
 		}
 		
 		/// <summary>
 		/// Flip back to previously set bookmark.
 		/// </summary>
-		public void FlipBack()
+		public void FlipBack(int bookmark)
 		{
-			if(bookmark>=0)
-				cursor = bookmark;
-			else
-				throw new Error("no bookmark set");
+			cursor = bookmark;
 		}
 		
 		/// <summary>

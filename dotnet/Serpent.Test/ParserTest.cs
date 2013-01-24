@@ -37,10 +37,11 @@ namespace Razorvine.Serpent.Test
 			Parser p = new Parser();
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("hello"), p.Parse("'hello'").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("hello"), p.Parse("\"hello\"").Root);
-			Assert.AreEqual(new Ast.PrimitiveNode<string>("\\"), p.Parse("'\\'").Root);
-			Assert.AreEqual(new Ast.PrimitiveNode<string>("\\"), p.Parse("\"\\\"").Root);
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("\\"), p.Parse("'\\\\'").Root);
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("\\"), p.Parse("\"\\\\\"").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("'"), p.Parse("\"'\"").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("\""), p.Parse("'\"'").Root);
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("tab\tnewline\n."), p.Parse("'tab\\tnewline\\n.'").Root);
 		}
 		
 		[Test]

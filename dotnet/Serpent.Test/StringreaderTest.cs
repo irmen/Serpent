@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using NUnit.Framework;
 
 namespace Razorvine.Serpent.Test
@@ -19,17 +20,30 @@ namespace Razorvine.Serpent.Test
 				Assert.AreEqual("o", s.Peek(999));
 				Assert.AreEqual("o", s.Read(999));
 			}
+			
+			using(SeekableStringReader s2 = new SeekableStringReader("    skip.\t\n\rwhitespace.  "))
+			{
+				s2.SkipWhitespace();
+				Assert.AreEqual("skip", s2.ReadUntil('.'));
+				s2.SkipWhitespace();
+				Assert.AreEqual("whitespace", s2.ReadUntil('.'));
+				s2.SkipWhitespace();
+				Assert.IsFalse(s2.HasMore());
+				Assert.Throws<IndexOutOfRangeException>(()=>s2.Peek());
+			}
 		}
 		
 		[Test]
 		public void TestRanges()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");
-			Assert.Throws<SeekableStringReader.Error>(()=>s.Read(-1));
+			Assert.Throws<ParseException>(()=>s.Read(-1));
 			Assert.AreEqual("hello", s.Read(999));
-			Assert.Throws<SeekableStringReader.Error>(()=>s.Read(1));
+			Assert.Throws<ParseException>(()=>s.Read(1));
 			s.Rewind(int.MaxValue);
+			Assert.IsTrue(s.HasMore());
 			Assert.AreEqual("hello", s.Peek(999));
+			Assert.IsTrue(s.HasMore());
 		}
 		
 		[Test]
@@ -39,10 +53,15 @@ namespace Razorvine.Serpent.Test
 			s.Read();
 			Assert.AreEqual("ello", s.ReadUntil(' '));
 			Assert.AreEqual('t', s.Peek());
-			Assert.Throws<SeekableStringReader.Error>(()=>s.ReadUntil('x'));
+			Assert.Throws<ParseException>(()=>s.ReadUntil('x'));
 			
 			Assert.AreEqual("there", s.Rest());
-			Assert.Throws<SeekableStringReader.Error>(()=>s.Rest());
+			Assert.Throws<ParseException>(()=>s.Rest());
+			
+			s.Rewind(int.MaxValue);
+			Assert.AreEqual("hell", s.ReadUntil('x', 'y', 'z', ' ', 'o'));
+			Assert.Throws<ParseException>(()=>s.ReadUntil('x', 'y', '@'));
+			
 		}
 		
 		[Test]
@@ -50,9 +69,9 @@ namespace Razorvine.Serpent.Test
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");
 			s.Read(2);
-			s.Bookmark();
+			int bookmark = s.Bookmark();
 			Assert.AreEqual("ll", s.Read(2));
-			s.FlipBack();
+			s.FlipBack(bookmark);
 			Assert.AreEqual("ll", s.Read(2));
 			Assert.AreEqual("o", s.Read(999));
 		}
