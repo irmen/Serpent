@@ -153,6 +153,8 @@ namespace Razorvine.Serpent
 			SeekableStringReader sr = new SeekableStringReader(expression);
 			try {
 				ast.Root = ParseExpr(sr);
+				if(sr.HasMore())
+					throw new ParseException("garbage at end of expression");
 				return ast;
 			} catch (ParseException x) {
 				throw new ParseException(x.Message + " (at position "+sr.Bookmark()+")", x);
@@ -219,8 +221,13 @@ namespace Razorvine.Serpent
 			
 			tuple.Elements = ParseExprList(sr);
 			tuple.Elements.Insert(0, firstelement);
-			if(sr.HasMore() && sr.Read()==',')
-				sr.Read();
+			if(!sr.HasMore())
+				throw new ParseException("missing ')'");
+			char closechar = sr.Read();
+			if(closechar==',')
+				closechar = sr.Read();
+			if(closechar!=')')
+				throw new ParseException("expected ')'");
 			return tuple;			
 		}
 		
@@ -239,7 +246,21 @@ namespace Razorvine.Serpent
 		
 		Ast.SequenceNode ParseSetOrDict(SeekableStringReader sr)
 		{
-			throw new NotImplementedException();
+			return ParseSet(sr);
+		}
+		
+		Ast.SetNode ParseSet(SeekableStringReader sr)
+		{
+			// set = '{' expr_list '}' .
+			sr.Read();	// {
+			Ast.SetNode setnode = new Ast.SetNode();
+			setnode.Elements = ParseExprList(sr);
+			if(!sr.HasMore())
+				throw new ParseException("missing '}'");
+			char closechar = sr.Read();
+			if(closechar!='}')
+				throw new ParseException("expected '}'");
+			return setnode;
 		}
 		
 		Ast.ListNode ParseList(SeekableStringReader sr)
@@ -256,6 +277,11 @@ namespace Razorvine.Serpent
 			}
 			
 			list.Elements = ParseExprList(sr);
+			if(!sr.HasMore())
+				throw new ParseException("missing ']'");
+			char closechar = sr.Read();
+			if(closechar!=']')
+				throw new ParseException("expected ']'");
 			return list;
 		}
 		

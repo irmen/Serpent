@@ -68,7 +68,8 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse("\t42\r\n").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse(" \t 42 \r \n ").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("   string value    "), p.Parse("  '   string value    '   ").Root);
-			Ast ast = p.Parse("     (  42  ,  ( 'x',   'y'  )   ");
+			Assert.Throws<ParseException>(()=>p.Parse("     (  42  ,  ( 'x',   'y'  )   "));  // missing tuple close )
+			Ast ast = p.Parse("     (  42  ,  ( 'x',   'y'  )  )  ");
 			Ast.TupleNode tuple = (Ast.TupleNode) ast.Root;
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), tuple.Elements[0]);
 			tuple = (Ast.TupleNode) tuple.Elements[1];
@@ -94,6 +95,10 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.TupleNode(), p.Parse("()").Root);
 			Assert.AreEqual(tuple, p.Parse("(42,)").Root);
 			Assert.AreEqual(tuple2, p.Parse("( 42,43, 44 )").Root);
+
+			Assert.Throws<ParseException>(()=>p.Parse("(42,43]"));
+			Assert.Throws<ParseException>(()=>p.Parse("()@"));
+			Assert.Throws<ParseException>(()=>p.Parse("(42,43)@"));
 		}
 		
 		[Test]
@@ -115,6 +120,33 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(list, p.Parse("[42]").Root);
 			Assert.Throws<ParseException>(()=>p.Parse("[42,]"));
 			Assert.AreEqual(list2, p.Parse("[ 42,43, 44 ]").Root);
+
+			Assert.Throws<ParseException>(()=>p.Parse("[42,43}"));
+			Assert.Throws<ParseException>(()=>p.Parse("[]@"));
+			Assert.Throws<ParseException>(()=>p.Parse("[42,43]@"));
+		}
+		
+		[Test]
+		public void TestSet()
+		{
+			Parser p = new Parser();
+			Ast.SetNode set1 = new Ast.SetNode();
+			Ast.SetNode set2 = new Ast.SetNode();
+			Assert.AreEqual(set1, set2);
+			
+			set1.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			set2.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			Assert.AreEqual(set1, set2);
+			set2.Elements.Add(new Ast.PrimitiveNode<int>(43));
+			set2.Elements.Add(new Ast.PrimitiveNode<int>(44));
+			Assert.AreNotEqual(set1, set2);
+			
+			Assert.AreEqual(set1, p.Parse("{42}").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("{42,}"));
+			Assert.AreEqual(set2, p.Parse("{ 42,43, 44 }").Root);
+
+			Assert.Throws<ParseException>(()=>p.Parse("{42,43]"));
+			Assert.Throws<ParseException>(()=>p.Parse("{42,43}@"));
 		}		
 	}
 }

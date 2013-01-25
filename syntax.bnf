@@ -26,7 +26,7 @@ bool            = 'True' | 'False' .
 none            = 'None' .
 
 
-expr_list       = expr [ ',' { expr } ] .
+expr_list       = expr { ',' expr } .
 tuple           = tuple_empty | tuple_one | tuple_more
 tuple_empty     = '()' .
 tuple_one       = '(' expr ',)' .
@@ -37,3 +37,10 @@ list            = list_empty | list_nonempty .
 list_empty      = '[]' .
 list_nonempty   = '[' expr_list ']' .
 
+
+set             = '{' expr_list '}' .
+
+dict            = '{' keyvalue_list '}' .
+keyvalue_list   = keyvalue { ',' keyvalue } .
+keyvalue        = expr ':' expr .
+ 
