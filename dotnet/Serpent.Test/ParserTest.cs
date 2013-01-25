@@ -1,4 +1,12 @@
-﻿using System;
+﻿/// <summary>
+/// Serpent, a Python literal expression serializer/deserializer
+/// (a.k.a. Python's ast.literal_eval in .NET)
+///
+/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// </summary>
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
@@ -30,6 +38,66 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(true), p.Parse("True").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(false), p.Parse("False").Root);
 			Assert.AreEqual(Ast.NoneNode.Instance, p.Parse("None").Root);
+		}
+		
+		[Test]
+		public void TestInvalidPrimitives()
+		{
+			Parser p = new Parser();
+			Assert.Throws<ParseException>(()=>p.Parse("1+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1.1+2.2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1.1-2.2"));
+			Assert.Throws<ParseException>(()=>p.Parse("True+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("False-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("3j+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("3j-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("None+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("None-2"));
+		}
+		
+		[Test]
+		public void TestComplex()
+		{
+			Parser p = new Parser();
+			var cplx = new Ast.ComplexNumberNode() {
+				Real = 4.2,
+				Imaginary = 3.2
+			};
+			var cplx2 = new Ast.ComplexNumberNode() {
+				Real = 4.2,
+				Imaginary = 99
+			};
+			Assert.AreNotEqual(cplx, cplx2);
+			cplx2.Imaginary = 3.2;
+			Assert.AreEqual(cplx, cplx2);
+
+			Assert.AreEqual(cplx, p.Parse("(4.2+3.2j)").Root);
+			cplx.Real = 0;
+			Assert.AreEqual(cplx, p.Parse("(0+3.2j)").Root);
+			Assert.AreEqual(cplx, p.Parse("3.2j").Root);
+			Assert.AreEqual(cplx, p.Parse("+3.2j").Root);
+			cplx.Imaginary = -3.2;
+			Assert.AreEqual(cplx, p.Parse("-3.2j").Root);
+			cplx.Real = -9.9;
+			Assert.AreEqual(cplx, p.Parse("(-9.9-3.2j)").Root);
+		}
+		
+		[Test]
+		public void TestPrimitivesStuffAtEnd()
+		{
+			Parser p = new Parser();
+			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.ParseSingle(new SeekableStringReader("42@")));
+			Assert.AreEqual(new Ast.PrimitiveNode<double>(42.331), p.ParseSingle(new SeekableStringReader("42.331@")));
+			Assert.AreEqual(new Ast.PrimitiveNode<bool>(true), p.ParseSingle(new SeekableStringReader("True@")));
+			Assert.AreEqual(Ast.NoneNode.Instance, p.ParseSingle(new SeekableStringReader("None@")));
+			var cplx = new Ast.ComplexNumberNode() {
+				Real = 4,
+				Imaginary = 3
+			};
+			Assert.AreEqual(cplx, p.ParseSingle(new SeekableStringReader("(4+3j)@")));
+			cplx.Real=0;
+			Assert.AreEqual(cplx, p.ParseSingle(new SeekableStringReader("3j@")));
 		}
 		
 		[Test]
@@ -86,6 +154,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(tuple, tuple2);
 			
 			tuple.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(99));
+			Assert.AreNotEqual(tuple, tuple2);
+			tuple2.Elements.Clear();
 			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(42));
 			Assert.AreEqual(tuple, tuple2);
 			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(43));
@@ -110,6 +181,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(list, list2);
 			
 			list.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			list2.Elements.Add(new Ast.PrimitiveNode<int>(99));
+			Assert.AreNotEqual(list, list2);
+			list2.Elements.Clear();
 			list2.Elements.Add(new Ast.PrimitiveNode<int>(42));
 			Assert.AreEqual(list, list2);
 			list2.Elements.Add(new Ast.PrimitiveNode<int>(43));
@@ -135,8 +209,12 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(set1, set2);
 			
 			set1.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			set2.Elements.Add(new Ast.PrimitiveNode<int>(99));
+			Assert.AreNotEqual(set1, set2);
+			set2.Elements.Clear();
 			set2.Elements.Add(new Ast.PrimitiveNode<int>(42));
 			Assert.AreEqual(set1, set2);
+			
 			set2.Elements.Add(new Ast.PrimitiveNode<int>(43));
 			set2.Elements.Add(new Ast.PrimitiveNode<int>(44));
 			Assert.AreNotEqual(set1, set2);
@@ -147,6 +225,41 @@ namespace Razorvine.Serpent.Test
 
 			Assert.Throws<ParseException>(()=>p.Parse("{42,43]"));
 			Assert.Throws<ParseException>(()=>p.Parse("{42,43}@"));
+		}
+		
+		[Test]
+		public void TestDict()
+		{
+			Parser p = new Parser();
+			Ast.DictNode dict1 = new Ast.DictNode();
+			Ast.DictNode dict2 = new Ast.DictNode();
+			Assert.AreEqual(dict1, dict2);
+			
+			Ast.KeyValueNode kv1 = new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key"), Value=new Ast.PrimitiveNode<int>(42) };
+			Ast.KeyValueNode kv2 = new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key"), Value=new Ast.PrimitiveNode<int>(99) };
+			Assert.AreNotEqual(kv1, kv2);
+			kv2.Value = new Ast.PrimitiveNode<int>(42);
+			Assert.AreEqual(kv1, kv2);
+			
+			dict1.Elements.Add(new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key1"), Value=new Ast.PrimitiveNode<int>(42) });
+			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key1"), Value=new Ast.PrimitiveNode<int>(99) });
+			Assert.AreNotEqual(dict1, dict2);
+			dict2.Elements.Clear();
+			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key1"), Value=new Ast.PrimitiveNode<int>(42) });
+			Assert.AreEqual(dict1, dict2);
+			
+			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key2"), Value=new Ast.PrimitiveNode<int>(43) });
+			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.PrimitiveNode<string>("key3"), Value=new Ast.PrimitiveNode<int>(44) });
+			Assert.AreNotEqual(dict1, dict2);
+			
+			Assert.AreEqual(new Ast.DictNode(), p.Parse("{}").Root);
+			Assert.AreEqual(dict1, p.Parse("{'key1': 42}").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("{'key1': 42,}"));
+			Assert.AreEqual(dict2, p.Parse("{'key1': 42, 'key2': 43, 'key3':44}").Root);
+
+			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42]"));
+			Assert.Throws<ParseException>(()=>p.Parse("{}@"));
+			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42}@"));
 		}		
 	}
 }

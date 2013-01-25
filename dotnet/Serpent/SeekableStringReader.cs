@@ -1,8 +1,21 @@
-﻿using System;
+﻿/// <summary>
+/// Serpent, a Python literal expression serializer/deserializer
+/// (a.k.a. Python's ast.literal_eval in .NET)
+///
+/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// </summary>
+
+using System;
 using System.Collections.Generic;
 
 namespace Razorvine.Serpent
 {
+	
+	/// <summary>
+	/// A special string reader that is suitable for the parser to read through
+	/// the expression string. You can rewind it, set bookmarks to flip back to, etc.
+	/// </summary>
 	public class SeekableStringReader : IDisposable
 	{
 		private string str;

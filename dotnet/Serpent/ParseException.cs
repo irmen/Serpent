@@ -1,4 +1,12 @@
-﻿using System;
+﻿/// <summary>
+/// Serpent, a Python literal expression serializer/deserializer
+/// (a.k.a. Python's ast.literal_eval in .NET)
+///
+/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// </summary>
+
+using System;
 
 namespace Razorvine.Serpent
 {

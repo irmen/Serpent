@@ -1,4 +1,12 @@
-﻿using System;
+﻿/// <summary>
+/// Serpent, a Python literal expression serializer/deserializer
+/// (a.k.a. Python's ast.literal_eval in .NET)
+///
+/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// </summary>
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -7,6 +15,9 @@ using System.Text;
 
 namespace Razorvine.Serpent
 {
+	/// <summary>
+	/// Abstract syntax tree for the literal expression. This is what the parser returns.
+	/// </summary>
 	public class Ast
 	{
 		public INode Root;
@@ -77,9 +88,9 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		public abstract class SequenceNode: INode
+		public abstract class SequenceNode<T>: INode where T: INode
 		{
-			public List<INode> Elements = new List<INode>();
+			public List<T> Elements = new List<T>();
 
 			public override int GetHashCode()
 			{
@@ -93,57 +104,55 @@ namespace Razorvine.Serpent
 			
 			public override bool Equals(object obj)
 			{
-				Ast.SequenceNode other = obj as Ast.SequenceNode;
+				Ast.SequenceNode<T> other = obj as Ast.SequenceNode<T>;
 				if (other == null)
 					return false;
-				return Enumerable.SequenceEqual<INode>(Elements, other.Elements);
+				return Enumerable.SequenceEqual<T>(Elements, other.Elements);
 			}
 
 		}
 		
-		public class TupleNode : SequenceNode
+		public class TupleNode : SequenceNode<INode>
 		{
 		}
 
-		public class ListNode : SequenceNode
+		public class ListNode : SequenceNode<INode>
 		{
 		}
 		
-		public class SetNode : SequenceNode
+		public class SetNode : SequenceNode<INode>
 		{
 		}
 		
-		public class DictNode : INode
+		public class DictNode : SequenceNode<KeyValueNode>
 		{
-			public IList<KeyValuePair<INode, INode>> Elements = new List<KeyValuePair<INode, INode>>();
-			
-			public override bool Equals(object obj)
-			{
-				Ast.DictNode other = obj as Ast.DictNode;
-				if (other == null)
-					return false;
-				return this.Elements.Equals(other.Elements);
-			}
-			
-			public override int GetHashCode()
-			{
-				int hashCode = Elements.GetHashCode();
-				unchecked {
-					foreach(var elt in Elements)
-						hashCode += 1000000007 * elt.GetHashCode();
-				}
-				return hashCode;
-			}			
 		}
+		
+		public struct KeyValueNode : INode
+		{
+			public INode Key;
+			public INode Value;
+		}
+			
 	}
 
+	/// <summary>
+	/// Parse a Python literal into an Ast (abstract syntax tree).
+	/// </summary>
 	public class Parser
 	{
+		
+		/// <summary>
+		/// Parse from a byte array (containing utf-8 encoded string with the Python literal expression in it)
+		/// </summary>
 		public Ast Parse(byte[] serialized)
 		{
 			return Parse(Encoding.UTF8.GetString(serialized));
 		}
 		
+		/// <summary>
+		/// Parse from a string with the Python literal expression
+		/// </summary>
 		public Ast Parse(string expression)
 		{
 			Ast ast=new Ast();
@@ -161,7 +170,7 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		protected Ast.INode ParseExpr(SeekableStringReader sr)
+		Ast.INode ParseExpr(SeekableStringReader sr)
 		{
 			// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
 			sr.SkipWhitespace();
@@ -175,17 +184,36 @@ namespace Razorvine.Serpent
 			return node;
 		}
 		
-		Ast.SequenceNode ParseCompound(SeekableStringReader sr)
+		Ast.INode ParseCompound(SeekableStringReader sr)
 		{
 			// compound =  tuple | dict | list | set .
+			
 			switch(sr.Peek())
 			{
 				case '[':
 					return ParseList(sr);
 				case '{':
-					return ParseSetOrDict(sr);
+					{
+						int bm = sr.Bookmark();
+						try {
+							return ParseSet(sr);
+						} catch(ParseException) {
+							sr.FlipBack(bm);
+							return ParseDict(sr);
+						}
+					}
 				case '(':
-					return ParseTuple(sr);
+					// tricky case here, it can be a tuple but also a complex number.
+					// try complex number first
+					{
+						int bm = sr.Bookmark();
+						try {
+							return ParseComplex(sr);
+						} catch(ParseException) {
+							sr.FlipBack(bm);
+							return ParseTuple(sr);
+						}
+					}
 				default:
 					throw new ParseException("invalid sequencetype char");
 			}
@@ -231,7 +259,7 @@ namespace Razorvine.Serpent
 			return tuple;			
 		}
 		
-		protected List<Ast.INode> ParseExprList(SeekableStringReader sr)
+		List<Ast.INode> ParseExprList(SeekableStringReader sr)
 		{
 			//expr_list       = expr { ',' expr } .
 			List<Ast.INode> exprList = new List<Ast.INode>();
@@ -244,9 +272,34 @@ namespace Razorvine.Serpent
 			return exprList;
 		}
 		
-		Ast.SequenceNode ParseSetOrDict(SeekableStringReader sr)
+		List<Ast.KeyValueNode> ParseKeyValueList(SeekableStringReader sr)
 		{
-			return ParseSet(sr);
+			//keyvalue_list   = keyvalue { ',' keyvalue } .
+			List<Ast.KeyValueNode> kvs = new List<Ast.KeyValueNode>();
+			kvs.Add(ParseKeyValue(sr));
+			while(sr.HasMore() && sr.Peek()==',')
+			{
+				sr.Read();
+				kvs.Add(ParseKeyValue(sr));
+			}
+			return kvs;
+		}		
+		
+		Ast.KeyValueNode ParseKeyValue(SeekableStringReader sr)
+		{
+			//keyvalue        = expr ':' expr .
+			Ast.INode key = ParseExpr(sr);
+			if(sr.HasMore() && sr.Peek()==':')
+			{
+				sr.Read(); // :
+				Ast.INode value = ParseExpr(sr);
+				return new Ast.KeyValueNode
+					{
+						Key = key,
+						Value = value
+					};
+			}
+			throw new ParseException("expected ':'");
 		}
 		
 		Ast.SetNode ParseSet(SeekableStringReader sr)
@@ -285,7 +338,30 @@ namespace Razorvine.Serpent
 			return list;
 		}
 		
-		protected Ast.INode ParseSingle(SeekableStringReader sr)
+		Ast.DictNode ParseDict(SeekableStringReader sr)
+		{
+			//dict            = '{' keyvalue_list '}' .
+			//keyvalue_list   = keyvalue { ',' keyvalue } .
+			//keyvalue        = expr ':' expr .
+			
+			sr.Read();	// {
+			Ast.DictNode dict = new Ast.DictNode();
+			if(sr.Peek() == '}')
+			{
+				sr.Read();
+				return dict;		// empty dict
+			}
+			
+			dict.Elements = ParseKeyValueList(sr);
+			if(!sr.HasMore())
+				throw new ParseException("missing '}'");
+			char closechar = sr.Read();
+			if(closechar!='}')
+				throw new ParseException("expected '}'");
+			return dict;
+		}		
+		
+		public Ast.INode ParseSingle(SeekableStringReader sr)
 		{
 			// single =  int | float | complex | string | bool | none .
 			switch(sr.Peek())
@@ -299,7 +375,7 @@ namespace Razorvine.Serpent
 				case '"':
 					return ParseString(sr);
 			}
-			// @todo int or float or complex.
+			// int or float or complex.
 			int bookmark = sr.Bookmark();
 			try {
 				return ParseComplex(sr);
@@ -320,7 +396,11 @@ namespace Razorvine.Serpent
 			string numberstr = sr.ReadWhile('-','0','1','2','3','4','5','6','7','8','9');
 			if(numberstr.Length==0)
 				throw new ParseException("invalid int character");
-			return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
+			try {
+				return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
+			} catch (FormatException x) {
+				throw new ParseException("invalid integer format", x);
+			}
 		}
 
 		Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
@@ -335,7 +415,11 @@ namespace Razorvine.Serpent
 			if(numberstr.IndexOfAny(new char[] {'.','e','E'}) < 0)
 				throw new ParseException("number is not a valid float");
 
-			return new Ast.PrimitiveNode<double>(double.Parse(numberstr, CultureInfo.InvariantCulture));
+			try {
+				return new Ast.PrimitiveNode<double>(double.Parse(numberstr, CultureInfo.InvariantCulture));
+			} catch (FormatException x) {
+				throw new ParseException("invalid float format", x);
+			}
 		}
 
 		Ast.ComplexNumberNode ParseComplex(SeekableStringReader sr)
@@ -346,11 +430,24 @@ namespace Razorvine.Serpent
 			if(sr.Peek()=='(')
 			{
 				// complextuple
-				sr.Read();
-				string numberstr = sr.ReadUntil(new char[] {'+', '-'});
-				double realpart = double.Parse(numberstr, CultureInfo.InvariantCulture);
+				sr.Read();  // (
+				string numberstr;
+				if(sr.Peek()=='-' || sr.Peek()=='+')
+				{
+					// starts with a sign, read that first otherwise the readuntil will return immediately
+					numberstr = sr.Read(1) + sr.ReadUntil(new char[] {'+', '-'});
+				}
+				else
+					numberstr = sr.ReadUntil(new char[] {'+', '-'});
+				double realpart;
+				try {
+					realpart = double.Parse(numberstr, CultureInfo.InvariantCulture);
+				} catch (FormatException x) {
+					throw new ParseException("invalid float format", x);
+				}
+				sr.Rewind(1); // rewind the +/-
 				double imaginarypart = ParseImaginaryPart(sr);
-				if(sr.Peek()!=')')
+				if(sr.Read()!=')')
 					throw new ParseException("expected ) to end a complex number");
 				return new Ast.ComplexNumberNode()
 					{
@@ -373,12 +470,12 @@ namespace Razorvine.Serpent
 		double ParseImaginaryPart(SeekableStringReader sr)
 		{
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-			char signchr = sr.Peek();
-			if(signchr!='+' && signchr!='-')
-				throw new ParseException("expected +/- at start of imaginary part");
-			
 			string numberstr = sr.ReadUntil('j');
-			return double.Parse(numberstr, CultureInfo.CurrentCulture);
+			try {
+				return double.Parse(numberstr, CultureInfo.InvariantCulture);
+			} catch(FormatException x) {
+				throw new ParseException("invalid float format", x);
+			}
 		}
 		
 		Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)
