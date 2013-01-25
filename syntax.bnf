@@ -26,26 +26,14 @@ bool            = 'True' | 'False' .
 none            = 'None' .
 
 
-tuple = tuple_empty | tuple_one | tuple_more .
-list = list_empty | list_one | list_more .
-set = set_one | set_more .
-dict = dict_empty | dict_one | dict_more .
+expr_list       = expr [ ',' { expr } ] .
+tuple           = tuple_empty | tuple_one | tuple_more
+tuple_empty     = '()' .
+tuple_one       = '(' expr ',)' .
+tuple_more      = '(' expr_list ')' .
 
-tuple_empty = '()' .
-tuple_one = '(' element_with_comma ')' .
-tuple_more = '(' element_with_comma { element_with_comma } expr ')' .
 
-list_empty = '[]' .
-list_one = '[' expr ']' .
-list_more = '[' element_with_comma { element_with_comma } expr ']' .
-
-set_one = '{' expr '}' .
-set_more = '{' element_with_comma { element_with_comma } expr '}' .
-
-dict_one = '{' keyvalue '}' .
-dict_more = '{' keyvalue_with_comma { keyvalue_with_comma } keyvalue '}' .
-keyvalue = expr ':' expr .
-keyvalue_with_comma = keyvalue ',' .
-element_with_comma = expr ',' .
-
+list            = list_empty | list_nonempty .
+list_empty      = '[]' .
+list_nonempty   = '[' expr_list ']' .
 

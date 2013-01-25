@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Razorvine.Serpent
@@ -89,6 +90,15 @@ namespace Razorvine.Serpent
 				}
 				return hashCode;
 			}
+			
+			public override bool Equals(object obj)
+			{
+				Ast.SequenceNode other = obj as Ast.SequenceNode;
+				if (other == null)
+					return false;
+				return Enumerable.SequenceEqual<INode>(Elements, other.Elements);
+			}
+
 		}
 		
 		public class TupleNode : SequenceNode
@@ -149,24 +159,23 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-/*
-expr            =  single | compound .
-single          =  int | float | complex | string | bool | none .
-compound        =  tuple | dict | list | set .
-*/
-
 		protected Ast.INode ParseExpr(SeekableStringReader sr)
 		{
-			// expr = single | compound
+			// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
 			sr.SkipWhitespace();
 			char c = sr.Peek();
+			Ast.INode node;
 			if(c=='{' || c=='[' || c=='(')
-				return ParseCompound(sr);
-			return ParseSingle(sr);
+				node = ParseCompound(sr);
+			else
+				node = ParseSingle(sr);
+			sr.SkipWhitespace();
+			return node;
 		}
 		
 		Ast.SequenceNode ParseCompound(SeekableStringReader sr)
 		{
+			// compound =  tuple | dict | list | set .
 			switch(sr.Peek())
 			{
 				case '[':
@@ -180,9 +189,52 @@ compound        =  tuple | dict | list | set .
 			}
 		}
 		
-		Ast.SequenceNode ParseTuple(SeekableStringReader sr)
+		Ast.TupleNode ParseTuple(SeekableStringReader sr)
 		{
-			throw new NotImplementedException();
+			//tuple           = tuple_empty | tuple_one | tuple_more
+			//tuple_empty     = '()' .
+			//tuple_one       = '(' expr ',)' .
+			//tuple_more      = '(' expr_list ')' .
+			
+			sr.Read();	// (
+			Ast.TupleNode tuple = new Ast.TupleNode();
+			if(sr.Peek() == ')')
+			{
+				sr.Read();
+				return tuple;		// empty tuple
+			}
+			
+			Ast.INode firstelement = ParseExpr(sr);
+			if(sr.Peek() == ',')
+			{
+				sr.Read();
+				if(sr.Read() == ')')
+				{
+					// tuple with just a single element
+					tuple.Elements.Add(firstelement);
+					return tuple;
+				}
+				sr.Rewind(1);   // undo the thing that wasn't a )
+			}
+			
+			tuple.Elements = ParseExprList(sr);
+			tuple.Elements.Insert(0, firstelement);
+			if(sr.HasMore() && sr.Read()==',')
+				sr.Read();
+			return tuple;			
+		}
+		
+		protected List<Ast.INode> ParseExprList(SeekableStringReader sr)
+		{
+			//expr_list       = expr { ',' expr } .
+			List<Ast.INode> exprList = new List<Ast.INode>();
+			exprList.Add(ParseExpr(sr));
+			while(sr.HasMore() && sr.Peek() == ',')
+			{
+				sr.Read();
+				exprList.Add(ParseExpr(sr));
+			}
+			return exprList;
 		}
 		
 		Ast.SequenceNode ParseSetOrDict(SeekableStringReader sr)
@@ -190,9 +242,21 @@ compound        =  tuple | dict | list | set .
 			throw new NotImplementedException();
 		}
 		
-		Ast.SequenceNode ParseList(SeekableStringReader sr)
+		Ast.ListNode ParseList(SeekableStringReader sr)
 		{
-			throw new NotImplementedException();
+			// list            = list_empty | list_nonempty .
+			// list_empty      = '[]' .
+			// list_nonempty   = '[' expr_list ']' .
+			sr.Read();	// [
+			Ast.ListNode list = new Ast.ListNode();
+			if(sr.Peek() == ']')
+			{
+				sr.Read();
+				return list;		// empty list
+			}
+			
+			list.Elements = ParseExprList(sr);
+			return list;
 		}
 		
 		protected Ast.INode ParseSingle(SeekableStringReader sr)

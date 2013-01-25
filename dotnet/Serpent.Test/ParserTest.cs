@@ -68,7 +68,53 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse("\t42\r\n").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), p.Parse(" \t 42 \r \n ").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("   string value    "), p.Parse("  '   string value    '   ").Root);
-			Assert.AreEqual(2, p.Parse("     [  42  ,  43  ]   ").Root);  // @todo will fail now
+			Ast ast = p.Parse("     (  42  ,  ( 'x',   'y'  )   ");
+			Ast.TupleNode tuple = (Ast.TupleNode) ast.Root;
+			Assert.AreEqual(new Ast.PrimitiveNode<int>(42), tuple.Elements[0]);
+			tuple = (Ast.TupleNode) tuple.Elements[1];
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("x"), tuple.Elements[0]);
+			Assert.AreEqual(new Ast.PrimitiveNode<string>("y"), tuple.Elements[1]);
 		}
+		
+		[Test]
+		public void TestTuple()
+		{
+			Parser p = new Parser();
+			Ast.TupleNode tuple = new Ast.TupleNode();
+			Ast.TupleNode tuple2 = new Ast.TupleNode();
+			Assert.AreEqual(tuple, tuple2);
+			
+			tuple.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			Assert.AreEqual(tuple, tuple2);
+			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(43));
+			tuple2.Elements.Add(new Ast.PrimitiveNode<int>(44));
+			Assert.AreNotEqual(tuple, tuple2);
+			
+			Assert.AreEqual(new Ast.TupleNode(), p.Parse("()").Root);
+			Assert.AreEqual(tuple, p.Parse("(42,)").Root);
+			Assert.AreEqual(tuple2, p.Parse("( 42,43, 44 )").Root);
+		}
+		
+		[Test]
+		public void TestList()
+		{
+			Parser p = new Parser();
+			Ast.ListNode list = new Ast.ListNode();
+			Ast.ListNode list2 = new Ast.ListNode();
+			Assert.AreEqual(list, list2);
+			
+			list.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			list2.Elements.Add(new Ast.PrimitiveNode<int>(42));
+			Assert.AreEqual(list, list2);
+			list2.Elements.Add(new Ast.PrimitiveNode<int>(43));
+			list2.Elements.Add(new Ast.PrimitiveNode<int>(44));
+			Assert.AreNotEqual(list, list2);
+			
+			Assert.AreEqual(new Ast.ListNode(), p.Parse("[]").Root);
+			Assert.AreEqual(list, p.Parse("[42]").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("[42,]"));
+			Assert.AreEqual(list2, p.Parse("[ 42,43, 44 ]").Root);
+		}		
 	}
 }
