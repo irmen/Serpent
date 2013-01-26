@@ -27,7 +27,7 @@ namespace Razorvine.Serpent
 			return "# serpent utf-8 .net\n" + Root.ToString();
 		}
 
-		public dynamic Objectify()
+		public object Objectify()
 		{
 			return Root.Objectify();
 		}
@@ -49,7 +49,7 @@ namespace Razorvine.Serpent
 		{
 			string ToString();
 			bool Equals(object obj);
-			dynamic Objectify();
+			object Objectify();
 		}
 		
 		public struct PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
@@ -81,7 +81,7 @@ namespace Razorvine.Serpent
 				return Value.CompareTo(other.Value);
 			}
 			
-			public dynamic Objectify()
+			public object Objectify()
 			{
 				return Value;
 			}
@@ -149,7 +149,7 @@ namespace Razorvine.Serpent
 			public double Real;
 			public double Imaginary;
 			
-			public dynamic Objectify()
+			public object Objectify()
 			{
 				return new ComplexNumber(Real, Imaginary);
 			}
@@ -176,7 +176,7 @@ namespace Razorvine.Serpent
 				return "None";
 			}
 			
-			public dynamic Objectify()
+			public object Objectify()
 			{
 				return null;
 			}
@@ -224,7 +224,7 @@ namespace Razorvine.Serpent
 				return sb.ToString();
 			}
 			
-			public abstract dynamic Objectify();
+			public abstract object Objectify();
 		}
 		
 		public class TupleNode : SequenceNode
@@ -247,7 +247,7 @@ namespace Razorvine.Serpent
 				return sb.ToString();
 			}
 			
-			public override dynamic Objectify()
+			public override object Objectify()
 			{
 				return Elements.ConvertAll(e => e.Objectify()).ToArray();
 			}
@@ -258,7 +258,7 @@ namespace Razorvine.Serpent
 			public override char OpenChar { get { return '['; } }
 			public override char CloseChar { get { return ']'; } }
 
-			public override dynamic Objectify()
+			public override object Objectify()
 			{
 				return Elements.ConvertAll(e => e.Objectify()).ToList();
 			}
@@ -269,9 +269,9 @@ namespace Razorvine.Serpent
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
 
-			public override dynamic Objectify()
+			public override object Objectify()
 			{
-				return new HashSet<dynamic>(Elements.ConvertAll(e => e.Objectify()));
+				return new HashSet<object>(Elements.ConvertAll(e => e.Objectify()));
 			}
 		}
 		
@@ -280,9 +280,9 @@ namespace Razorvine.Serpent
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
 
-			public override dynamic Objectify()
+			public override object Objectify()
 			{
-				var obj = new Dictionary<dynamic,dynamic>(Elements.Count);
+				var obj = new Dictionary<object,object>(Elements.Count);
 				foreach(KeyValueNode kv in Elements)
 				{
 					obj[kv.Key.Objectify()] = kv.Value.Objectify();
@@ -301,7 +301,7 @@ namespace Razorvine.Serpent
 				return string.Format("{0}:{1}", Key, Value);
 			}
 			
-			public dynamic Objectify()
+			public object Objectify()
 			{
 				throw new NotSupportedException("should not objectify a KeyValueNode");
 			}

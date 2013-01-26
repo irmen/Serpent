@@ -509,8 +509,8 @@ namespace Razorvine.Serpent.Test
 			ast = p.Parse(expr2);
 			Assert.AreEqual(ast, ast2);
 			
-			dynamic obj1 = ast.Objectify();
-			dynamic obj2 = ast2.Objectify();
+			object obj1 = ast.Objectify();
+			object obj2 = ast2.Objectify();
 			Assert.AreEqual(obj1, obj2);
 		}
 		

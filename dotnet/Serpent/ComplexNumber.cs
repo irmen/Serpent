@@ -62,8 +62,6 @@ public struct ComplexNumber {
 		if(!(obj is ComplexNumber))
 			return false;
 		ComplexNumber other = (ComplexNumber) obj;
-		if (other == null)
-			return false;
 		return Real==other.Real && Imaginary==other.Imaginary;
 	}
 	
