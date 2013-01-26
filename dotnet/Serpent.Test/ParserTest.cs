@@ -8,7 +8,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+
 using NUnit.Framework;
 
 namespace Razorvine.Serpent.Test
@@ -22,6 +24,7 @@ namespace Razorvine.Serpent.Test
 			Parser p = new Parser();
 			Assert.IsNull(p.Parse((string)null).Root);
 			Assert.IsNull(p.Parse("").Root);
+			Assert.IsNotNull(p.Parse("# comment\n42\n").Root);
 		}
 		
 		[Test]
@@ -38,6 +41,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(true), p.Parse("True").Root);
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(false), p.Parse("False").Root);
 			Assert.AreEqual(Ast.NoneNode.Instance, p.Parse("None").Root);
+			
+			// long int
+			Assert.AreEqual(new Ast.PrimitiveNode<decimal>(123456789123456789123456789M), p.Parse("123456789123456789123456789").Root);
 		}
 		
 		[Test]
@@ -64,6 +70,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("(0+2j)", p.Parse("2j").Root.ToString());
 			Assert.AreEqual("(-1.1-2.2j)", p.Parse("(-1.1-2.2j)").Root.ToString());
 			Assert.AreEqual("(1.1+2.2j)", p.Parse("(1.1+2.2j)").Root.ToString());
+			
+			// long int
+			Assert.AreEqual("123456789123456789123456789", p.Parse("123456789123456789123456789").Root.ToString());
 		}
 		
 		[Test]
@@ -327,5 +336,14 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("'c': 6", dict1.Elements[2].ToString());
 			Assert.AreEqual(3, dict1.Elements.Count);
 		}		
+		
+		[Test]
+		public void TestFile()
+		{
+			Parser p = new Parser();
+			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
+			Ast ast = p.Parse(ser);
+			
+		}
 	}
 }

@@ -255,6 +255,9 @@ namespace Razorvine.Serpent
 				return ast;
 			
 			SeekableStringReader sr = new SeekableStringReader(expression);
+			if(sr.Peek()=='#')
+				sr.ReadUntil('\n');  // skip comment line
+			
 			try {
 				ast.Root = ParseExpr(sr);
 				if(sr.HasMore())
@@ -476,6 +479,10 @@ namespace Razorvine.Serpent
 		public Ast.INode ParseSingle(SeekableStringReader sr)
 		{
 			// single =  int | float | complex | string | bool | none .
+			
+			// int bm=sr.Bookmark(); Console.WriteLine("SINGLE? {0}", sr.Read(50)); sr.FlipBack(bm);  // @ TODO remove debug stuff
+			
+			
 			switch(sr.Peek())
 			{
 				case 'N':
@@ -502,14 +509,19 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		Ast.PrimitiveNode<int> ParseInt(SeekableStringReader sr)
+		Ast.INode ParseInt(SeekableStringReader sr)
 		{
 			// int =  ['-'] digitnonzero {digit} .
 			string numberstr = sr.ReadWhile('-','0','1','2','3','4','5','6','7','8','9');
 			if(numberstr.Length==0)
 				throw new ParseException("invalid int character");
 			try {
-				return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
+				try {
+					return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
+				} catch (OverflowException) {
+					// try decimal
+					return new Ast.PrimitiveNode<decimal>(decimal.Parse(numberstr));
+				}
 			} catch (FormatException x) {
 				throw new ParseException("invalid integer format", x);
 			}

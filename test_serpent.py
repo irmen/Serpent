@@ -173,18 +173,21 @@ class TestIndent(unittest.TestCase):
 
     def test_indent_sorting(self):
         # non-indented should not be sorted, indented should
-        data = {"e": 1, "d": 1, "c": 1, "b": 1, "a": 1}
+        data = {"ee": 1, "dd": 1, "cc": 1, "bb": 1, "aa": 1, 'ff':1, 'hh':1, 'gg':1 }
         ser = serpent.serialize(data, False)
         ser = strip_header(ser)
-        self.assertNotEqual(b"{'a':1,'b':1,'c':1,'d':1,'e':1}", ser)
+        self.assertNotEqual(b"{'aa':1,'bb':1,'cc':1,'dd':1,'ee':1,'ff':1,'gg':1,'hh':1}", ser)
         ser = serpent.serialize(data, True)
         ser = strip_header(ser)
         self.assertEqual(b"""{
-  'a': 1,
-  'b': 1,
-  'c': 1,
-  'd': 1,
-  'e': 1
+  'aa': 1,
+  'bb': 1,
+  'cc': 1,
+  'dd': 1,
+  'ee': 1,
+  'ff': 1,
+  'gg': 1,
+  'hh': 1
 }""", ser)
         data = set("irmen de jong")
         ser = serpent.serialize(data, False)
@@ -228,6 +231,16 @@ class TestIndent(unittest.TestCase):
         self.assertEqual("""{
   'one': 1
 }""", ser)
+
+
+class TestFiledump(unittest.TestCase):
+    def testFile(self):
+        if sys.version_info < (3,2):
+            self.skipTest("testdatafile contains stuff that is not supported by ast.literal_eval on Python < 3.2")
+        with open("testserpent.utf8.bin", "rb") as file:
+            data = file.read()
+        obj = serpent.deserialize(data)
+        self.assertEqual(-3+8j, obj["numbers"][3])
 
 
 if __name__ == '__main__':
