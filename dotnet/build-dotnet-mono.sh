@@ -6,5 +6,5 @@ fi
 if [ -d Serpent.Test/bin ]; then
   rm -r Serpent.Test/bin
 fi
-xbuild /verbosity:minimal /property:Configuration=Debug /property:Platform="Any CPU" Serpent.sln
-cp Serpent/bin/Debug/*.dll build
+xbuild /verbosity:minimal /property:Configuration=Release /property:Platform="Any CPU" Serpent.sln
+cp Serpent/bin/Release/*.dll build
