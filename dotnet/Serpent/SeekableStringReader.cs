@@ -115,7 +115,7 @@ namespace Razorvine.Serpent
 			int start = cursor;
 			while(cursor < str.Length)
 			{
-				if(Array.IndexOf(accepted, str[cursor])>=0)
+				if(Array.IndexOf<char>(accepted, str[cursor])>=0)
 					++cursor;
 				else
 					break;
@@ -182,6 +182,21 @@ namespace Razorvine.Serpent
 		{
 			bookmark = inner.bookmark;
 			cursor = inner.cursor;
+		}
+		
+		/// <summary>
+		/// Extract a piece of context around the current cursor (if you set cursor to -1)
+		/// or around a given position in the string (if you set cursor>=0).
+		/// </summary>
+		public void Context(int crsr, int width, out string left, out string right)
+		{
+			if(crsr<0)
+				crsr=this.cursor;
+			int leftStrt = Math.Max(0, crsr-width);
+			int leftLen = crsr-leftStrt;
+			int rightLen = Math.Min(width, str.Length-crsr);
+			left = str.Substring(leftStrt, leftLen);
+			right = str.Substring(crsr, rightLen);
 		}
 	
 		public void Dispose()

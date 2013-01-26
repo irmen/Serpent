@@ -29,7 +29,7 @@ none            = 'None' .
 expr_list       = expr { ',' expr } .
 tuple           = tuple_empty | tuple_one | tuple_more
 tuple_empty     = '()' .
-tuple_one       = '(' expr ',)' .
+tuple_one       = '(' expr ',' <whitespace> ')' .
 tuple_more      = '(' expr_list ')' .
 
 

@@ -111,5 +111,27 @@ namespace Razorvine.Serpent.Test
 			outer.Sync(inner2);
 			Assert.AreEqual("!", outer.Read(1));
 		}
+
+		[Test]
+		public void TestContext()
+		{
+			SeekableStringReader s = new SeekableStringReader("abcdefghijklmnopqrstuvwxyz");
+			s.Read(10);
+			string left, right;
+			s.Context(-1, 5, out left, out right);
+			Assert.AreEqual("fghij", left);
+			Assert.AreEqual("klmno", right);
+			s.Context(-1, 12, out left, out right);
+			Assert.AreEqual("abcdefghij", left);
+			Assert.AreEqual("klmnopqrstuv", right);
+			s.Read(13);
+			s.Context(-1, 6, out left, out right);
+			Assert.AreEqual("rstuvw", left);
+			Assert.AreEqual("xyz", right);
+			
+			s.Context(5,4, out left, out right);
+			Assert.AreEqual("bcde", left);
+			Assert.AreEqual("fghi", right);
+		}
 	}
 }

@@ -42,8 +42,147 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.PrimitiveNode<bool>(false), p.Parse("False").Root);
 			Assert.AreEqual(Ast.NoneNode.Instance, p.Parse("None").Root);
 			
-			// long int
+			// long ints
 			Assert.AreEqual(new Ast.PrimitiveNode<decimal>(123456789123456789123456789M), p.Parse("123456789123456789123456789").Root);
+			Assert.AreNotEqual(new Ast.PrimitiveNode<long>(52), p.Parse("52").Root);
+			Assert.AreEqual(new Ast.PrimitiveNode<long>(123456789123456789L), p.Parse("123456789123456789").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("123456789123456789123456789123456789")); // overflow
+		}
+		
+		[Test]
+		public void TestEquality()
+		{
+			Ast.INode n1, n2;
+
+			n1 = new Ast.PrimitiveNode<int>(42);
+			n2 = new Ast.PrimitiveNode<int>(42);
+			Assert.AreEqual(n1, n2);
+			n2 = new Ast.PrimitiveNode<int>(43);
+			Assert.AreNotEqual(n1, n2);
+			
+			n1 = new Ast.PrimitiveNode<string>("foo");
+			n2 = new Ast.PrimitiveNode<string>("foo");
+			Assert.AreEqual(n1, n2);
+			n2 = new Ast.PrimitiveNode<string>("bar");
+			Assert.AreNotEqual(n1, n2);
+			
+			n1 = new Ast.ComplexNumberNode() {
+				Real=1.1,
+				Imaginary=2.2
+			};
+			n2 = new Ast.ComplexNumberNode() {
+				Real=1.1,
+				Imaginary=2.2
+			};
+			Assert.AreEqual(n1, n2);
+			n2 = new Ast.ComplexNumberNode() {
+				Real=1.1,
+				Imaginary=3.3
+			};
+			Assert.AreNotEqual(n1, n2);
+			
+			n1=new Ast.KeyValueNode() {
+				Key=new Ast.PrimitiveNode<int>(42),
+				Value=new Ast.PrimitiveNode<int>(42)
+			};
+			n2=new Ast.KeyValueNode() {
+				Key=new Ast.PrimitiveNode<int>(42),
+				Value=new Ast.PrimitiveNode<int>(42)
+			};
+			Assert.AreEqual(n1, n2);
+			n1=new Ast.KeyValueNode() {
+				Key=new Ast.PrimitiveNode<int>(43),
+				Value=new Ast.PrimitiveNode<int>(43)
+			};
+			Assert.AreNotEqual(n1,n2);
+			
+			n1=Ast.NoneNode.Instance;
+			n2=Ast.NoneNode.Instance;
+			Assert.AreEqual(n1, n2);
+			n2=new Ast.PrimitiveNode<int>(42);
+			Assert.AreNotEqual(n1, n2);
+			
+			n1=new Ast.DictNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.KeyValueNode() {
+						Key=new Ast.PrimitiveNode<int>(42),
+						Value=new Ast.PrimitiveNode<int>(42)
+					}
+				}
+			};
+			n2=new Ast.DictNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.KeyValueNode() {
+						Key=new Ast.PrimitiveNode<int>(42),
+						Value=new Ast.PrimitiveNode<int>(42)
+					}
+				}
+			};
+			Assert.AreEqual(n1, n2);
+			n2=new Ast.DictNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.KeyValueNode() {
+						Key=new Ast.PrimitiveNode<int>(42),
+						Value=new Ast.PrimitiveNode<int>(43)
+					}
+				}
+			};
+			Assert.AreNotEqual(n1, n2);
+			
+			n1=new Ast.ListNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			n2=new Ast.ListNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			Assert.AreEqual(n1,n2);
+			n2=new Ast.ListNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(43)
+				}
+			};
+			Assert.AreNotEqual(n1,n2);
+			
+			n1=new Ast.SetNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			n2=new Ast.SetNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			Assert.AreEqual(n1,n2);
+			n2=new Ast.SetNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(43)
+				}
+			};
+			Assert.AreNotEqual(n1,n2);
+			
+			n1=new Ast.TupleNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			n2=new Ast.TupleNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(42)
+				}
+			};
+			Assert.AreEqual(n1,n2);
+			n2=new Ast.TupleNode() {
+				Elements=new List<Ast.INode>() {
+					new Ast.PrimitiveNode<int>(43)
+				}
+			};
+			Assert.AreNotEqual(n1,n2);
+			
 		}
 		
 		[Test]
@@ -54,6 +193,9 @@ namespace Razorvine.Serpent.Test
 			// primitives
 			Assert.AreEqual("42", p.Parse("42").Root.ToString());
 			Assert.AreEqual("-42.331", p.Parse("-42.331").Root.ToString());
+			Assert.AreEqual("-42.0", p.Parse("-42.0").Root.ToString());
+			Assert.AreEqual("-2E+20", p.Parse("-2E20").Root.ToString());
+			Assert.AreEqual("2.0", p.Parse("2.0").Root.ToString());
 			Assert.AreEqual("1.2E+19", p.Parse("1.2e19").Root.ToString());
 			Assert.AreEqual("True", p.Parse("True").Root.ToString());
 			Assert.AreEqual("'hello'", p.Parse("'hello'").Root.ToString());
@@ -96,9 +238,9 @@ namespace Razorvine.Serpent.Test
 
 			// dict			
 			Assert.AreEqual("{}", p.Parse("{}").Root.ToString());
-			Assert.AreEqual("{'a': 42}", p.Parse("{'a': 42}").Root.ToString());
-			Assert.AreEqual("{'a': 42,'b': 43}", p.Parse("{'a': 42, 'b': 43}").Root.ToString());
-			Assert.AreEqual("{'a': 42,'b': 45}", p.Parse("{'a': 42, 'b': 43, 'b': 44, 'b': 45}").Root.ToString());
+			Assert.AreEqual("{'a':42}", p.Parse("{'a': 42}").Root.ToString());
+			Assert.AreEqual("{'a':42,'b':43}", p.Parse("{'a': 42, 'b': 43}").Root.ToString());
+			Assert.AreEqual("{'a':42,'b':45}", p.Parse("{'a': 42, 'b': 43, 'b': 44, 'b': 45}").Root.ToString());
 		}
 		
 		[Test]
@@ -204,6 +346,11 @@ namespace Razorvine.Serpent.Test
 			tuple = (Ast.TupleNode) tuple.Elements[1];
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("x"), tuple.Elements[0]);
 			Assert.AreEqual(new Ast.PrimitiveNode<string>("y"), tuple.Elements[1]);
+			
+			p.Parse(" ( 52 , ) ");
+			p.Parse(" [ 52 ] ");
+			p.Parse(" { 'a' : 42 } ");
+			p.Parse(" { 52 } ");
 		}
 		
 		[Test]
@@ -331,9 +478,9 @@ namespace Razorvine.Serpent.Test
 			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42}@"));
 			
 			dict1 = p.Parse("{'a': 1, 'b': 2, 'c': 3, 'c': 4, 'c': 5, 'c': 6}").Root as Ast.DictNode;
-			Assert.AreEqual("'a': 1", dict1.Elements[0].ToString());
-			Assert.AreEqual("'b': 2", dict1.Elements[1].ToString());
-			Assert.AreEqual("'c': 6", dict1.Elements[2].ToString());
+			Assert.AreEqual("'a':1", dict1.Elements[0].ToString());
+			Assert.AreEqual("'b':2", dict1.Elements[1].ToString());
+			Assert.AreEqual("'c':6", dict1.Elements[2].ToString());
 			Assert.AreEqual(3, dict1.Elements.Count);
 		}		
 		
@@ -344,6 +491,36 @@ namespace Razorvine.Serpent.Test
 			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			
+			string expr = ast.ToString();
+			Ast ast2 = p.Parse(expr);
+			string expr2 = ast2.ToString();
+			Assert.AreEqual(expr, expr2);
+			
+			StringBuilder sb= new StringBuilder();
+			Walk(ast.Root, sb);
+			string walk1 = sb.ToString();
+			sb= new StringBuilder();
+			Walk(ast2.Root, sb);
+			string walk2 = sb.ToString();
+			Assert.AreEqual(walk1, walk2);
+			
+			Assert.AreEqual(ast.Root, ast2.Root);
+			ast = p.Parse(expr2);
+			Assert.AreEqual(ast, ast2);
+		}
+		
+		public void Walk(Ast.INode node, StringBuilder sb)
+		{
+			if(node is Ast.SequenceNode)
+			{
+				sb.AppendLine(string.Format("{0} (seq)", node.GetType()));
+				Ast.SequenceNode seq = (Ast.SequenceNode)node;
+				foreach(Ast.INode child in seq.Elements) {
+					Walk(child, sb);
+				}
+			}
+			else
+				sb.AppendLine(string.Format("{0} = {1}", node.GetType(), node.ToString()));
 		}
 	}
 }

@@ -21,10 +21,29 @@ namespace Razorvine.Serpent
 	public class Ast
 	{
 		public INode Root;
-			
+		
+		public override string ToString()
+		{
+			return "# serpent utf-8 .net\n" + Root.ToString();
+		}
+		
+		public override bool Equals(object obj)
+		{
+			Ast other = obj as Ast;
+			if (other == null)
+				return false;
+			return this.Root.Equals(other.Root);
+		}
+		
+		public override int GetHashCode()
+		{
+			return this.Root.GetHashCode();
+		}
+
 		public interface INode
 		{
 			string ToString();
+			bool Equals(object obj);
 		}
 		
 		public struct PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
@@ -101,7 +120,14 @@ namespace Razorvine.Serpent
 					sb.Append("'");
 					return sb.ToString();
 				}
-				return Convert.ToString(Value, CultureInfo.InvariantCulture);
+				else if(Value is double || Value is float)
+				{
+					string d = Convert.ToString(Value, CultureInfo.InvariantCulture);
+					if(!d.Contains('.') && !d.Contains('e') && !d.Contains('E'))
+						d+=".0";
+					return d;
+				}
+				else return Value.ToString();
 			}
 		}
 		
@@ -225,7 +251,7 @@ namespace Razorvine.Serpent
 			
 			public override string ToString()
 			{
-				return string.Format("{0}: {1}", Key, Value);
+				return string.Format("{0}:{1}", Key, Value);
 			}
 		}
 			
@@ -264,8 +290,16 @@ namespace Razorvine.Serpent
 					throw new ParseException("garbage at end of expression");
 				return ast;
 			} catch (ParseException x) {
-				throw new ParseException(x.Message + " (at position "+sr.Bookmark()+")", x);
+				string faultLocation = ExtractFaultLocation(sr);
+				throw new ParseException(x.Message + " (at position "+sr.Bookmark()+"; '"+faultLocation+"')", x);
 			}
+		}
+		
+		string ExtractFaultLocation(SeekableStringReader sr)
+		{
+			string left, right;
+			sr.Context(-1, 20, out left, out right);
+			return string.Format("...{0}>>><<<{1}...", left, right);
 		}
 		
 		Ast.INode ParseExpr(SeekableStringReader sr)
@@ -321,7 +355,7 @@ namespace Razorvine.Serpent
 		{
 			//tuple           = tuple_empty | tuple_one | tuple_more
 			//tuple_empty     = '()' .
-			//tuple_one       = '(' expr ',)' .
+			//tuple_one       = '(' expr ',' <whitespace> ')' .
 			//tuple_more      = '(' expr_list ')' .
 			
 			sr.Read();	// (
@@ -336,6 +370,7 @@ namespace Razorvine.Serpent
 			if(sr.Peek() == ',')
 			{
 				sr.Read();
+				sr.SkipWhitespace();
 				if(sr.Read() == ')')
 				{
 					// tuple with just a single element
@@ -479,10 +514,6 @@ namespace Razorvine.Serpent
 		public Ast.INode ParseSingle(SeekableStringReader sr)
 		{
 			// single =  int | float | complex | string | bool | none .
-			
-			// int bm=sr.Bookmark(); Console.WriteLine("SINGLE? {0}", sr.Read(50)); sr.FlipBack(bm);  // @ TODO remove debug stuff
-			
-			
 			switch(sr.Peek())
 			{
 				case 'N':
@@ -519,8 +550,17 @@ namespace Razorvine.Serpent
 				try {
 					return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
 				} catch (OverflowException) {
-					// try decimal
-					return new Ast.PrimitiveNode<decimal>(decimal.Parse(numberstr));
+					// try long
+					try {
+						return new Ast.PrimitiveNode<long>(long.Parse(numberstr));
+					} catch (OverflowException) {
+						// try decimal, but it can still overflow because it's not arbitrary precision
+						try {
+							return new Ast.PrimitiveNode<decimal>(decimal.Parse(numberstr));
+						} catch (OverflowException) {
+							throw new ParseException("number too large");
+						}
+					}
 				}
 			} catch (FormatException x) {
 				throw new ParseException("invalid integer format", x);
