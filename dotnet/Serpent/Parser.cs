@@ -304,15 +304,15 @@ namespace Razorvine.Serpent
 				throw new ParseException("invalid int character");
 			try {
 				try {
-					return new Ast.PrimitiveNode<int>(int.Parse(numberstr));
+					return new Ast.IntegerNode(int.Parse(numberstr));
 				} catch (OverflowException) {
 					// try long
 					try {
-						return new Ast.PrimitiveNode<long>(long.Parse(numberstr));
+						return new Ast.LongNode(long.Parse(numberstr));
 					} catch (OverflowException) {
 						// try decimal, but it can still overflow because it's not arbitrary precision
 						try {
-							return new Ast.PrimitiveNode<decimal>(decimal.Parse(numberstr));
+							return new Ast.DecimalNode(decimal.Parse(numberstr));
 						} catch (OverflowException) {
 							throw new ParseException("number too large");
 						}
@@ -336,7 +336,7 @@ namespace Razorvine.Serpent
 				throw new ParseException("number is not a valid float");
 
 			try {
-				return new Ast.PrimitiveNode<double>(double.Parse(numberstr, CultureInfo.InvariantCulture));
+				return new Ast.DoubleNode(double.Parse(numberstr, CultureInfo.InvariantCulture));
 			} catch (FormatException x) {
 				throw new ParseException("invalid float format", x);
 			}
@@ -449,7 +449,7 @@ namespace Razorvine.Serpent
 				else if(c==quotechar)
 				{
 					// end of string
-					return new Ast.PrimitiveNode<string>(sb.ToString());
+					return new Ast.StringNode(sb.ToString());
 				}
 				else
 				{
@@ -464,9 +464,9 @@ namespace Razorvine.Serpent
 			// True,False
 			string b = sr.ReadUntil('e');
 			if(b=="Tru")
-				return new Ast.PrimitiveNode<bool>(true);
+				return new Ast.BooleanNode(true);
 			if(b=="Fals")
-				return new Ast.PrimitiveNode<bool>(false);
+				return new Ast.BooleanNode(false);
 			throw new ParseException("expected bool, True or False");
 		}
 		

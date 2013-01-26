@@ -27,11 +27,6 @@ namespace Razorvine.Serpent
 			return "# serpent utf-8 .net\n" + Root.ToString();
 		}
 
-		public object Objectify()
-		{
-			return Root.Objectify();
-		}
-			
 		public override bool Equals(object obj)
 		{
 			Ast other = obj as Ast;
@@ -45,14 +40,35 @@ namespace Razorvine.Serpent
 			return this.Root.GetHashCode();
 		}
 
+		public interface INodeVisitor
+		{
+			void Visit(Ast.ComplexNumberNode complex);
+			void Visit(Ast.DictNode dict);
+			void Visit(Ast.ListNode list);
+			void Visit(Ast.NoneNode none);
+			void Visit(Ast.IntegerNode value);
+			void Visit(Ast.LongNode value);
+			void Visit(Ast.DoubleNode value);
+			void Visit(Ast.BooleanNode value);
+			void Visit(Ast.StringNode value);
+			void Visit(Ast.DecimalNode value);
+			void Visit(Ast.SetNode setnode);
+			void Visit(Ast.TupleNode tuple);
+		}
+
+		public void Accept(INodeVisitor visitor)
+		{
+			Root.Accept(visitor);
+		}
+
 		public interface INode
 		{
 			string ToString();
 			bool Equals(object obj);
-			object Objectify();
+			void Accept(INodeVisitor visitor);
 		}
 		
-		public struct PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
+		public abstract class PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
 		{
 			public T Value;
 			public PrimitiveNode(T value)
@@ -81,11 +97,6 @@ namespace Razorvine.Serpent
 				return Value.CompareTo(other.Value);
 			}
 			
-			public object Objectify()
-			{
-				return Value;
-			}
-
 			public override string ToString()
 			{
 				if(Value is string)
@@ -140,20 +151,86 @@ namespace Razorvine.Serpent
 				}
 				else return Value.ToString();
 			}
+			
+			public abstract void Accept(Ast.INodeVisitor visitor);
 		}
 		
+		public class IntegerNode: PrimitiveNode<int>
+		{
+			public IntegerNode(int value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
 		
+		public class LongNode: PrimitiveNode<long>
+		{
+			public LongNode(long value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
+
+		public class DoubleNode: PrimitiveNode<double>
+		{
+			public DoubleNode(double value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
+		
+		public class StringNode: PrimitiveNode<string>
+		{
+			public StringNode(string value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
+		
+		public class DecimalNode: PrimitiveNode<decimal>
+		{
+			public DecimalNode(decimal value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
+		
+		public class BooleanNode: PrimitiveNode<bool>
+		{
+			public BooleanNode(bool value) : base(value)
+			{
+			}
+			public override void Accept(Ast.INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}
 		
 		public struct ComplexNumberNode: INode
 		{
 			public double Real;
 			public double Imaginary;
 			
-			public object Objectify()
+			public void Accept(INodeVisitor visitor)
 			{
-				return new ComplexNumber(Real, Imaginary);
+				visitor.Visit(this);
 			}
-			
+
 			public override string ToString()
 			{
 				string strReal = Real.ToString(CultureInfo.InvariantCulture);
@@ -175,11 +252,11 @@ namespace Razorvine.Serpent
 			{
 				return "None";
 			}
-			
-			public object Objectify()
+
+			public void Accept(INodeVisitor visitor)
 			{
-				return null;
-			}
+				visitor.Visit(this);
+			}			
 		}
 		
 		public abstract class SequenceNode: INode
@@ -224,7 +301,7 @@ namespace Razorvine.Serpent
 				return sb.ToString();
 			}
 			
-			public abstract object Objectify();
+			public abstract void Accept(Ast.INodeVisitor visitor);
 		}
 		
 		public class TupleNode : SequenceNode
@@ -247,9 +324,9 @@ namespace Razorvine.Serpent
 				return sb.ToString();
 			}
 			
-			public override object Objectify()
+			public override void Accept(Ast.INodeVisitor visitor)
 			{
-				return Elements.ConvertAll(e => e.Objectify()).ToArray();
+				visitor.Visit(this);
 			}
 		}
 
@@ -257,10 +334,9 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '['; } }
 			public override char CloseChar { get { return ']'; } }
-
-			public override object Objectify()
+			public override void Accept(Ast.INodeVisitor visitor)
 			{
-				return Elements.ConvertAll(e => e.Objectify()).ToList();
+				visitor.Visit(this);
 			}
 		}
 		
@@ -268,10 +344,9 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
-
-			public override object Objectify()
+			public override void Accept(Ast.INodeVisitor visitor)
 			{
-				return new HashSet<object>(Elements.ConvertAll(e => e.Objectify()));
+				visitor.Visit(this);
 			}
 		}
 		
@@ -279,15 +354,9 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
-
-			public override object Objectify()
+			public override void Accept(Ast.INodeVisitor visitor)
 			{
-				var obj = new Dictionary<object,object>(Elements.Count);
-				foreach(KeyValueNode kv in Elements)
-				{
-					obj[kv.Key.Objectify()] = kv.Value.Objectify();
-				}
-				return obj;
+				visitor.Visit(this);
 			}
 		}
 		
@@ -301,9 +370,9 @@ namespace Razorvine.Serpent
 				return string.Format("{0}:{1}", Key, Value);
 			}
 			
-			public object Objectify()
+			public void Accept(INodeVisitor visitor)
 			{
-				throw new NotSupportedException("should not objectify a KeyValueNode");
+				throw new NotSupportedException("don't visit a keyvaluenode");
 			}
 		}
 	}
