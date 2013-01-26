@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Xml.Serialization;
 
 using NUnit.Framework;
 
@@ -507,6 +508,10 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(ast.Root, ast2.Root);
 			ast = p.Parse(expr2);
 			Assert.AreEqual(ast, ast2);
+			
+			dynamic obj1 = ast.Objectify();
+			dynamic obj2 = ast2.Objectify();
+			Assert.AreEqual(obj1, obj2);
 		}
 		
 		public void Walk(Ast.INode node, StringBuilder sb)

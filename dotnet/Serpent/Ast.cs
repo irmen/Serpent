@@ -7,6 +7,7 @@
 /// </summary>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -25,7 +26,12 @@ namespace Razorvine.Serpent
 		{
 			return "# serpent utf-8 .net\n" + Root.ToString();
 		}
-		
+
+		public dynamic Objectify()
+		{
+			return Root.Objectify();
+		}
+			
 		public override bool Equals(object obj)
 		{
 			Ast other = obj as Ast;
@@ -43,6 +49,7 @@ namespace Razorvine.Serpent
 		{
 			string ToString();
 			bool Equals(object obj);
+			dynamic Objectify();
 		}
 		
 		public struct PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
@@ -74,6 +81,11 @@ namespace Razorvine.Serpent
 				return Value.CompareTo(other.Value);
 			}
 			
+			public dynamic Objectify()
+			{
+				return Value;
+			}
+
 			public override string ToString()
 			{
 				if(Value is string)
@@ -137,6 +149,11 @@ namespace Razorvine.Serpent
 			public double Real;
 			public double Imaginary;
 			
+			public dynamic Objectify()
+			{
+				return new ComplexNumber(Real, Imaginary);
+			}
+			
 			public override string ToString()
 			{
 				string strReal = Real.ToString(CultureInfo.InvariantCulture);
@@ -157,6 +174,11 @@ namespace Razorvine.Serpent
 			public override string ToString()
 			{
 				return "None";
+			}
+			
+			public dynamic Objectify()
+			{
+				return null;
 			}
 		}
 		
@@ -201,7 +223,8 @@ namespace Razorvine.Serpent
 				sb.Append(CloseChar);
 				return sb.ToString();
 			}
-
+			
+			public abstract dynamic Objectify();
 		}
 		
 		public class TupleNode : SequenceNode
@@ -223,24 +246,49 @@ namespace Razorvine.Serpent
 				sb.Append(')');
 				return sb.ToString();
 			}
+			
+			public override dynamic Objectify()
+			{
+				return Elements.ConvertAll(e => e.Objectify()).ToArray();
+			}
 		}
 
 		public class ListNode : SequenceNode
 		{
 			public override char OpenChar { get { return '['; } }
 			public override char CloseChar { get { return ']'; } }
+
+			public override dynamic Objectify()
+			{
+				return Elements.ConvertAll(e => e.Objectify()).ToList();
+			}
 		}
 		
 		public class SetNode : SequenceNode
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
+
+			public override dynamic Objectify()
+			{
+				return new HashSet<dynamic>(Elements.ConvertAll(e => e.Objectify()));
+			}
 		}
 		
 		public class DictNode : SequenceNode
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
+
+			public override dynamic Objectify()
+			{
+				var obj = new Dictionary<dynamic,dynamic>(Elements.Count);
+				foreach(KeyValueNode kv in Elements)
+				{
+					obj[kv.Key.Objectify()] = kv.Value.Objectify();
+				}
+				return obj;
+			}
 		}
 		
 		public struct KeyValueNode : INode
@@ -252,7 +300,11 @@ namespace Razorvine.Serpent
 			{
 				return string.Format("{0}:{1}", Key, Value);
 			}
-		}
 			
+			public dynamic Objectify()
+			{
+				throw new NotSupportedException("should not objectify a KeyValueNode");
+			}
+		}
 	}
 }
