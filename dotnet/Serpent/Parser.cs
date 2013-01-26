@@ -24,6 +24,7 @@ namespace Razorvine.Serpent
 			
 		public interface INode
 		{
+			string ToString();
 		}
 		
 		public struct PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
@@ -34,7 +35,6 @@ namespace Razorvine.Serpent
 				this.Value=value;
 			}
 			
-			#region Equals and GetHashCode implementation
 			public override int GetHashCode()
 			{
 				return Value!=null? Value.GetHashCode() : 0;
@@ -51,17 +51,6 @@ namespace Razorvine.Serpent
 				return object.Equals(this.Value, other.Value);
 			}
 			
-			public static bool operator ==(Ast.PrimitiveNode<T> lhs, Ast.PrimitiveNode<T> rhs)
-			{
-				return lhs.Equals(rhs);
-			}
-			
-			public static bool operator !=(Ast.PrimitiveNode<T> lhs, Ast.PrimitiveNode<T> rhs)
-			{
-				return !(lhs == rhs);
-			}
-			#endregion
-
 			public int CompareTo(PrimitiveNode<T> other)
 			{
 				return Value.CompareTo(other.Value);
@@ -69,15 +58,68 @@ namespace Razorvine.Serpent
 			
 			public override string ToString()
 			{
-				return string.Format("[PrimitiveNode Type={0} Value={1}]", typeof(T), Value);
+				if(Value is string)
+				{
+					StringBuilder sb=new StringBuilder();
+					sb.Append("'");
+					foreach(char c in (Value as string))
+					{
+						switch(c)
+						{
+							case '\\':
+								sb.Append("\\\\");
+								break;
+							case '\'':
+								sb.Append("\\'");
+								break;
+							case '\a':
+								sb.Append("\\a");
+								break;
+							case '\b':
+								sb.Append("\\b");
+								break;
+							case '\f':
+								sb.Append("\\f");
+								break;
+							case '\n':
+								sb.Append("\\n");
+								break;
+							case '\r':
+								sb.Append("\\r");
+								break;
+							case '\t':
+								sb.Append("\\t");
+								break;
+							case '\v':
+								sb.Append("\\v");
+								break;
+							default:
+								sb.Append(c);
+								break;
+						}
+					}
+					sb.Append("'");
+					return sb.ToString();
+				}
+				return Convert.ToString(Value, CultureInfo.InvariantCulture);
 			}
-
 		}
+		
+		
 		
 		public struct ComplexNumberNode: INode
 		{
 			public double Real;
 			public double Imaginary;
+			
+			public override string ToString()
+			{
+				string strReal = Real.ToString(CultureInfo.InvariantCulture);
+				string strImag = Imaginary.ToString(CultureInfo.InvariantCulture);
+				if(Imaginary>=0)
+					return string.Format("({0}+{1}j)", strReal, strImag);
+				return string.Format("({0}{1}j)", strReal, strImag);
+			}
 		}
 		
 		public class NoneNode: INode
@@ -86,11 +128,18 @@ namespace Razorvine.Serpent
 			private NoneNode()
 			{
 			}
+			
+			public override string ToString()
+			{
+				return "None";
+			}
 		}
 		
-		public abstract class SequenceNode<T>: INode where T: INode
+		public abstract class SequenceNode: INode
 		{
-			public List<T> Elements = new List<T>();
+			public List<INode> Elements = new List<INode>();
+			public virtual char OpenChar {get { return '?'; }}
+			public virtual char CloseChar {get { return '?'; }}
 
 			public override int GetHashCode()
 			{
@@ -104,34 +153,80 @@ namespace Razorvine.Serpent
 			
 			public override bool Equals(object obj)
 			{
-				Ast.SequenceNode<T> other = obj as Ast.SequenceNode<T>;
+				Ast.SequenceNode other = obj as Ast.SequenceNode;
 				if (other == null)
 					return false;
-				return Enumerable.SequenceEqual<T>(Elements, other.Elements);
+				return Enumerable.SequenceEqual(Elements, other.Elements);
+			}
+
+			public override string ToString()
+			{
+				StringBuilder sb=new StringBuilder();
+				sb.Append(OpenChar);
+				if(Elements != null)
+				{
+					foreach(var elt in Elements)
+					{
+						sb.Append(elt.ToString());
+						sb.Append(',');
+					}
+				}
+				if(Elements.Count>0)
+					sb.Remove(sb.Length-1, 1);	// remove last comma
+				sb.Append(CloseChar);
+				return sb.ToString();
 			}
 
 		}
 		
-		public class TupleNode : SequenceNode<INode>
+		public class TupleNode : SequenceNode
 		{
+			public override string ToString()
+			{
+				StringBuilder sb=new StringBuilder();
+				sb.Append('(');
+				if(Elements != null)
+				{
+					foreach(var elt in Elements)
+					{
+						sb.Append(elt.ToString());
+						sb.Append(",");
+					}
+				}
+				if(Elements.Count>1)
+					sb.Remove(sb.Length-1, 1);
+				sb.Append(')');
+				return sb.ToString();
+			}
 		}
 
-		public class ListNode : SequenceNode<INode>
+		public class ListNode : SequenceNode
 		{
+			public override char OpenChar { get { return '['; } }
+			public override char CloseChar { get { return ']'; } }
 		}
 		
-		public class SetNode : SequenceNode<INode>
+		public class SetNode : SequenceNode
 		{
+			public override char OpenChar { get { return '{'; } }
+			public override char CloseChar { get { return '}'; } }
 		}
 		
-		public class DictNode : SequenceNode<KeyValueNode>
+		public class DictNode : SequenceNode
 		{
+			public override char OpenChar { get { return '{'; } }
+			public override char CloseChar { get { return '}'; } }
 		}
 		
 		public struct KeyValueNode : INode
 		{
 			public INode Key;
 			public INode Value;
+			
+			public override string ToString()
+			{
+				return string.Format("{0}: {1}", Key, Value);
+			}
 		}
 			
 	}
@@ -272,10 +367,10 @@ namespace Razorvine.Serpent
 			return exprList;
 		}
 		
-		List<Ast.KeyValueNode> ParseKeyValueList(SeekableStringReader sr)
+		List<Ast.INode> ParseKeyValueList(SeekableStringReader sr)
 		{
 			//keyvalue_list   = keyvalue { ',' keyvalue } .
-			List<Ast.KeyValueNode> kvs = new List<Ast.KeyValueNode>();
+			List<Ast.INode> kvs = new List<Ast.INode>();
 			kvs.Add(ParseKeyValue(sr));
 			while(sr.HasMore() && sr.Peek()==',')
 			{
@@ -307,12 +402,16 @@ namespace Razorvine.Serpent
 			// set = '{' expr_list '}' .
 			sr.Read();	// {
 			Ast.SetNode setnode = new Ast.SetNode();
-			setnode.Elements = ParseExprList(sr);
+			List<Ast.INode> elts = ParseExprList(sr);
 			if(!sr.HasMore())
 				throw new ParseException("missing '}'");
 			char closechar = sr.Read();
 			if(closechar!='}')
 				throw new ParseException("expected '}'");
+
+			// make sure it has set semantics (remove duplicate elements)
+			HashSet<Ast.INode> h = new HashSet<Ast.INode>(elts);
+			setnode.Elements = h.ToList();
 			return setnode;
 		}
 		
@@ -352,12 +451,25 @@ namespace Razorvine.Serpent
 				return dict;		// empty dict
 			}
 			
-			dict.Elements = ParseKeyValueList(sr);
+			List<Ast.INode> elts = ParseKeyValueList(sr);
 			if(!sr.HasMore())
 				throw new ParseException("missing '}'");
 			char closechar = sr.Read();
 			if(closechar!='}')
 				throw new ParseException("expected '}'");
+			
+			// make sure it has dict semantics (remove duplicate keys)
+			Dictionary<Ast.INode, Ast.INode> fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
+			foreach(Ast.KeyValueNode kv in elts)
+				fixedDict[kv.Key] = kv.Value;
+			foreach(var kv in fixedDict)
+			{
+				dict.Elements.Add(new Ast.KeyValueNode()
+				                  {
+				                  	Key=kv.Key,
+				                  	Value=kv.Value
+				                  });
+			}
 			return dict;
 		}		
 		
