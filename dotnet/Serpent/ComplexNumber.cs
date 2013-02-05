@@ -15,10 +15,10 @@ namespace Razorvine.Serpent
 /// <summary>
 /// A Complex Number class. 
 /// </summary>
-public struct ComplexNumber {
+public class ComplexNumber {
 	
-	public double Real;
-	public double Imaginary;
+	public double Real {get; private set;}
+	public double Imaginary {get; private set;}
 	
 	public ComplexNumber(double r, double i) {
 		Real=r;

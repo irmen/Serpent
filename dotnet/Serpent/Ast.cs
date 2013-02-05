@@ -35,11 +35,6 @@ namespace Razorvine.Serpent
 			return this.Root.Equals(other.Root);
 		}
 		
-		public override int GetHashCode()
-		{
-			return this.Root.GetHashCode();
-		}
-
 		public interface INodeVisitor
 		{
 			void Visit(Ast.ComplexNumberNode complex);
@@ -265,16 +260,6 @@ namespace Razorvine.Serpent
 			public virtual char OpenChar {get { return '?'; }}
 			public virtual char CloseChar {get { return '?'; }}
 
-			public override int GetHashCode()
-			{
-				int hashCode = Elements.GetHashCode();
-				unchecked {
-					foreach(var elt in Elements)
-						hashCode += 1000000007 * elt.GetHashCode();
-				}
-				return hashCode;
-			}
-			
 			public override bool Equals(object obj)
 			{
 				Ast.SequenceNode other = obj as Ast.SequenceNode;
