@@ -8,8 +8,8 @@
 
 using System;
 using System.Collections.Generic;
-
 using NUnit.Framework;
+using Razorvine.Serpent.Parsing;
 
 namespace Razorvine.Serpent.Test
 {

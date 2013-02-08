@@ -13,6 +13,7 @@ using System.Text;
 using System.Xml.Serialization;
 
 using NUnit.Framework;
+using Razorvine.Serpent.Parsing;
 
 namespace Razorvine.Serpent.Test
 {
@@ -507,7 +508,7 @@ namespace Razorvine.Serpent.Test
 			
 			Assert.AreEqual(ast.Root, ast2.Root);
 			ast = p.Parse(expr2);
-			Assert.AreEqual(ast, ast2);
+			Assert.AreEqual(ast.Root, ast2.Root);
 		}
 		
 		public void Walk(Ast.INode node, StringBuilder sb)
