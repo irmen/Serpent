@@ -13,7 +13,7 @@ using System.Globalization;
 using System.Text;
 using System.Linq;
 
-namespace Razorvine.Serpent
+namespace Razorvine.Serpent.Parsing
 {
 	/// <summary>
 	/// Abstract syntax tree for the literal expression. This is what the parser returns.
@@ -27,14 +27,6 @@ namespace Razorvine.Serpent
 			return "# serpent utf-8 .net\n" + Root.ToString();
 		}
 
-		public override bool Equals(object obj)
-		{
-			Ast other = obj as Ast;
-			if (other == null)
-				return false;
-			return this.Root.Equals(other.Root);
-		}
-		
 		public interface INodeVisitor
 		{
 			void Visit(Ast.ComplexNumberNode complex);
