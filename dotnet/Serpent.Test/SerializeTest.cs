@@ -18,6 +18,18 @@ namespace Razorvine.Serpent.Test
 	public class SerializeTest
 	{
 		[Test]
+		public void TestHeader()
+		{
+			Serializer ser = new Serializer();
+			byte[] data = ser.Serialize(null);
+			Assert.AreEqual(35, data[0]);
+			string strdata = Encoding.UTF8.GetString(data);
+			string header = "# serpent utf-8 dotnet-cli"+Environment.Version.ToString(2);
+			Assert.AreEqual(header, strdata.Split('\n')[0]);
+		}
+		
+		
+		[Test]
 		public void TestStuff()
 		{
 			Serializer ser=new Serializer();
