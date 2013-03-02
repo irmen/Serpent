@@ -3,7 +3,7 @@
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
 /// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
-/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
 using System;
@@ -15,6 +15,7 @@ namespace Razorvine.Serpent
 /// <summary>
 /// A Complex Number class. 
 /// </summary>
+[Serializable]
 public class ComplexNumber {
 	
 	public double Real {get; private set;}

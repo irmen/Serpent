@@ -3,7 +3,7 @@
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
 /// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
-/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
 using System;
@@ -116,6 +116,10 @@ namespace Razorvine.Serpent.Serializing
 			{
 				Serialize_guid((Guid) obj, tw, level);
 			}
+			else if(obj is ComplexNumber)
+			{
+				Serialize_complex((ComplexNumber) obj, tw, level);
+			}
 			else
 			{
 				Serialize_class(obj, tw, level);
@@ -145,11 +149,11 @@ namespace Razorvine.Serpent.Serializing
 		protected void Serialize_dict(IDictionary dict, TextWriter tw, int level)
 		{
 			tw.Write("{");
-			foreach(int x in dict)
+			foreach(DictionaryEntry x in dict)
 			{
-				Serialize(x, tw, level);
+				Serialize(x.Key, tw, level);
 				tw.Write(":");
-				Serialize(x, tw, level);
+				Serialize(x.Value, tw, level);
 				tw.Write(",");
 			}
 			tw.Write("}");
@@ -240,7 +244,17 @@ namespace Razorvine.Serpent.Serializing
 
 		protected void Serialize_primitive(object obj, TextWriter tw, int level)
 		{
-			Serialize_string(Convert.ToString(obj, CultureInfo.InvariantCulture), tw, level);
+			tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
+		}
+
+		protected void Serialize_complex(ComplexNumber cplx, TextWriter tw, int level)
+		{
+			tw.Write("(");
+			Serialize_primitive(cplx.Real, tw, level);
+			if(cplx.Imaginary>=0)
+				tw.Write("+");
+			Serialize_primitive(cplx.Imaginary, tw, level);
+			tw.Write("j)");
 		}
 
 		protected void Serialize_class(object obj, TextWriter tw, int level)

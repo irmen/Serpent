@@ -3,7 +3,7 @@
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
 /// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
-/// This code is open-source, but licensed under the "MIT software license". See http://opensource.org/licenses/MIT
+/// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
 using System;
@@ -251,6 +251,16 @@ namespace Razorvine.Serpent.Parsing
 			public List<INode> Elements = new List<INode>();
 			public virtual char OpenChar {get { return '?'; }}
 			public virtual char CloseChar {get { return '?'; }}
+
+			public override int GetHashCode()
+			{
+				int hashCode = 0;
+				unchecked {
+					foreach(INode elt in Elements)
+						hashCode += 1000000007 * elt.GetHashCode();
+				}
+				return hashCode;
+			}
 
 			public override bool Equals(object obj)
 			{
