@@ -31,8 +31,7 @@ Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal
 @TODO: java and C# implementations, both serializers and deserializers
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
-This code is open-source, but licensed under the "MIT software license".
-See http://opensource.org/licenses/MIT
+Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
 import __future__
@@ -42,7 +41,7 @@ import sys
 import types
 import os
 
-__version__ = "0.4"
+__version__ = "0.5"
 __all__ = ["serialize", "deserialize"]
 
 

@@ -2,8 +2,7 @@
 Serpent: ast.literal_eval() compatible object tree serialization.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
-This code is open-source, but licensed under the "MIT software license".
-See http://opensource.org/licenses/MIT
+Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
 import unittest
@@ -16,12 +15,27 @@ import array
 import serpent
 
 
+if sys.version_info >= (3,0):
+    unicode = str
+    unichr = chr
+
+
 def strip_header(ser):
     if sys.platform == "cli":
         _, _, data = ser.partition("\n")
     else:
         _, _, data = ser.partition(b"\n")
     return data
+
+
+class TestDeserialize(unittest.TestCase):
+    def test_deserialize(self):
+        data = serpent.deserialize(b"555")
+        self.assertEqual(555, data)
+        unicodestring = "euro"+unichr(0x20ac)
+        encoded = repr(unicodestring).encode("utf-8")
+        data = serpent.deserialize(encoded)
+        self.assertEqual(unicodestring, data)
 
 
 class TestBasics(unittest.TestCase):
@@ -104,7 +118,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual({'attr': 42}, data)
 
     def test_array(self):
-        ser = serpent.serialize(array.array('u', u"unicode"))
+        ser = serpent.serialize(array.array('u', unicode("unicode")))
         data = strip_header(ser)
         self.assertEqual(b"'unicode'", data)
         ser = serpent.serialize(array.array('i', [44, 45, 46]))
@@ -137,7 +151,7 @@ class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {
             "str": "hello",
-            "unicode": u"\u20ac",
+            "unicode": unichr(0x20ac),  # euro-character
             "numbers": [123456789012345678901234567890, 999.1234, decimal.Decimal("1.99999999999999999991")],
             "bytes": bytearray(100),
             "list": [1, 2, 3, 4, 5, 6, 7, 8],
