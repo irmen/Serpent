@@ -7,9 +7,11 @@
 /// </summary>
 
 using System;
-using System.Text;
 using System.Collections.Generic;
+using System.Text;
+
 using NUnit.Framework;
+using Razorvine.Serpent.Parsing;
 using Razorvine.Serpent.Serializing;
 
 namespace Razorvine.Serpent.Test
@@ -145,19 +147,19 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(B("False"),data);
 		}
 
+		[Test]
+		public void TestBytes()
+		{
+			Serializer serpent = new Serializer();
+			Parser p = new Parser();
+			byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
+			byte[] ser = serpent.Serialize(bytes);
+			Console.WriteLine(Encoding.UTF8.GetString(ser));
+			string parsed = p.Parse(ser).Root.ToString();
+			Console.WriteLine(parsed);
+            Assert.AreEqual("{'encoding': 'base64', 'data': 'YWJjZGVm'}@TODO", parsed);
+		}
 /***		
-    def test_bytes(self):
-        if sys.version_info >= (3, 0):
-            ser = serpent.serialize(bytes(b"abcdef"))
-            data = serpent.deserialize(ser)
-            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
-        ser = serpent.serialize(bytearray(b"abcdef"))
-        data = serpent.deserialize(ser)
-        self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
-        if sys.version_info >= (2, 7):
-            ser = serpent.serialize(memoryview(b"abcdef"))
-            data = serpent.deserialize(ser)
-            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
     def test_class(self):
         class Class1(object):
@@ -174,18 +176,6 @@ namespace Razorvine.Serpent.Test
         ser = serpent.serialize(c)
         data = serpent.deserialize(ser)
         self.assertEqual({'attr': 42}, data)
-
-    def test_array(self):
-        ser = serpent.serialize(array.array('u', unicode("unicode")))
-        data = strip_header(ser)
-        self.assertEqual(b"'unicode'", data)
-        ser = serpent.serialize(array.array('i', [44, 45, 46]))
-        data = strip_header(ser)
-        self.assertEqual(b"[44,45,46]", data)
-        if sys.version_info < (3, 0):
-            ser = serpent.serialize(array.array('c', "normal"))
-            data = strip_header(ser)
-            self.assertEqual(b"'normal'", data)
 
     def test_time(self):
         ser = serpent.serialize(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
@@ -211,5 +201,6 @@ namespace Razorvine.Serpent.Test
 //@TODO: datetime, timespan
 //@TODO: exception
 //@TODO: random class
+//@TODO: indentation.
 	}
 }
