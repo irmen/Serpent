@@ -19,7 +19,8 @@ setup(
     long_description="""Serpent is a simple serialization library based on ast.literal_eval.
 
     Because it only serializes literals and recreates the objects using ast.literal_eval(),
-    the serialized data is safe to transport to other machines over the network for instance.
+    the serialized data is safe to transport to other machines (over the network for instance)
+    and de-serialize it there.
 
     API:
 
@@ -38,7 +39,7 @@ setup(
     - it outputs the keys of sets and dicts in alphabetical order when pretty-printing
     - it works around a few quirks of ast.literal_eval() on the various Python implementations
 
-    Serpent can't serialize object graphs though (when an object refers to itself); it will crash with a recursion error.
+    Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a recursion error.
 
     Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
     """,
@@ -51,6 +52,7 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development"
     ],

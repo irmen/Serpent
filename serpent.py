@@ -28,7 +28,7 @@ of the ast module in earlier python versions. Python <3.2 will fail to read serp
 by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
 Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal_eval in 2.6)
 
-@TODO: java and C# implementations, both serializers and deserializers
+@TODO: java implementation, both serializers and deserializers
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT

@@ -1,3 +1,4 @@
+#  BNF-ish syntax of a Serpent-serialized data string.
 
 expr            =  single | compound .
 single          =  int | float | complex | string | bool | none .
