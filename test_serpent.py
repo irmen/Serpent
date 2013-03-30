@@ -62,26 +62,23 @@ class TestBasics(unittest.TestCase):
         obj = {3: "three", 4: "four", 2: "two", 1: "one"}
         ser = serpent.serialize(obj)
         data = strip_header(ser)
-        self.assertEqual(b"{1:'one',2:'two',3:'three',4:'four'}", data)
+        self.assertEqual(36, len(data))
         obj = set([3, 4, 2, 1, 6, 5])
         ser = serpent.serialize(obj)
         data = strip_header(ser)
-        if sys.version_info <= (3, 2):
-            self.assertEqual(b"(1,2,3,4,5,6)", data)
-        else:
-            self.assertEqual(b"{1,2,3,4,5,6}", data)
+        self.assertEqual(13, len(data))
 
         obj = set([3, "something"])
         ser = serpent.serialize(obj, indent=False)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
-            self.assertEqual(b"(3,'something')", data)
+            self.assertTrue(data == b"(3,'something')" or data == b"('something',3)")
         else:
             self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
         ser = serpent.serialize(obj, indent=True)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
-            self.assertEqual(b"(\n  3,\n  'something'\n)", data)
+            self.assertTrue(data == b"(\n  3,\n  'something'\n)" or data == b"(\n  'something',\n  3\n)")
         else:
             self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
 
@@ -216,13 +213,13 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(myset)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
-            self.assertEqual(b"(42,'Sally')", data)
+            self.assertTrue(data == b"(42,'Sally')" or data == b"('Sally',42)")
         else:
             self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
         ser = serpent.serialize(myset, indent=True)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
-            self.assertEqual(b"(\n  42,\n  'Sally'\n)", data)
+            self.assertTrue(data == b"(\n  42,\n  'Sally'\n)" or data == b"(\n  'Sally',\n  42\n)")
         else:
             self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
 
