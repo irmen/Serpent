@@ -23,11 +23,10 @@ anyway for Python 3.x, and it solves the problem of the str/unicode difference b
 Python versions. Also it means the serialized output doesn't have those problematic 'u' prefixes on strings.
 Note: the serializer is not thread-safe. Make sure you're not making changes to the
 object tree that is being serialized, and don't use the same serializer in different threads.
-Caveat: when serializing, set literals are converted into tuples on Python <3.2. This is because of a limitation
-of the ast module in earlier python versions. Python <3.2 will fail to read serpent data produced
-by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
 Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal_eval in 2.6)
 Note: because the serialized format is just valid Python source code, it can contain comments.
+Note: set literals are not supported on python <3.2 (ast.literal_eval limitation). If you need Python < 3.2
+compatibility, you'll have to use set_literals=False when serializing.
 
 @TODO: java implementation, both serializers and deserializers
 
@@ -42,13 +41,13 @@ import sys
 import types
 import os
 
-__version__ = "0.6"
+__version__ = "0.7"
 __all__ = ["serialize", "deserialize"]
 
 
-def serialize(obj, indent=False):
+def serialize(obj, indent=False, set_literals=True):
     """Serialize object tree to bytes"""
-    return Serializer(indent).serialize(obj)
+    return Serializer(indent, set_literals).serialize(obj)
 
 
 def deserialize(serialized_bytes):
@@ -136,16 +135,22 @@ class Serializer(object):
     if sys.version_info < (2, 7):
         repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
-    def __init__(self, indent=False):
+    def __init__(self, indent=False, set_literals=True):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
+        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2)
         """
         self.indent = indent
+        self.set_literals = set_literals
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
-        header = "# serpent utf-8 python{0}.{1}\n".format(*sys.version_info)
+        header = "# serpent utf-8 "
+        if self.set_literals:
+            header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
+        else:
+            header += "python2.6\n"
         out = [header.encode("utf-8")]
         self._serialize(obj, out, 0)
         if sys.platform == "cli":
@@ -264,12 +269,10 @@ class Serializer(object):
             out.append(b"}")
 
     def ser_builtins_set(self, set_obj, out, level):
-        if sys.version_info < (3, 2):
-            # set literals are not supported on python <3.2 (ast.literal_eval limitation)
-            # so we transform the set into a tuple.
+        if not self.set_literals:
             if self.indent:
                 set_obj = sorted(set_obj)
-            self._serialize(tuple(set_obj), out, level)
+            self._serialize(tuple(set_obj), out, level)     # use a tuple instead of a set literal
             return
         if self.indent and set_obj:
             indent_chars = b"  " * level

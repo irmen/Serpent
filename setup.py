@@ -36,7 +36,7 @@ setup(
     - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal
     - it tries to serialize unrecognised types as a dict (you can control this with __getstate__ on your own types)
     - it can create a pretty-printed (indented) output for readability purposes
-    - it outputs the keys of sets and dicts in alphabetical order when pretty-printing
+    - it outputs the keys of sets and dicts in alphabetical order (when pretty-printing)
     - it works around a few quirks of ast.literal_eval() on the various Python implementations
 
     Serpent allows comments in the serialized data (because it is just Python source code).

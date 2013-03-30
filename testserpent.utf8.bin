@@ -1,4 +1,4 @@
-# serpent utf-8 python3.3
+# serpent utf-8 python3.2
 {
   # serpent supports comments inside the serialized data
   'bytes': {

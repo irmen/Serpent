@@ -46,8 +46,15 @@ class TestBasics(unittest.TestCase):
         else:
             self.assertTrue(type(ser) is bytes)
             header, _, rest = ser.partition(b"\n")
-        hdr = "# serpent utf-8 python%s.%s" % sys.version_info[:2]
-        hdr = hdr.encode("utf-8")
+        hdr = "# serpent utf-8 python3.2".encode("utf-8")
+        self.assertEqual(hdr, header)
+        ser = serpent.serialize(None, set_literals=False)
+        if sys.platform == "cli":
+            header, _, rest = ser.partition("\n")
+        else:
+            self.assertTrue(type(ser) is bytes)
+            header, _, rest = ser.partition(b"\n")
+        hdr = "# serpent utf-8 python2.6".encode("utf-8")
         self.assertEqual(hdr, header)
 
     def test_comments(self):
@@ -84,16 +91,10 @@ class TestBasics(unittest.TestCase):
         obj = set([3, "something"])
         ser = serpent.serialize(obj, indent=False)
         data = strip_header(ser)
-        if sys.version_info <= (3, 2):
-            self.assertTrue(data == b"(3,'something')" or data == b"('something',3)")
-        else:
-            self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
+        self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
         ser = serpent.serialize(obj, indent=True)
         data = strip_header(ser)
-        if sys.version_info <= (3, 2):
-            self.assertTrue(data == b"(\n  3,\n  'something'\n)" or data == b"(\n  'something',\n  3\n)")
-        else:
-            self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
+        self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
 
         obj = {3: "three", "something": 99}
         ser = serpent.serialize(obj, indent=False)
@@ -225,16 +226,10 @@ class TestBasics(unittest.TestCase):
         myset = set([42, "Sally"])
         ser = serpent.serialize(myset)
         data = strip_header(ser)
-        if sys.version_info <= (3, 2):
-            self.assertTrue(data == b"(42,'Sally')" or data == b"('Sally',42)")
-        else:
-            self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
+        self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
         ser = serpent.serialize(myset, indent=True)
         data = strip_header(ser)
-        if sys.version_info <= (3, 2):
-            self.assertTrue(data == b"(\n  42,\n  'Sally'\n)" or data == b"(\n  'Sally',\n  42\n)")
-        else:
-            self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
+        self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):
@@ -320,9 +315,10 @@ class TestSpeed(unittest.TestCase):
         print("serialize with indent:", timeit.timeit(lambda: serpent.serialize(self.data, True), number=1000))
 
     def test_deser_speed(self):
-        ser = serpent.serialize(self.data, False)
+        use_set_literals = sys.version_info >= (3, 2)
+        ser = serpent.serialize(self.data, False, set_literals=use_set_literals)
         print("deserialize without indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=1000))
-        ser = serpent.serialize(self.data, True)
+        ser = serpent.serialize(self.data, True, set_literals=use_set_literals)
         print("deserialize with indent:", timeit.timeit(lambda: serpent.deserialize(ser), number=1000))
 
 
@@ -379,12 +375,7 @@ class TestIndent(unittest.TestCase):
         data = set([1])
         ser = serpent.serialize(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
-        if sys.version_info < (3, 2):
-            self.assertEqual("""(
-  1,
-)""", ser)
-        else:
-            self.assertEqual("""{
+        self.assertEqual("""{
   1
 }""", ser)
         data = {"one": 1}
@@ -394,7 +385,7 @@ class TestIndent(unittest.TestCase):
   'one': 1
 }""", ser)
 
-        data = {"first": [1, 2, ("a", "b")], "second": {1: False}}
+        data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": set([1,2])}
         ser = serpent.serialize(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
@@ -408,6 +399,10 @@ class TestIndent(unittest.TestCase):
   ],
   'second': {
     1: False
+  },
+  'third': {
+    1,
+    2
   }
 }""", ser)
 
