@@ -7,14 +7,16 @@
 /// </summary>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using Hashtable = System.Collections.Hashtable;
-using IDictionary = System.Collections.IDictionary;
+using System.Runtime.Serialization;
 using System.Text;
 
 using NUnit.Framework;
 using Razorvine.Serpent.Parsing;
 using Razorvine.Serpent.Serializing;
+using Hashtable = System.Collections.Hashtable;
+using IDictionary = System.Collections.IDictionary;
 
 namespace Razorvine.Serpent.Test
 {
@@ -50,9 +52,13 @@ namespace Razorvine.Serpent.Test
 			byte[] data = ser.Serialize(null);
 			Assert.AreEqual(35, data[0]);
 			string strdata = S(data);
-			string header = "# serpent utf-8 dotnet-cli"+Environment.Version.ToString(2);
-			Assert.AreEqual(header, strdata.Split('\n')[0]);
+			Assert.AreEqual("# serpent utf-8 python3.2", strdata.Split('\n')[0]);
 			
+			ser.SetLiterals=false;
+			data = ser.Serialize(null);
+			strdata = S(data);
+			Assert.AreEqual("# serpent utf-8 python2.6", strdata.Split('\n')[0]);
+
 			data = B("# header\nfirst-line");
 			data = strip_header(data);
 			Assert.AreEqual(B("first-line"), data);
@@ -150,6 +156,56 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestList()
+		{
+			Serializer serpent = new Serializer();
+			IList<object> list = new List<object>();
+			
+			// test empty list
+			byte[] ser = strip_header(serpent.Serialize(list));
+			Assert.AreEqual("[]", S(ser));
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(list));
+			Assert.AreEqual("[]", S(ser));
+			serpent.Indent=false;
+			
+			// test nonempty list
+			list.Add(42);
+			list.Add("Sally");
+			list.Add(16.5);
+			ser = strip_header(serpent.Serialize(list));
+			Assert.AreEqual("[42,'Sally',16.5]", S(ser));
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(list));
+			Assert.AreEqual("[\n  42,\n  'Sally',\n  16.5\n]", S(ser));
+		}
+
+		[Test]
+		public void TestSet()
+		{
+			Serializer serpent = new Serializer();
+			HashSet<object> set = new HashSet<object>();
+			
+			// test empty set
+			byte[] ser = strip_header(serpent.Serialize(set));
+			Assert.AreEqual("()", S(ser));  // empty set is serialized as a tuple.
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(set));
+			Assert.AreEqual("()", S(ser));  // empty set is serialized as a tuple.
+			serpent.Indent=false;
+			
+			// test nonempty set
+			set.Add(42);
+			set.Add("Sally");
+			set.Add(16.5);
+			ser = strip_header(serpent.Serialize(set));
+			Assert.AreEqual("{42,'Sally',16.5}", S(ser));
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(set));
+			Assert.AreEqual("{\n  42,\n  'Sally',\n  16.5\n}", S(ser));
+		}
+
+		[Test]
 		public void TestDictionary()
 		{
 			Serializer serpent = new Serializer();
@@ -158,14 +214,14 @@ namespace Razorvine.Serpent.Test
 			// test empty dict
 			IDictionary ht = new Hashtable();
 			byte[] ser = serpent.Serialize(ht);
-			Assert.AreEqual(Encoding.UTF8.GetBytes("{}"), strip_header(ser));
+			Assert.AreEqual(B("{}"), strip_header(ser));
 			string parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual("{}", parsed);
 			
             // empty dict with indentation
             serpent.Indent=true;
 			ser = serpent.Serialize(ht);
-			Assert.AreEqual(Encoding.UTF8.GetBytes("{}"), strip_header(ser));
+			Assert.AreEqual(B("{}"), strip_header(ser));
 			parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual("{}", parsed);
 			
@@ -187,13 +243,23 @@ namespace Razorvine.Serpent.Test
             // test indentation
             serpent.Indent=true;
             ser = serpent.Serialize(ht);
-            string indented = Encoding.UTF8.GetString(strip_header(ser));
+            string indented = S(strip_header(ser));
 			Console.WriteLine(indented);
 			Assert.AreEqual('}', ser[ser.Length-1]);
 			Assert.AreEqual('\n', ser[ser.Length-2]);
 			Assert.AreNotEqual(',', ser[ser.Length-3]);
 			parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual("{42:'fortytwo','status':False,'name':'Sally','sixteen-and-half':16.5}", parsed);
+            serpent.Indent=false;
+            
+            // generic Dictionary test
+            IDictionary<int, string> mydict = new Dictionary<int, string> {
+            	{ 1, "one" },
+            	{ 2, "two" },
+            };
+            ser = serpent.Serialize(mydict);
+            string ser_str = S(strip_header(ser));
+            Assert.IsTrue(ser_str=="{2:'two',1:'one'}" || ser_str=="{1:'one',2:'two'}");
 		}
 
 		[Test]
@@ -208,13 +274,46 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestCollection()
+		{
+			ICollection<int> intlist = new LinkedList<int>();
+			intlist.Add(42);
+			intlist.Add(43);
+			Serializer serpent = new Serializer();
+			byte[] ser = serpent.Serialize(intlist);
+			ser = strip_header(ser);
+			Assert.AreEqual(B("[42,43]"), ser);
+			
+			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
+			Assert.AreEqual(B("(42,43)"), ser);
+			
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(intlist));
+			Assert.AreEqual(B("[\n  42,\n  43\n]"), ser);
+			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
+			Assert.AreEqual(B("(\n  42,\n  43\n)"), ser);
+		}
+		
+		
+		[Test]
 		public void TestIndentation()
 		{
-			/***
-        data = {"first": [1,2, ("a", "b")], "second": {1: False}}
-        ser = serpent.serialize(data, indent=True).decode("utf-8")
-        _, _, ser = ser.partition("\n")
-        self.assertEqual("""{
+			var dict = new Dictionary<string, object>();
+			var list = new List<object>() {
+				1,
+				2,
+				new string[] {"a", "b"}
+			};
+			dict.Add("first", list);
+			dict.Add("second", new Dictionary<int, bool> {
+			         	{1, false}
+			         });
+			dict.Add("third", new HashSet<int> { 3, 4} );
+			
+			Serializer serpent = new Serializer();
+			serpent.Indent=true;
+			byte[] ser = strip_header(serpent.Serialize(dict));
+			Assert.AreEqual(@"{
   'first': [
     1,
     2,
@@ -225,96 +324,112 @@ namespace Razorvine.Serpent.Test
   ],
   'second': {
     1: False
+  },
+  'third': {
+    3,
+    4
   }
-}""", ser)
+}", S(ser).Replace("\n", "\r\n"));
 
-***/			 
-			Assert.Fail("todo");
 		}
 		
 		[Test]
 		public void TestSorting()
 		{
-/***
-    def test_sorting(self):
-        obj = [3,2,1]
-        ser = serpent.serialize(obj)
-        data = strip_header(ser)
-        self.assertEqual(b"[3,2,1]", data)
-        obj = (3,2,1)
-        ser = serpent.serialize(obj)
-        data = strip_header(ser)
-        self.assertEqual(b"(3,2,1)", data)
-        obj = {3: "three", 4: "four", 2:"two", 1:"one"}
-        ser = serpent.serialize(obj)
-        data = strip_header(ser)
-        self.assertEqual(b"{1:'one',2:'two',3:'three',4:'four'}", data)
-        obj = {3,4,2,1,6,5}
-        ser = serpent.serialize(obj)
-        data = strip_header(ser)
-        self.assertEqual(b"{1,2,3,4,5,6}", data)
+			Serializer serpent=new Serializer();
+			object data = new List<int> { 3, 2, 1};
+			byte[] ser = strip_header(serpent.Serialize(data));
+			Assert.AreEqual("[3,2,1]", S(ser));
+			data = new int[] { 3,2,1 };
+			ser = strip_header(serpent.Serialize(data));
+			Assert.AreEqual("(3,2,1)", S(ser));
+			
+			data = new HashSet<object> {
+				42,
+				"hi"
+			};
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(data));
+			Assert.IsTrue(S(ser)=="{\n  42,\n  'hi'\n}" || S(ser)=="{\n  'hi',\n  42\n}");
 
-        obj = {3, "something"}
-        ser = serpent.serialize(obj, indent=False)
-        data = strip_header(ser)
-        self.assertTrue(data==b"{3,'something'}" or data==b"{'something',3}")
-        ser = serpent.serialize(obj, indent=True)
-        data = strip_header(ser)
-        self.assertTrue(data==b"{\n  3,\n  'something'\n}" or data==b"{\n  'something',\n  3\n}")
-
-        obj = {3:"three", "something":99}
-        ser = serpent.serialize(obj, indent=False)
-        data = strip_header(ser)
-        self.assertTrue(data==b"{'something':99,3:'three'}" or data==b"{3:'three','something':99}")
-        ser = serpent.serialize(obj, indent=True)
-        data = strip_header(ser)
-        self.assertTrue(data==b"{\n  'something': 99,\n  3: 'three'\n}" or data==b"{\n  3: 'three',\n  'something': 99\n}")
-***/			
-			Assert.Fail("todo");
+			data = new Dictionary<int, string> {
+				{5, "five"},
+				{3, "three"},
+				{1, "one"},
+				{4, "four"},
+				{2, "two"}
+			};
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(data));
+			Assert.AreEqual("{\n  1: 'one',\n  2: 'two',\n  3: 'three',\n  4: 'four',\n  5: 'five'\n}", S(ser));
+			
+			data = new HashSet<string> {
+				"x",
+				"y",
+				"z",
+				"c",
+				"b",
+				"a"
+			};
+			serpent.Indent=true;
+			ser = strip_header(serpent.Serialize(data));
+			Assert.AreEqual("{\n  'a',\n  'b',\n  'c',\n  'x',\n  'y',\n  'z'\n}", S(ser));
 		}
 
-/***
-
-    def test_class(self):
-        class Class1(object):
-            def __init__(self):
-                self.attr = 1
-        class Class2(object):
-            def __getstate__(self):
-                return {"attr": 42}
-        c = Class1()
-        ser = serpent.serialize(c)
-        data = serpent.deserialize(ser)
-        self.assertEqual({'__class__': 'Class1', 'attr': 1}, data)
-        c = Class2()
-        ser = serpent.serialize(c)
-        data = serpent.deserialize(ser)
-        self.assertEqual({'attr': 42}, data)
-
-    def test_time(self):
-        ser = serpent.serialize(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
-        data = strip_header(ser)
-        self.assertEqual(b"'2013-01-20T23:59:45.999888'", data)
-        ser = serpent.serialize(datetime.time(23, 59, 45, 999888))
-        data = strip_header(ser)
-        self.assertEqual(b"'23:59:45.999888'", data)
-        ser = serpent.serialize(datetime.time(23, 59, 45))
-        data = strip_header(ser)
-        self.assertEqual(b"'23:59:45'", data)
-        ser = serpent.serialize(datetime.timedelta(1, 4000, 999888, minutes=22))
-        data = strip_header(ser)
-        self.assertEqual(b"91720.999888", data)
-        ser = serpent.serialize(datetime.timedelta(seconds=12345))
-        data = strip_header(ser)
-        self.assertEqual(b"12345.0", data)
-***/
-
-//@TODO: dictionary
-//@TODO: hashset
-//@TODO: collection
-//@TODO: datetime, timespan
-//@TODO: exception
-//@TODO: random class
-//@TODO: indentation.
+		[Serializable]
+		public class SerializeTestClass
+		{
+			public int x;
+			public string s {get; set;}
+			public int i {get; set;}
+		}
+		
+		public class UnserializableClass
+		{
+		}
+		
+		[Test]
+		public void TestClass()
+		{
+			Serializer serpent = new Serializer();
+			Object obj = new UnserializableClass();
+			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
+			
+			obj = new SerializeTestClass() {
+				i = 99,
+				s = "hi",
+				x = 42
+			};
+			byte[] ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("{'s':'hi','__class__':'SerializeTestClass','i':99}", S(ser));
+		}
+		
+		
+		[Test]
+		public void TestDateTime()
+		{
+			Serializer serpent = new Serializer();
+			
+			DateTime date = new DateTime(2013, 1, 20, 23, 59, 45, 999);
+			byte[] ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-01-20T23:59:45.999000'", S(ser));
+			
+			date = new DateTime(2013, 1, 20, 23, 59, 45);
+			ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-01-20T23:59:45'", S(ser));
+		
+			TimeSpan timespan = new TimeSpan(1, 10, 20, 30, 999);
+			ser = strip_header(serpent.Serialize(timespan));
+			Assert.AreEqual("123630.999", S(ser));
+		}
+		
+		[Test]
+		public void TestException()
+		{
+			Exception x = new ApplicationException("errormessage");
+			Serializer serpent = new Serializer();
+			byte[] ser = strip_header(serpent.Serialize(x));
+			Assert.AreEqual("{'args':None,'__class__':'ApplicationException','message':'errormessage','__exception__':True}", S(ser));
+		}
 	}
 }

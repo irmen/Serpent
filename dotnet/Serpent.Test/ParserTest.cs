@@ -33,15 +33,22 @@ namespace Razorvine.Serpent.Test
 		public void TestComments()
 		{
 			Parser p = new Parser();
-			Ast ast = p.Parse(@"# serpent utf-8 python2.7
+
+			Ast ast = p.Parse("[ 1, 2 ]");  // no header whatsoever
+			var visitor = new ObjectifyVisitor();
+			ast.Accept(visitor);
+			Object obj = visitor.GetObject();
+			Assert.AreEqual(new int[] {1,2}, obj);
+
+			ast = p.Parse(@"# serpent utf-8 python2.7
 [ 1, 2,
    # some comments here
    3, 4]    # more here
 # and here.
 ");			
-			var visitor = new ObjectifyVisitor();
+			visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
-			Object obj = visitor.GetObject();
+			obj = visitor.GetObject();
 			Assert.AreEqual(new int[] {1,2,3,4}, obj);
 		}
 

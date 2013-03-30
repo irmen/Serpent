@@ -24,14 +24,16 @@ namespace Razorvine.Serpent.Serializing
 	public class Serializer
 	{
 		public bool Indent;
+		public bool SetLiterals;
 		
 		/// <summary>
 		/// Initialize the serializer.
 		/// </summary>
 		/// <param name="indent">indent the output over multiple lines (default=false)</param>
-		public Serializer(bool indent=false)
+		public Serializer(bool indent=false, bool setLiterals=true)
 		{
 			this.Indent = indent;
+			this.SetLiterals = setLiterals;
 		}
 
 		/// <summary>
@@ -42,7 +44,11 @@ namespace Razorvine.Serpent.Serializing
 			using(MemoryStream ms = new MemoryStream())
 			using(TextWriter tw = new StreamWriter(ms, new UTF8Encoding(false)))			// don't write BOM
 			{
-				string header = string.Format("# serpent utf-8 dotnet-cli{0}\n", Environment.Version.ToString(2));
+				string header = "# serpent utf-8 ";
+				if(this.SetLiterals)
+					header += "python3.2\n";  //set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
+				else
+					header += "python2.6\n";
 				tw.Write(header);
 				Serialize(obj, tw, 0);
 				tw.Flush();
@@ -86,7 +92,12 @@ namespace Razorvine.Serpent.Serializing
 			}
 			else if(t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(HashSet<>)))
 			{
-				Serialize_set((ICollection) obj, tw, level);
+				IEnumerable x = (IEnumerable) obj;
+				ArrayList list = new ArrayList();
+				foreach(var elt in x)
+					list.Add(elt);
+				object[] setvalues = list.ToArray();
+				Serialize_set(setvalues, tw, level);
 			}
 			else if(obj is byte[])
 			{
@@ -136,6 +147,8 @@ namespace Razorvine.Serpent.Serializing
 				// tuple with 1 elements need special treatment (require a trailing comma)
 				tw.Write(",");
 			}
+			if(this.Indent && array.Count>0)
+				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write(")");
 		}
 
@@ -143,17 +156,40 @@ namespace Razorvine.Serpent.Serializing
 		{
 			tw.Write("[");
 			Serialize_sequence_elements(list, tw, level+1);
+			if(this.Indent && list.Count>0)
+				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write("]");
+		}
+		
+		protected int DictentryCompare(DictionaryEntry d1, DictionaryEntry d2)
+		{
+			IComparable c1 = d1.Key as IComparable;
+			IComparable c2 = d2.Key as IComparable;
+			
+			if(c1==null) return 0;
+			return c1.CompareTo(c2);
 		}
 
 		protected void Serialize_dict(IDictionary dict, TextWriter tw, int level)
 		{
+			if(dict.Count==0)
+			{
+				tw.Write("{}");
+				return;
+			}
 			int counter=0;
 			if(this.Indent)
 			{
 				string innerindent = string.Join("  ", new string[level+2]);
 				tw.Write("{\n");
-				foreach(DictionaryEntry x in dict)
+				DictionaryEntry[] entries = new DictionaryEntry[dict.Count];
+				dict.CopyTo(entries, 0);
+				try {
+					Array.Sort(entries, DictentryCompare);
+				} catch (InvalidOperationException) {
+					// ignore sorting of incomparable elements
+				}
+				foreach(DictionaryEntry x in entries)
 				{
 					tw.Write(innerindent);
 					Serialize(x.Key, tw, level+1);
@@ -163,7 +199,9 @@ namespace Razorvine.Serpent.Serializing
 					if(counter<dict.Count)
 						tw.Write(",\n");
 				}
-				tw.Write("\n}");
+				tw.Write("\n");
+				tw.Write(string.Join("  ", new string[level+1]));
+				tw.Write("}");
 			}
 			else
 			{
@@ -181,12 +219,22 @@ namespace Razorvine.Serpent.Serializing
 			}
 		}
 		
-		protected void Serialize_set(ICollection set, TextWriter tw, int level)
+		protected void Serialize_set(object[] set, TextWriter tw, int level)
 		{
-			if(set.Count>0)
+			if(set.Length>0)
 			{
 				tw.Write("{");
+				if(this.Indent)
+				{
+					try {
+						Array.Sort(set);
+					} catch (InvalidOperationException) {
+						// ignore sorting of incomparable elements.
+					}
+				}
 				Serialize_sequence_elements(set, tw, level+1);
+				if(this.Indent)
+					tw.Write(string.Join("  ", new string[level+1]));
 				tw.Write("}");
 			}
 			else
@@ -198,10 +246,34 @@ namespace Razorvine.Serpent.Serializing
 		
 		protected void Serialize_sequence_elements(ICollection elements, TextWriter tw, int level)
 		{
-			foreach(object e in elements)
+			if(elements.Count==0)
+				return;
+			int count=0;
+			if(this.Indent)
 			{
-				Serialize(e, tw, level);
-				tw.Write(",");
+				tw.Write("\n");
+				string innerindent = string.Join("  ", new string[level+1]);
+				foreach(object e in elements)
+				{
+					tw.Write(innerindent);
+					Serialize(e, tw, level);
+					count++;
+					if(count<elements.Count)
+					{
+						tw.Write(",\n");
+					}
+				}
+				tw.Write("\n");
+			}
+			else
+			{
+				foreach(object e in elements)
+				{
+					Serialize(e, tw, level);
+					count++;
+					if(count<elements.Count)
+						tw.Write(",");
+				}
 			}
 		}
 		
@@ -234,7 +306,10 @@ namespace Razorvine.Serpent.Serializing
 
 		protected void Serialize_datetime(DateTime dt, TextWriter tw, int level)
 		{
-			Serialize_string(dt.ToString("s"), tw, level);
+			if(dt.Millisecond>0)
+				Serialize_string(dt.ToString("yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture), tw, level);
+			else
+				Serialize_string(dt.ToString("s"), tw, level);
 		}
 
 		protected void Serialize_timespan(TimeSpan span, TextWriter tw, int level)
