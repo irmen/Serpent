@@ -79,6 +79,7 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(obj)
         data = strip_header(ser)
         self.assertEqual(b"(3,2,1)", data)
+
         obj = {3: "three", 4: "four", 2: "two", 1: "one"}
         ser = serpent.serialize(obj)
         data = strip_header(ser)
@@ -87,6 +88,9 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(obj)
         data = strip_header(ser)
         self.assertEqual(13, len(data))
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"{\n  1,\n  2,\n  3,\n  4,\n  5,\n  6\n}", data)      # sorted
 
         obj = set([3, "something"])
         ser = serpent.serialize(obj, indent=False)
@@ -103,6 +107,11 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(obj, indent=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  'something': 99,\n  3: 'three'\n}" or data == b"{\n  3: 'three',\n  'something': 99\n}")
+
+        obj = {3: "three", 4: "four", 5: "five", 2: "two", 1: "one"}
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"{\n  1: 'one',\n  2: 'two',\n  3: 'three',\n  4: 'four',\n  5: 'five'\n}", data)   # sorted
 
     def test_none(self):
         ser = serpent.serialize(None)
