@@ -29,8 +29,9 @@ namespace Razorvine.Serpent.Test
 			// serialize data structure to bytes
 			Serializer serpent = new Serializer(indent: true);
 			byte[] ser = serpent.Serialize(data);
+			// print it on the screen, but normally you'd store byte bytes in a file or transfer them across a network connection
 			Console.WriteLine("Serialized:");
-			Console.WriteLine(Encoding.UTF8.GetString(ser));
+			Console.WriteLine(Encoding.UTF8.GetString(ser));  
 			
 			// parse the serialized bytes back into an abstract syntax tree of the datastructure
 			Parser parser = new Parser();
