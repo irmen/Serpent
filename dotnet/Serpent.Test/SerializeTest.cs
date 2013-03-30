@@ -238,7 +238,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual('}', ser[ser.Length-1]);
 			Assert.AreNotEqual(',', ser[ser.Length-2]);
 			parsed = p.Parse(ser).Root.ToString();
-            Assert.AreEqual("{42:'fortytwo','status':False,'name':'Sally','sixteen-and-half':16.5}", parsed);
+            Assert.AreEqual(69, parsed.Length);
             
             // test indentation
             serpent.Indent=true;
@@ -246,8 +246,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual('}', ser[ser.Length-1]);
 			Assert.AreEqual('\n', ser[ser.Length-2]);
 			Assert.AreNotEqual(',', ser[ser.Length-3]);
+			Assert.AreEqual("{\n  'name': 'Sally',\n  'status': False,\n  42: 'fortytwo',\n  'sixteen-and-half': 16.5\n}", S(strip_header(ser)));
 			parsed = p.Parse(ser).Root.ToString();
-            Assert.AreEqual("{42:'fortytwo','status':False,'name':'Sally','sixteen-and-half':16.5}", parsed);
+            Assert.AreEqual(69, parsed.Length);
             serpent.Indent=false;
             
             // generic Dictionary test
@@ -263,12 +264,14 @@ namespace Razorvine.Serpent.Test
 		[Test]
 		public void TestBytes()
 		{
-			Serializer serpent = new Serializer();
-			Parser p = new Parser();
+			Serializer serpent = new Serializer(indent: true);
 			byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
 			byte[] ser = serpent.Serialize(bytes);
+			Assert.AreEqual("{\n  'data': 'YWJjZGVm',\n  'encoding': 'base64'\n}", S(strip_header(ser)));
+
+			Parser p = new Parser();
 			string parsed = p.Parse(ser).Root.ToString();
-            Assert.AreEqual("{'encoding':'base64','data':'YWJjZGVm'}", parsed);
+            Assert.AreEqual(39, parsed.Length);
 		}
 		
 		[Test]
@@ -389,7 +392,7 @@ namespace Razorvine.Serpent.Test
 		[Test]
 		public void TestClass()
 		{
-			Serializer serpent = new Serializer();
+			Serializer serpent = new Serializer(indent: true);
 			Object obj = new UnserializableClass();
 			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
 			
@@ -399,7 +402,7 @@ namespace Razorvine.Serpent.Test
 				x = 42
 			};
 			byte[] ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("{'s':'hi','__class__':'SerializeTestClass','i':99}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
 		}
 		
 		
@@ -425,9 +428,9 @@ namespace Razorvine.Serpent.Test
 		public void TestException()
 		{
 			Exception x = new ApplicationException("errormessage");
-			Serializer serpent = new Serializer();
+			Serializer serpent = new Serializer(indent:true);
 			byte[] ser = strip_header(serpent.Serialize(x));
-			Assert.AreEqual("{'args':None,'__class__':'ApplicationException','message':'errormessage','__exception__':True}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'message': 'errormessage'\n}", S(ser));
 		}
 	}
 }
