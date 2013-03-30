@@ -244,7 +244,6 @@ namespace Razorvine.Serpent.Test
             serpent.Indent=true;
             ser = serpent.Serialize(ht);
             string indented = S(strip_header(ser));
-			Console.WriteLine(indented);
 			Assert.AreEqual('}', ser[ser.Length-1]);
 			Assert.AreEqual('\n', ser[ser.Length-2]);
 			Assert.AreNotEqual(',', ser[ser.Length-3]);

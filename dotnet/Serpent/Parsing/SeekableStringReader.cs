@@ -124,13 +124,19 @@ namespace Razorvine.Serpent.Parsing
 		}
 		
 		/// <summary>
-		/// Read away any whitespace.
+		/// Read away any whitespace. 
+		/// If a comment follows ('# bla bla') read away that as well
 		/// </summary>
 		public void SkipWhitespace()
 		{
 			while(HasMore())
 			{
 				char c=Read();
+				if(c=='#')
+				{
+					ReadUntil('\n');
+					return;
+				}
 				if(!Char.IsWhiteSpace(c))
 				{
 					Rewind(1);

@@ -42,6 +42,7 @@ namespace Razorvine.Serpent.Parsing
 			
 			try {
 				ast.Root = ParseExpr(sr);
+				sr.SkipWhitespace();
 				if(sr.HasMore())
 					throw new ParseException("garbage at end of expression");
 				return ast;
@@ -75,7 +76,7 @@ namespace Razorvine.Serpent.Parsing
 		Ast.INode ParseCompound(SeekableStringReader sr)
 		{
 			// compound =  tuple | dict | list | set .
-			
+			sr.SkipWhitespace();
 			switch(sr.Peek())
 			{
 				case '[':
@@ -115,6 +116,7 @@ namespace Razorvine.Serpent.Parsing
 			//tuple_more      = '(' expr_list ')' .
 			
 			sr.Read();	// (
+			sr.SkipWhitespace();
 			Ast.TupleNode tuple = new Ast.TupleNode();
 			if(sr.Peek() == ')')
 			{
@@ -195,6 +197,7 @@ namespace Razorvine.Serpent.Parsing
 		{
 			// set = '{' expr_list '}' .
 			sr.Read();	// {
+			sr.SkipWhitespace();
 			Ast.SetNode setnode = new Ast.SetNode();
 			List<Ast.INode> elts = ParseExprList(sr);
 			if(!sr.HasMore())
@@ -215,6 +218,7 @@ namespace Razorvine.Serpent.Parsing
 			// list_empty      = '[]' .
 			// list_nonempty   = '[' expr_list ']' .
 			sr.Read();	// [
+			sr.SkipWhitespace();
 			Ast.ListNode list = new Ast.ListNode();
 			if(sr.Peek() == ']')
 			{
@@ -238,6 +242,7 @@ namespace Razorvine.Serpent.Parsing
 			//keyvalue        = expr ':' expr .
 			
 			sr.Read();	// {
+			sr.SkipWhitespace();
 			Ast.DictNode dict = new Ast.DictNode();
 			if(sr.Peek() == '}')
 			{
@@ -270,6 +275,7 @@ namespace Razorvine.Serpent.Parsing
 		public Ast.INode ParseSingle(SeekableStringReader sr)
 		{
 			// single =  int | float | complex | string | bool | none .
+			sr.SkipWhitespace();
 			switch(sr.Peek())
 			{
 				case 'N':
