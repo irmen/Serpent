@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Example.cs" />
     <Compile Include="ParserTest.cs" />
     <Compile Include="SerializeTest.cs" />
     <Compile Include="StringreaderTest.cs" />
