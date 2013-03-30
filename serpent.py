@@ -41,7 +41,7 @@ import sys
 import types
 import os
 
-__version__ = "0.5"
+__version__ = "0.6"
 __all__ = ["serialize", "deserialize"]
 
 
@@ -238,7 +238,12 @@ class Serializer(object):
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
             out.append(b"{\n")
-            for k, v in sorted(dict_obj.items()):
+            dict_items = dict_obj.items()
+            try:
+                sorted_items = sorted(dict_items)
+            except TypeError:  # can occur when elements can't be ordered (Python 3.x)
+                sorted_items = dict_items
+            for k, v in sorted_items:
                 out.append(indent_chars_inside)
                 self._serialize(k, out, level + 1)
                 out.append(b": ")
@@ -269,7 +274,11 @@ class Serializer(object):
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
             out.append(b"{\n")
-            for elt in sorted(set_obj):
+            try:
+                sorted_elts = sorted(set_obj)
+            except TypeError:   # can occur when elements can't be ordered (Python 3.x)
+                sorted_elts = set_obj
+            for elt in sorted_elts:
                 out.append(indent_chars_inside)
                 self._serialize(elt, out, level + 1)
                 out.append(b",\n")
@@ -299,7 +308,7 @@ class Serializer(object):
     def ser_datetime_timedelta(self, timedelta_obj, out, level):
         if os.name == "java" or sys.version_info < (2, 7):
             # jython bug http://bugs.jython.org/issue2010
-            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds)*10**6 + timedelta_obj.microseconds) / 10**6
+            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10**6 + timedelta_obj.microseconds) / 10**6
         else:
             secs = timedelta_obj.total_seconds()
         self._serialize(secs, out, level)

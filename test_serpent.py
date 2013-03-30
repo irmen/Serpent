@@ -15,7 +15,7 @@ import array
 import serpent
 
 
-if sys.version_info >= (3,0):
+if sys.version_info >= (3, 0):
     unicode = str
     unichr = chr
 
@@ -32,7 +32,7 @@ class TestDeserialize(unittest.TestCase):
     def test_deserialize(self):
         data = serpent.deserialize(b"555")
         self.assertEqual(555, data)
-        unicodestring = "euro"+unichr(0x20ac)
+        unicodestring = "euro" + unichr(0x20ac)
         encoded = repr(unicodestring).encode("utf-8")
         data = serpent.deserialize(encoded)
         self.assertEqual(unicodestring, data)
@@ -49,6 +49,49 @@ class TestBasics(unittest.TestCase):
         hdr = "# serpent utf-8 python%s.%s" % sys.version_info[:2]
         hdr = hdr.encode("utf-8")
         self.assertEqual(hdr, header)
+
+    def test_sorting(self):
+        obj = [3, 2, 1]
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"[3,2,1]", data)
+        obj = (3, 2, 1)
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"(3,2,1)", data)
+        obj = {3: "three", 4: "four", 2: "two", 1: "one"}
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"{1:'one',2:'two',3:'three',4:'four'}", data)
+        obj = {3, 4, 2, 1, 6, 5}
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        if sys.version_info <= (3, 2):
+            self.assertEqual(b"(1,2,3,4,5,6)", data)
+        else:
+            self.assertEqual(b"{1,2,3,4,5,6}", data)
+
+        obj = {3, "something"}
+        ser = serpent.serialize(obj, indent=False)
+        data = strip_header(ser)
+        if sys.version_info <= (3, 2):
+            self.assertEqual(b"(3,'something')", data)
+        else:
+            self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        if sys.version_info <= (3, 2):
+            self.assertEqual(b"(\n  3,\n  'something'\n)", data)
+        else:
+            self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
+
+        obj = {3: "three", "something": 99}
+        ser = serpent.serialize(obj, indent=False)
+        data = strip_header(ser)
+        self.assertTrue(data == b"{'something':99,3:'three'}" or data == b"{3:'three','something':99}")
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        self.assertTrue(data == b"{\n  'something': 99,\n  3: 'three'\n}" or data == b"{\n  3: 'three',\n  'something': 99\n}")
 
     def test_none(self):
         ser = serpent.serialize(None)
@@ -83,10 +126,105 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"(2+3j)", data)
 
-    def test_others(self):
+    def test_bool(self):
         ser = serpent.serialize(True)
         data = strip_header(ser)
         self.assertEqual(b"True", data)
+
+    def test_dict(self):
+        ser = serpent.serialize({})
+        data = strip_header(ser)
+        self.assertEqual(b"{}", data)
+        ser = serpent.serialize({}, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"{}", data)
+
+        mydict = {
+            42: 'fortytwo',
+            'status': False,
+            'name': 'Sally',
+            'sixteen-and-half': 16.5
+        }
+        ser = serpent.serialize(mydict)
+        data = strip_header(ser)
+        self.assertEqual(69, len(data))
+        if sys.version_info < (3, 0):
+            self.assertEqual(b"{", data[0])
+            self.assertEqual(b"}", data[-1])
+        else:
+            self.assertEqual(ord("{"), data[0])
+            self.assertEqual(ord("}"), data[-1])
+        ser = serpent.serialize(mydict, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(86, len(data))
+        if sys.version_info < (3, 0):
+            self.assertEqual(b"{", data[0])
+            self.assertEqual(b"}", data[-1])
+        else:
+            self.assertEqual(ord("{"), data[0])
+            self.assertEqual(ord("}"), data[-1])
+
+    def test_list(self):
+        ser = serpent.serialize([])
+        data = strip_header(ser)
+        self.assertEqual(b"[]", data)
+        ser = serpent.serialize([], indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"[]", data)
+
+        mylist = [42, "Sally", 16.5]
+        ser = serpent.serialize(mylist)
+        data = strip_header(ser)
+        self.assertEqual(b"[42,'Sally',16.5]", data)
+        ser = serpent.serialize(mylist, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"""[
+  42,
+  'Sally',
+  16.5
+]""", data)
+
+    def test_tuple(self):
+        ser = serpent.serialize(tuple())
+        data = strip_header(ser)
+        self.assertEqual(b"()", data)
+        ser = serpent.serialize(tuple(), indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"()", data)
+
+        mytuple = (42, "Sally", 16.5)
+        ser = serpent.serialize(mytuple)
+        data = strip_header(ser)
+        self.assertEqual(b"(42,'Sally',16.5)", data)
+        ser = serpent.serialize(mytuple, indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"""(
+  42,
+  'Sally',
+  16.5
+)""", data)
+
+    def test_set(self):
+        ser = serpent.serialize(set())
+        data = strip_header(ser)
+        self.assertEqual(b"()", data)
+        ser = serpent.serialize(set(), indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"()", data)
+
+        myset = {42, "Sally"}
+        ser = serpent.serialize(myset)
+        data = strip_header(ser)
+        if sys.version_info <= (3, 2):
+            self.assertEqual(b"(42,'Sally')", data)
+        else:
+            self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
+        ser = serpent.serialize(myset, indent=True)
+        data = strip_header(ser)
+        if sys.version_info <= (3, 2):
+            self.assertEqual(b"(\n  42,\n  'Sally'\n)", data)
+        else:
+            self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):
@@ -187,7 +325,7 @@ class TestIndent(unittest.TestCase):
 
     def test_indent_sorting(self):
         # non-indented should not be sorted, indented should
-        data = {"ee": 1, "dd": 1, "cc": 1, "bb": 1, "aa": 1, 'ff':1, 'hh':1, 'gg':1 }
+        data = {"ee": 1, "dd": 1, "cc": 1, "bb": 1, "aa": 1, 'ff': 1, 'hh': 1, 'gg': 1}
         ser = serpent.serialize(data, False)
         ser = strip_header(ser)
         self.assertNotEqual(b"{'aa':1,'bb':1,'cc':1,'dd':1,'ee':1,'ff':1,'gg':1,'hh':1}", ser)
@@ -246,10 +384,27 @@ class TestIndent(unittest.TestCase):
   'one': 1
 }""", ser)
 
+        data = {"first": [1, 2, ("a", "b")], "second": {1: False}}
+        ser = serpent.serialize(data, indent=True).decode("utf-8")
+        _, _, ser = ser.partition("\n")
+        self.assertEqual("""{
+  'first': [
+    1,
+    2,
+    (
+      'a',
+      'b'
+    )
+  ],
+  'second': {
+    1: False
+  }
+}""", ser)
+
 
 class TestFiledump(unittest.TestCase):
     def testFile(self):
-        if sys.version_info < (3,2):
+        if sys.version_info < (3, 2):
             self.skipTest("testdatafile contains stuff that is not supported by ast.literal_eval on Python < 3.2")
         with open("testserpent.utf8.bin", "rb") as file:
             data = file.read()
