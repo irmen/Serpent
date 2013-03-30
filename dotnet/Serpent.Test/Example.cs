@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Text;
 using System.Linq;
-
 using NUnit.Framework;
 using Razorvine.Serpent.Parsing;
 using Razorvine.Serpent.Serializing;
@@ -12,18 +12,21 @@ namespace Razorvine.Serpent.Test
 	/// <summary>
 	/// Example usage.
 	/// </summary>
-	/// 
 	[TestFixture]
+	[Ignore("example")]
 	public class Example 
 	{
 		[Test]
-		[Ignore("example")]
 		public void ExampleUsage()
 		{
 			var data = new Dictionary<string, object> {
 				{"tuple", new int[] { 1,2,3 } },
 				{"date", DateTime.Now},
-				{"set", new HashSet<string> { "a", "b", "c" } }
+				{"set", new HashSet<string> { "a", "b", "c" } },
+				{"class", new SampleClass() {
+						name = "Sally",
+						age = 26
+					}}
 			};
 			
 			// serialize data structure to bytes
@@ -52,6 +55,18 @@ namespace Razorvine.Serpent.Test
 			Console.Write("Set items: ");
 			HashSet<object> set = (HashSet<object>) dict["set"];
 			Console.WriteLine(string.Join(", ", set.Select(e=>e.ToString()).ToArray()));
+			Console.WriteLine("Class attributes:");
+			var clazz = (IDictionary<object, object>) dict["class"];	// custom classes are serialized as dicts
+			Console.WriteLine("type: {0}", clazz["__class__"]);
+			Console.WriteLine("name: {0}", clazz["name"]);
+			Console.WriteLine("age: {0}", clazz["age"]);
+		}
+		
+		[Serializable]
+		public class SampleClass
+		{
+			public int age {get;set;}
+			public string name {get;set;}
 		}
 	}
 }

@@ -260,6 +260,10 @@ class TestBasics(unittest.TestCase):
         class Class2(object):
             def __getstate__(self):
                 return {"attr": 42}
+        class SlotsClass(object):
+            __slots__ = ["attr"]
+            def __init__(self):
+                self.attr = 1
         c = Class1()
         ser = serpent.serialize(c)
         data = serpent.deserialize(ser)
@@ -268,6 +272,10 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(c)
         data = serpent.deserialize(ser)
         self.assertEqual({'attr': 42}, data)
+        c = SlotsClass()
+        ser = serpent.serialize(c)
+        data = serpent.deserialize(ser)
+        self.assertEqual({'__class__': 'SlotsClass', 'attr': 1}, data)
 
     def test_array(self):
         ser = serpent.serialize(array.array('u', unicode("unicode")))
