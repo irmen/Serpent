@@ -27,6 +27,7 @@ Caveat: when serializing, set literals are converted into tuples on Python <3.2.
 of the ast module in earlier python versions. Python <3.2 will fail to read serpent data produced
 by Python 3.2+ which contains set literals! So it's perhaps best to avoid set literals altogether.
 Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal_eval in 2.6)
+Note: because the serialized format is just valid Python source code, it can contain comments.
 
 @TODO: java implementation, both serializers and deserializers
 

@@ -50,6 +50,15 @@ class TestBasics(unittest.TestCase):
         hdr = hdr.encode("utf-8")
         self.assertEqual(hdr, header)
 
+    def test_comments(self):
+        ser = b"""# serpent utf-8 python2.7
+[ 1, 2,
+   # some comments here
+   3, 4]    # more here
+# and here."""
+        data = serpent.deserialize(ser)
+        self.assertEqual([1,2,3,4], data)
+
     def test_sorting(self):
         obj = [3, 2, 1]
         ser = serpent.serialize(obj)

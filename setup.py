@@ -39,6 +39,7 @@ setup(
     - it outputs the keys of sets and dicts in alphabetical order when pretty-printing
     - it works around a few quirks of ast.literal_eval() on the various Python implementations
 
+    Serpent allows comments in the serialized data (because it is just Python source code).
     Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a recursion error.
 
     Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.

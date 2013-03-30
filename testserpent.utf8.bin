@@ -1,17 +1,18 @@
 # serpent utf-8 python3.3
 {
+  # serpent supports comments inside the serialized data
   'bytes': {
     'data': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==',
     'encoding': 'base64'
   },
-  'dates': [
+  'dates': [            # some dates are here
     '2013-01-26T03:32:39.007001',
     '23:59:45.999888',
     500.0
   ],
   'dict': {
     0: '0000',
-    1: '1111',
+    1: '1111',             # some more comments
     2: '2222',
     3: '3333',
     4: '4444',
@@ -23,7 +24,7 @@
   },
   'exc': {
     '__class__': 'ZeroDivisionError',
-    '__exception__': True,
+    '__exception__': True,               # this is an exception
     'args': (
       'fault',
     ),
@@ -67,6 +68,6 @@
     7,
     8
   ),
-  'unicode': '€',
+  'unicode': '€',            # the feared unicode.
   'uuid': '57e12d82-511f-456b-ab65-f765144c6a90'
 }
