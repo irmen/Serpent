@@ -7,9 +7,6 @@
 
 package net.razorvine.serpent;
 
-using System;
-using System.Collections.Generic;
-
 namespace Razorvine.Serpent
 {
 	/// <summary>
