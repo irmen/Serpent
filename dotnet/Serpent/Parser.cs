@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace Razorvine.Serpent.Parsing
+namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// Parse a Python literal into an Ast (abstract syntax tree).

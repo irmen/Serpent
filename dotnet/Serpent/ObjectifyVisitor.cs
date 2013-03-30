@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Razorvine.Serpent.Parsing
+namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// Ast nodevisitor that turns the AST into actual .NET objects (array, int, IDictionary, string, etc...)

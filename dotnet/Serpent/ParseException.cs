@@ -8,7 +8,7 @@
 
 using System;
 
-namespace Razorvine.Serpent.Parsing
+namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// A problem occurred during parsing.

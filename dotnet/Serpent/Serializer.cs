@@ -15,7 +15,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace Razorvine.Serpent.Serializing
+namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// Serialize an object tree to a byte stream.

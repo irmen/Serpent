@@ -4,8 +4,7 @@ using System.Security;
 using System.Text;
 using System.Linq;
 using NUnit.Framework;
-using Razorvine.Serpent.Parsing;
-using Razorvine.Serpent.Serializing;
+using Razorvine.Serpent;
 
 namespace Razorvine.Serpent.Test
 {

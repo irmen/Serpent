@@ -13,8 +13,6 @@ using System.Runtime.Serialization;
 using System.Text;
 
 using NUnit.Framework;
-using Razorvine.Serpent.Parsing;
-using Razorvine.Serpent.Serializing;
 using Hashtable = System.Collections.Hashtable;
 using IDictionary = System.Collections.IDictionary;
 

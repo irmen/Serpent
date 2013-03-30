@@ -51,18 +51,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ast.cs" />
     <Compile Include="ComplexNumber.cs" />
-    <Compile Include="Parsing\Ast.cs" />
-    <Compile Include="Parsing\ObjectifyVisitor.cs" />
-    <Compile Include="Parsing\ParseException.cs" />
-    <Compile Include="Parsing\Parser.cs" />
-    <Compile Include="Parsing\SeekableStringReader.cs" />
+    <Compile Include="ObjectifyVisitor.cs" />
+    <Compile Include="ParseException.cs" />
+    <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Serializing\Serializer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Parsing" />
-    <Folder Include="Serializing" />
+    <Compile Include="SeekableStringReader.cs" />
+    <Compile Include="Serializer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

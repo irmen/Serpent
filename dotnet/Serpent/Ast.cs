@@ -13,7 +13,7 @@ using System.Globalization;
 using System.Text;
 using System.Linq;
 
-namespace Razorvine.Serpent.Parsing
+namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// Abstract syntax tree for the literal expression. This is what the parser returns.

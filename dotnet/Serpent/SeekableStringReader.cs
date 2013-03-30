@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Razorvine.Serpent.Parsing
+namespace Razorvine.Serpent
 {
 	
 	/// <summary>
