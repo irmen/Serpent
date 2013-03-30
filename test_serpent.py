@@ -59,6 +59,10 @@ class TestBasics(unittest.TestCase):
         data = serpent.deserialize(ser)
         self.assertEqual([1,2,3,4], data)
 
+        ser = b"[ 1, 2 ]"       # no header whatsoever
+        data = serpent.deserialize(ser)
+        self.assertEqual([1,2], data)
+
     def test_sorting(self):
         obj = [3, 2, 1]
         ser = serpent.serialize(obj)
