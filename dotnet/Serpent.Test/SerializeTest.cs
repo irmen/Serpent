@@ -8,6 +8,8 @@
 
 using System;
 using System.Collections.Generic;
+using Hashtable = System.Collections.Hashtable;
+using IDictionary = System.Collections.IDictionary;
 using System.Text;
 
 using NUnit.Framework;
@@ -146,6 +148,53 @@ namespace Razorvine.Serpent.Test
 			data = strip_header(ser);
 			Assert.AreEqual(B("False"),data);
 		}
+		
+		[Test]
+		public void TestDictionary()
+		{
+			Serializer serpent = new Serializer();
+			Parser p = new Parser();
+			
+			// test empty dict
+			IDictionary ht = new Hashtable();
+			byte[] ser = serpent.Serialize(ht);
+			Assert.AreEqual(Encoding.UTF8.GetBytes("{}"), strip_header(ser));
+			string parsed = p.Parse(ser).Root.ToString();
+            Assert.AreEqual("{}", parsed);
+			
+            // empty dict with indentation
+            serpent.Indent=true;
+			ser = serpent.Serialize(ht);
+			Assert.AreEqual(Encoding.UTF8.GetBytes("{}"), strip_header(ser));
+			parsed = p.Parse(ser).Root.ToString();
+            Assert.AreEqual("{}", parsed);
+			
+			// test dict with values
+			serpent.Indent=false;
+			ht = new Hashtable() {
+				{42, "fortytwo"},
+				{"sixteen-and-half", 16.5},
+				{"name", "Sally"},
+				{"status", false}
+			};
+			
+			ser = serpent.Serialize(ht);
+			Assert.AreEqual('}', ser[ser.Length-1]);
+			Assert.AreNotEqual(',', ser[ser.Length-2]);
+			parsed = p.Parse(ser).Root.ToString();
+            Assert.AreEqual("{42:'fortytwo','status':False,'name':'Sally','sixteen-and-half':16.5}", parsed);
+            
+            // test indentation
+            serpent.Indent=true;
+            ser = serpent.Serialize(ht);
+            string indented = Encoding.UTF8.GetString(strip_header(ser));
+			Console.WriteLine(indented);
+			Assert.AreEqual('}', ser[ser.Length-1]);
+			Assert.AreEqual('\n', ser[ser.Length-2]);
+			Assert.AreNotEqual(',', ser[ser.Length-3]);
+			parsed = p.Parse(ser).Root.ToString();
+            Assert.AreEqual("{42:'fortytwo','status':False,'name':'Sally','sixteen-and-half':16.5}", parsed);
+		}
 
 		[Test]
 		public void TestBytes()
@@ -154,12 +203,77 @@ namespace Razorvine.Serpent.Test
 			Parser p = new Parser();
 			byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
 			byte[] ser = serpent.Serialize(bytes);
-			Console.WriteLine(Encoding.UTF8.GetString(ser));
 			string parsed = p.Parse(ser).Root.ToString();
-			Console.WriteLine(parsed);
-            Assert.AreEqual("{'encoding': 'base64', 'data': 'YWJjZGVm'}@TODO", parsed);
+            Assert.AreEqual("{'encoding':'base64','data':'YWJjZGVm'}", parsed);
 		}
-/***		
+		
+		[Test]
+		public void TestIndentation()
+		{
+			/***
+        data = {"first": [1,2, ("a", "b")], "second": {1: False}}
+        ser = serpent.serialize(data, indent=True).decode("utf-8")
+        _, _, ser = ser.partition("\n")
+        self.assertEqual("""{
+  'first': [
+    1,
+    2,
+    (
+      'a',
+      'b'
+    )
+  ],
+  'second': {
+    1: False
+  }
+}""", ser)
+
+***/			 
+			Assert.Fail("todo");
+		}
+		
+		[Test]
+		public void TestSorting()
+		{
+/***
+    def test_sorting(self):
+        obj = [3,2,1]
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"[3,2,1]", data)
+        obj = (3,2,1)
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"(3,2,1)", data)
+        obj = {3: "three", 4: "four", 2:"two", 1:"one"}
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"{1:'one',2:'two',3:'three',4:'four'}", data)
+        obj = {3,4,2,1,6,5}
+        ser = serpent.serialize(obj)
+        data = strip_header(ser)
+        self.assertEqual(b"{1,2,3,4,5,6}", data)
+
+        obj = {3, "something"}
+        ser = serpent.serialize(obj, indent=False)
+        data = strip_header(ser)
+        self.assertTrue(data==b"{3,'something'}" or data==b"{'something',3}")
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        self.assertTrue(data==b"{\n  3,\n  'something'\n}" or data==b"{\n  'something',\n  3\n}")
+
+        obj = {3:"three", "something":99}
+        ser = serpent.serialize(obj, indent=False)
+        data = strip_header(ser)
+        self.assertTrue(data==b"{'something':99,3:'three'}" or data==b"{3:'three','something':99}")
+        ser = serpent.serialize(obj, indent=True)
+        data = strip_header(ser)
+        self.assertTrue(data==b"{\n  'something': 99,\n  3: 'three'\n}" or data==b"{\n  3: 'three',\n  'something': 99\n}")
+***/			
+			Assert.Fail("todo");
+		}
+
+/***
 
     def test_class(self):
         class Class1(object):

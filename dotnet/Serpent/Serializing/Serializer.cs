@@ -148,15 +148,37 @@ namespace Razorvine.Serpent.Serializing
 
 		protected void Serialize_dict(IDictionary dict, TextWriter tw, int level)
 		{
-			tw.Write("{");
-			foreach(DictionaryEntry x in dict)
+			int counter=0;
+			if(this.Indent)
 			{
-				Serialize(x.Key, tw, level);
-				tw.Write(":");
-				Serialize(x.Value, tw, level);
-				tw.Write(",");
+				string innerindent = string.Join("  ", new string[level+2]);
+				tw.Write("{\n");
+				foreach(DictionaryEntry x in dict)
+				{
+					tw.Write(innerindent);
+					Serialize(x.Key, tw, level+1);
+					tw.Write(": ");
+					Serialize(x.Value, tw, level+1);
+					counter++;
+					if(counter<dict.Count)
+						tw.Write(",\n");
+				}
+				tw.Write("\n}");
 			}
-			tw.Write("}");
+			else
+			{
+				tw.Write("{");
+				foreach(DictionaryEntry x in dict)
+				{
+					Serialize(x.Key, tw, level+1);
+					tw.Write(":");
+					Serialize(x.Value, tw, level+1);
+					counter++;
+					if(counter<dict.Count)
+						tw.Write(",");
+				}
+				tw.Write("}");
+			}
 		}
 		
 		protected void Serialize_set(ICollection set, TextWriter tw, int level)

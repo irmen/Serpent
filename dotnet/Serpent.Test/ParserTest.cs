@@ -28,7 +28,23 @@ namespace Razorvine.Serpent.Test
 			Assert.IsNull(p.Parse("").Root);
 			Assert.IsNotNull(p.Parse("# comment\n42\n").Root);
 		}
-		
+
+		[Test]
+		public void TestComments()
+		{
+			Parser p = new Parser();
+			Ast ast = p.Parse(@"# serpent utf-8 python2.7
+[ 1, 2,
+   # some comments here
+   3, 4]    # more here
+# and here.
+");			
+			var visitor = new ObjectifyVisitor();
+			ast.Accept(visitor);
+			Object obj = visitor.GetObject();
+			Assert.AreEqual(new int[] {1,2,3,4}, obj);
+		}
+
 		[Test]
 		public void TestPrimitives()
 		{
