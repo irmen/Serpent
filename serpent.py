@@ -352,7 +352,10 @@ class Serializer(object):
                 value["__class__"] = type(obj).__name__
             except TypeError:
                 if hasattr(obj, "__slots__"):
-                    value = {slot: getattr(obj, slot) for slot in obj.__slots__}   # use the __slots__ instead of the vars dict
+                    # use the __slots__ instead of the vars dict
+                    value = {}
+                    for slot in obj.__slots__:
+                        value[slot] = getattr(obj, slot)
                     value["__class__"] = type(obj).__name__
                 else:
                     raise TypeError("don't know how to serialize class " + str(type(obj)) + ". Give it vars() or an appropriate __getstate__")
