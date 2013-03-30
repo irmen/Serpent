@@ -188,6 +188,8 @@ namespace Razorvine.Serpent.Serializing
 					Array.Sort(entries, DictentryCompare);
 				} catch (InvalidOperationException) {
 					// ignore sorting of incomparable elements
+				} catch (ArgumentException) {
+					// ignore sorting of incomparable elements
 				}
 				foreach(DictionaryEntry x in entries)
 				{
@@ -229,6 +231,8 @@ namespace Razorvine.Serpent.Serializing
 					try {
 						Array.Sort(set);
 					} catch (InvalidOperationException) {
+						// ignore sorting of incomparable elements.
+					} catch (ArgumentException) {
 						// ignore sorting of incomparable elements.
 					}
 				}
