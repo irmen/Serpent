@@ -63,7 +63,7 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(obj)
         data = strip_header(ser)
         self.assertEqual(b"{1:'one',2:'two',3:'three',4:'four'}", data)
-        obj = {3, 4, 2, 1, 6, 5}
+        obj = set([3, 4, 2, 1, 6, 5])
         ser = serpent.serialize(obj)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
@@ -71,7 +71,7 @@ class TestBasics(unittest.TestCase):
         else:
             self.assertEqual(b"{1,2,3,4,5,6}", data)
 
-        obj = {3, "something"}
+        obj = set([3, "something"])
         ser = serpent.serialize(obj, indent=False)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
@@ -212,7 +212,7 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"()", data)
 
-        myset = {42, "Sally"}
+        myset = set([42, "Sally"])
         ser = serpent.serialize(myset)
         data = strip_header(ser)
         if sys.version_info <= (3, 2):
