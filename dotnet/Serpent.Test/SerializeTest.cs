@@ -246,7 +246,11 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual('}', ser[ser.Length-1]);
 			Assert.AreEqual('\n', ser[ser.Length-2]);
 			Assert.AreNotEqual(',', ser[ser.Length-3]);
-			Assert.AreEqual("{\n  'name': 'Sally',\n  'status': False,\n  42: 'fortytwo',\n  'sixteen-and-half': 16.5\n}", S(strip_header(ser)));
+			string ser_str = S(strip_header(ser));
+			Assert.IsTrue(ser_str.Contains("'name': 'Sally'"));
+			Assert.IsTrue(ser_str.Contains("'status': False"));
+			Assert.IsTrue(ser_str.Contains("42: 'fortytwo'"));
+			Assert.IsTrue(ser_str.Contains("'sixteen-and-half': 16.5"));
 			parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual(69, parsed.Length);
             serpent.Indent=false;
@@ -257,7 +261,7 @@ namespace Razorvine.Serpent.Test
             	{ 2, "two" },
             };
             ser = serpent.Serialize(mydict);
-            string ser_str = S(strip_header(ser));
+            ser_str = S(strip_header(ser));
             Assert.IsTrue(ser_str=="{2:'two',1:'one'}" || ser_str=="{1:'one',2:'two'}");
 		}
 
