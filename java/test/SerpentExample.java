@@ -73,7 +73,7 @@ public class SerpentExample {
 		System.out.println("\nParsed AST:");
 		System.out.println(ast.Root.toString());
 		
-		// turn the Ast into regular .net objects
+		// turn the Ast into regular Java objects
 		ObjectifyVistior visitor = new ObjectifyVisitor();
 		ast.Accept(visitor);
 		var dict = (IDictionary<Object, Object>) visitor.GetObject();
