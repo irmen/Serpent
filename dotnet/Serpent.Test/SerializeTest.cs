@@ -434,5 +434,19 @@ namespace Razorvine.Serpent.Test
 			byte[] ser = strip_header(serpent.Serialize(x));
 			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'message': 'errormessage'\n}", S(ser));
 		}
+		
+		enum FooType {
+			Foobar,
+			Jarjar
+		}
+
+		[Test]
+		public void TestEnum()
+		{
+			FooType e = FooType.Jarjar;
+			Serializer serpent = new Serializer();
+			byte[] ser = strip_header(serpent.Serialize(e));
+			Assert.AreEqual("'Jarjar'", S(ser));
+		}
 	}
 }

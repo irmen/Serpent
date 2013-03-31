@@ -86,6 +86,10 @@ namespace Razorvine.Serpent
 			{
 				Serialize_decimal((decimal)obj, tw, level);
 			}
+			else if(obj is Enum)
+			{
+				Serialize_string(obj.ToString(), tw, level);
+			}
 			else if(obj is IDictionary)
 			{
 				Serialize_dict((IDictionary)obj, tw, level);
