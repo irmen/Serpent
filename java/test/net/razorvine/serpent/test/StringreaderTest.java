@@ -8,6 +8,7 @@
 package net.razorvine.serpent.test;
 
 import static org.junit.Assert.*;
+import net.razorvine.serpent.ParseException;
 import net.razorvine.serpent.SeekableStringReader;
 
 import org.junit.Test;
@@ -30,11 +31,17 @@ public class StringreaderTest
 		s2.SkipWhitespace();
 		assertEquals("skip", s2.ReadUntil('.'));
 		s2.SkipWhitespace();
+		assertTrue(s2.HasMore());
+		assertEquals("whit", s2.Peek(4));
 		assertEquals("whitespace", s2.ReadUntil('.'));
 		s2.SkipWhitespace();
 		assertFalse(s2.HasMore());
-		s2.Peek();
-		// TODO Assert.Throws<IndexOutOfRangeException>(()=>s2.Peek());
+		try {
+			s2.Peek();
+			fail("expected out of bounds error");
+		} catch (StringIndexOutOfBoundsException x) {
+			// ok
+		}
 		s.close();
 	}
 	
@@ -42,11 +49,20 @@ public class StringreaderTest
 	public void TestRanges()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello");
-		s.Read(-1);
-		// TODO Assert.Throws<ParseException>(()=>s.Read(-1));
+		try {
+			s.Read(-1);
+			fail("expected parse error");
+		} catch (ParseException x) {
+			// ok
+		}
 		assertEquals("hello", s.Read(999));
-		s.Read(1);
-		// TODO Assert.Throws<ParseException>(()=>s.Read(1));
+		
+		try {
+			s.Read(1);
+			fail("expected parse error");
+		} catch (ParseException x) {
+			// ok
+		}
 		s.Rewind(Integer.MAX_VALUE);
 		assertTrue(s.HasMore());
 		assertEquals("hello", s.Peek(999));
@@ -61,19 +77,31 @@ public class StringreaderTest
 		assertEquals("ello", s.ReadUntil(' '));
 		assertEquals('t', s.Peek());
 		
-		s.ReadUntil('x');
-		// TODO Assert.Throws<ParseException>(()=>s.ReadUntil('x'));
+		try {
+			s.ReadUntil('x');
+			fail("expected parse error");
+		} catch (ParseException x) {
+			// ok
+		}
 		
 		assertEquals("there", s.Rest());
 		
-		s.Rest();
-		// TODO  Assert.Throws<ParseException>(()=>s.Rest());
+		try {
+			s.Rest();
+			fail("expected parse error");
+		} catch (ParseException x) {
+			// ok
+		}
 		
 		s.Rewind(Integer.MAX_VALUE);
 		assertEquals("hell", s.ReadUntil('x', 'y', 'z', ' ', 'o'));
-		
-		s.ReadUntil('x', 'y', '@');
-		// TODO Assert.Throws<ParseException>(()=>s.ReadUntil('x', 'y', '@'));
+
+		try {
+			s.ReadUntil('x', 'y', '@');
+			fail("expected parse error");
+		} catch (ParseException x) {
+			// ok
+		}
 	}
 
 	@Test
@@ -86,6 +114,22 @@ public class StringreaderTest
 		assertEquals("foo", s.Rest());
 	}
 	
+	@Test
+	public void TestRead()
+	{
+		SeekableStringReader s = new SeekableStringReader("hello");
+		assertEquals('h', s.Read());
+		assertEquals('e', s.Read());
+		assertEquals("l", s.Read(1));
+		assertEquals("lo", s.Read(2));
+		try {
+			s.Read();
+			fail("expected bounds error");
+		} catch (StringIndexOutOfBoundsException x) {
+			//ok
+		}
+	}
+
 	@Test
 	public void TestBookmark()
 	{

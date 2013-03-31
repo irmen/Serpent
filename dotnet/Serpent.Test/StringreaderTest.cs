@@ -41,6 +41,17 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestRead()
+		{
+			SeekableStringReader s = new SeekableStringReader("hello");
+			Assert.AreEqual('h', s.Read());
+			Assert.AreEqual('e', s.Read());
+			Assert.AreEqual("l", s.Read(1));
+			Assert.AreEqual("lo", s.Read(2));
+			Assert.Throws<IndexOutOfRangeException>(()=>s.Read());
+		}
+
+		[Test]
 		public void TestRanges()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");

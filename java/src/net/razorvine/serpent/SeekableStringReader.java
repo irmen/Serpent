@@ -60,7 +60,7 @@ public class SeekableStringReader
 	 */
 	public String Peek(int count)
 	{
-		return str.substring(cursor, Math.min(count, str.length()-cursor));
+		return str.substring(cursor, cursor+Math.min(count, str.length()-cursor));
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class SeekableStringReader
 		if(safecount==0 && count>0)
 			throw new ParseException("no more data");
 		
-		String result = str.substring(cursor, safecount);
+		String result = str.substring(cursor, cursor+safecount);
 		cursor += safecount;
 		return result;
 	}
@@ -95,10 +95,15 @@ public class SeekableStringReader
 	{
 		int index=Integer.MAX_VALUE;
 		for(char s: sentinels)
-			index = Math.min(str.indexOf(s), index);
-		if(index>=0)
 		{
-			String result = str.substring(cursor, index-cursor);
+			int i = str.indexOf(s, cursor);
+			if(i>=0)
+				index = Math.min(i, index);
+		}
+			
+		if(index>=0 && index<Integer.MAX_VALUE)
+		{
+			String result = str.substring(cursor, index);
 			cursor = index+1;
 			return result;
 		}
@@ -121,7 +126,7 @@ public class SeekableStringReader
 			else
 				break;
 		}
-		return str.substring(start, cursor-start);
+		return str.substring(start, cursor);
 	}
 	
 	/**
@@ -209,8 +214,8 @@ public class SeekableStringReader
 		int leftLen = crsr-leftStrt;
 		int rightLen = Math.min(width, str.length()-crsr);
 		StringContext result = new StringContext();
-		result.left = str.substring(leftStrt, leftLen);
-		result.right = str.substring(crsr, rightLen);
+		result.left = str.substring(leftStrt, leftStrt+leftLen);
+		result.right = str.substring(crsr, crsr+rightLen);
 		return result;
 	}
 	
