@@ -2,20 +2,20 @@ package net.razorvine.serpent.ast;
 
 class ComplexNumberNode implements INode
 {
-	public double Real;
-	public double Imaginary;
+	public double realpart;
+	public double imaginary;
 	
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}
 
 	@Override
 	public String toString()
 	{
-		String strReal = ""+Real;
-		String strImag = ""+Imaginary;
-		if(Imaginary>=0)
+		String strReal = ""+realpart;
+		String strImag = ""+imaginary;
+		if(imaginary>=0)
 			return String.format("({0}+{1}j)", strReal, strImag);
 		return String.format("({0}{1}j)", strReal, strImag);
 	}

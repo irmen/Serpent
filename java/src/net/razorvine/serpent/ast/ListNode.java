@@ -3,9 +3,9 @@ package net.razorvine.serpent.ast;
 class ListNode extends SequenceNode
 {
 	@Override
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}
 
 	@Override

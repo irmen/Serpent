@@ -5,7 +5,7 @@ import java.util.List;
 
 abstract class SequenceNode implements INode
 {
-	public List<INode> Elements = new ArrayList<INode>();
+	public List<INode> elements = new ArrayList<INode>();
 	public abstract char getOpenChar();
 	public abstract char getCloseChar();
 
@@ -13,7 +13,7 @@ abstract class SequenceNode implements INode
 	public int hashCode()
 	{
 		int hashCode = 0;
-		for(INode elt: Elements)
+		for(INode elt: elements)
 			hashCode += 1000000007 * elt.hashCode();
 		return hashCode;
 	}
@@ -24,7 +24,7 @@ abstract class SequenceNode implements INode
 		if(!(obj instanceof SequenceNode))
 			return false;
 		SequenceNode other = (SequenceNode)obj;
-		return Elements.equals(other.Elements);
+		return elements.equals(other.elements);
 	}
 
 	@Override
@@ -32,19 +32,19 @@ abstract class SequenceNode implements INode
 	{
 		StringBuilder sb=new StringBuilder();
 		sb.append(getOpenChar());
-		if(Elements != null)
+		if(elements != null)
 		{
-			for(INode elt: Elements)
+			for(INode elt: elements)
 			{
 				sb.append(elt.toString());
 				sb.append(',');
 			}
 		}
-		if(Elements.size()>0)
+		if(elements.size()>0)
 			sb.deleteCharAt(sb.length()); // remove last comma
 		sb.append(getCloseChar());
 		return sb.toString();
 	}
 	
-	public abstract void Accept(INodeVisitor visitor);
+	public abstract void accept(INodeVisitor visitor);
 }

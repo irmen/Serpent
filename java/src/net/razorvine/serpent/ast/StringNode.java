@@ -8,8 +8,8 @@ class StringNode extends PrimitiveNode<String>
 	}
 
 	@Override
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}
 }

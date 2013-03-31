@@ -2,16 +2,16 @@ package net.razorvine.serpent.ast;
 
 class KeyValueNode implements INode
 {
-	public INode Key;
-	public INode Value;
+	public INode key;
+	public INode value;
 	
 	@Override
 	public String toString()
 	{
-		return String.format("{0}:{1}", Key, Value);
+		return String.format("{0}:{1}", key, value);
 	}
 	
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
 		throw new NoSuchMethodError("don't visit a keyvaluenode");
 	}

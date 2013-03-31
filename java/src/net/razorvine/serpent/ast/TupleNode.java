@@ -6,25 +6,25 @@ class TupleNode extends SequenceNode
 	public String toString()
 	{
 		StringBuilder sb=new StringBuilder();
-		sb.append('(');
-		if(Elements != null)
+		sb.append(getOpenChar());
+		if(elements != null)
 		{
-			for(INode elt: Elements)
+			for(INode elt: elements)
 			{
 				sb.append(elt.toString());
 				sb.append(",");
 			}
 		}
-		if(Elements.size()>1)
+		if(elements.size()>1)
 			sb.deleteCharAt(sb.length());  // remove last comma
-		sb.append(')');
+		sb.append(getCloseChar());
 		return sb.toString();
 	}
 	
 	@Override
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}
 
 	@Override

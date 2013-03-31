@@ -4,5 +4,5 @@ interface INode
 {
 	String toString();
 	boolean equals(Object obj);
-	void Accept(INodeVisitor visitor);
+	void accept(INodeVisitor visitor);
 }

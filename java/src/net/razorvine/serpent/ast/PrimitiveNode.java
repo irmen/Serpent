@@ -2,22 +2,22 @@ package net.razorvine.serpent.ast;
 
 abstract class PrimitiveNode<T> implements INode, Comparable<T>
 {
-	public T Value;
+	public T value;
 	public PrimitiveNode(T value)
 	{
-		this.Value=value;
+		this.value=value;
 	}
 	
 	@Override
 	public int hashCode()
 	{
-		return Value!=null? Value.hashCode() : 0;
+		return value!=null? value.hashCode() : 0;
 	}
 	
 	@Override
 	public boolean equals(Object obj)
 	{
-		return (obj instanceof PrimitiveNode<?>) &&	Value.equals(((PrimitiveNode<?>)obj).Value);
+		return (obj instanceof PrimitiveNode<?>) &&	value.equals(((PrimitiveNode<?>)obj).value);
 	}
 	
 	public int compareTo(T other)
@@ -27,17 +27,17 @@ abstract class PrimitiveNode<T> implements INode, Comparable<T>
 
 	public boolean equals(PrimitiveNode<T> other)
 	{
-		return this.Value.equals(other.Value);
+		return this.value.equals(other.value);
 	}
 
 	@Override
 	public String toString()
 	{
-		if(Value instanceof String)
+		if(value instanceof String)
 		{
 			StringBuilder sb=new StringBuilder();
 			sb.append("'");
-			String strValue = (String)Value;
+			String strValue = (String)value;
 			for(char c: strValue.toCharArray())
 			{
 				switch(c)
@@ -71,15 +71,15 @@ abstract class PrimitiveNode<T> implements INode, Comparable<T>
 			sb.append("'");
 			return sb.toString();
 		}
-		else if(Value instanceof Number)
+		else if(value instanceof Number)
 		{
-			String d = Value.toString();
+			String d = value.toString();
 			if(d.indexOf('.')<=0 && d.indexOf('e')<=0 && d.indexOf('E')<=0)
 				d+=".0";
 			return d;
 		}
-		else return Value.toString();
+		else return value.toString();
 	}
 	
-	public abstract void Accept(INodeVisitor visitor);
+	public abstract void accept(INodeVisitor visitor);
 }

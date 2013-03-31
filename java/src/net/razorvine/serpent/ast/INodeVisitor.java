@@ -2,15 +2,15 @@ package net.razorvine.serpent.ast;
 
 public interface INodeVisitor
 {
-	void Visit(ComplexNumberNode complex);
-	void Visit(DictNode dict);
-	void Visit(ListNode list);
-	void Visit(NoneNode none);
-	void Visit(IntegerNode value);
-	void Visit(LongNode value);
-	void Visit(DoubleNode value);
-	void Visit(BooleanNode value);
-	void Visit(StringNode value);
-	void Visit(SetNode setnode);
-	void Visit(TupleNode tuple);
+	void visit(ComplexNumberNode complex);
+	void visit(DictNode dict);
+	void visit(ListNode list);
+	void visit(NoneNode none);
+	void visit(IntegerNode value);
+	void visit(LongNode value);
+	void visit(DoubleNode value);
+	void visit(BooleanNode value);
+	void visit(StringNode value);
+	void visit(SetNode setnode);
+	void visit(TupleNode tuple);
 }

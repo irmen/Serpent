@@ -8,8 +8,8 @@ class LongNode extends PrimitiveNode<Long>
 	}
 	
 	@Override
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}
 }

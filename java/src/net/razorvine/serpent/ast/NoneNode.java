@@ -12,8 +12,8 @@ class NoneNode implements INode
 		return "None";
 	}
 
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		visitor.Visit(this);
+		visitor.visit(this);
 	}			
 }

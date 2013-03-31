@@ -12,16 +12,16 @@ package net.razorvine.serpent.ast;
 /// </summary>
 public class Ast
 {
-	public INode Root;
+	public INode root;
 	
 	@Override
 	public String toString()
 	{
-		return "# serpent utf-8 .net\n" + Root.toString();
+		return "# serpent utf-8 .net\n" + root.toString();
 	}
 
-	public void Accept(INodeVisitor visitor)
+	public void accept(INodeVisitor visitor)
 	{
-		Root.Accept(visitor);
+		root.accept(visitor);
 	}
 }

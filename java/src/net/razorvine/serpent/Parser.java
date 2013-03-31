@@ -183,8 +183,8 @@ namespace Razorvine.Serpent
 				Ast.INode value = ParseExpr(sr);
 				return new Ast.KeyValueNode
 					{
-						Key = key,
-						Value = value
+						key = key,
+						value = value
 					};
 			}
 			throw new ParseException("expected ':'");
@@ -262,8 +262,8 @@ namespace Razorvine.Serpent
 			{
 				dict.Elements.Add(new Ast.KeyValueNode()
 				                  {
-				                  	Key=kv.Key,
-				                  	Value=kv.Value
+				                  	key=kv.Key,
+				                  	value=kv.Value
 				                  });
 			}
 			return dict;
@@ -374,8 +374,8 @@ namespace Razorvine.Serpent
 					throw new ParseException("expected ) to end a complex number");
 				return new Ast.ComplexNumberNode()
 					{
-						Real = realpart,
-						Imaginary = imaginarypart
+						realpart = realpart,
+						imaginary = imaginarypart
 					};
 			}
 			else
@@ -384,8 +384,8 @@ namespace Razorvine.Serpent
 				double imag = ParseImaginaryPart(sr);
 				return new Ast.ComplexNumberNode()
 					{
-						Real=0,
-						Imaginary=imag
+						realpart=0,
+						imaginary=imag
 					};
 			}
 		}
