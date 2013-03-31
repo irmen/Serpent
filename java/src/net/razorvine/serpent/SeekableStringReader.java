@@ -42,7 +42,7 @@ public class SeekableStringReader
 	/**
 	 * Is tehre more to read?
 	 */
-	public boolean HasMore()
+	public boolean hasMore()
 	{
 		return cursor<str.length();
 	}
@@ -50,7 +50,7 @@ public class SeekableStringReader
 	/**
 	 * What is the next character?
 	 */
-	public char Peek()
+	public char peek()
 	{
 		return str.charAt(cursor);
 	}
@@ -58,7 +58,7 @@ public class SeekableStringReader
 	/**
 	 * What are the next characters that will be read?
 	 */
-	public String Peek(int count)
+	public String peek(int count)
 	{
 		return str.substring(cursor, cursor+Math.min(count, str.length()-cursor));
 	}
@@ -66,7 +66,7 @@ public class SeekableStringReader
 	/**
 	 * Read a single character.
 	 */
-	public char Read()
+	public char read()
 	{
 		return str.charAt(cursor++);
 	}
@@ -74,7 +74,7 @@ public class SeekableStringReader
 	/**
 	 * Read a number of characters.
 	 */
-	public String Read(int count)
+	public String read(int count)
 	{
 		if(count<0)
 			throw new ParseException("use Rewind to seek back");
@@ -91,7 +91,7 @@ public class SeekableStringReader
 	 * Read everything until one of the sentinel(s), which must exist in the string.
 	 * Sentinel char is read but not returned in the result.
 	 */
-	public String ReadUntil(char ... sentinels)
+	public String readUntil(char ... sentinels)
 	{
 		int index=Integer.MAX_VALUE;
 		for(char s: sentinels)
@@ -113,7 +113,7 @@ public class SeekableStringReader
 	/**
 	 * Read everything as long as the char occurs in the accepted characters.
 	 */
-	public String ReadWhile(char ... accepted)
+	public String readWhile(char ... accepted)
 	{
 		int start = cursor;
 		Set<Character> acceptedChars = new HashSet<Character>();
@@ -133,19 +133,19 @@ public class SeekableStringReader
 	 * Read away any whitespace.
 	 * If a comment follows ('# bla bla') read away that as well
 	 */
-	public void SkipWhitespace()
+	public void skipWhitespace()
 	{
-		while(HasMore())
+		while(hasMore())
 		{
-			char c=Read();
+			char c=read();
 			if(c=='#')
 			{
-				ReadUntil('\n');
+				readUntil('\n');
 				return;
 			}
 			if(!Character.isWhitespace(c))
 			{
-				Rewind(1);
+				rewind(1);
 				return;
 			}
 		}
@@ -154,7 +154,7 @@ public class SeekableStringReader
 	/**
 	 * Returns the rest of the data until the end.
 	 */
-	public String Rest()
+	public String rest()
 	{
 		if(cursor>=str.length())
 			throw new ParseException("no more data");
@@ -166,7 +166,7 @@ public class SeekableStringReader
 	/**
 	 * Rewind a number of characters.
 	 */
-	public void Rewind(int count)
+	public void rewind(int count)
 	{
 		cursor = Math.max(0, cursor-count);
 	}
@@ -174,7 +174,7 @@ public class SeekableStringReader
 	/**
 	 * Return a bookmark to rewind to later.
 	 */
-	public int Bookmark()
+	public int bookmark()
 	{
 		return cursor;
 	}
@@ -182,7 +182,7 @@ public class SeekableStringReader
 	/**
 	 * Flip back to previously set bookmark.
 	 */
-	public void FlipBack(int bookmark)
+	public void flipBack(int bookmark)
 	{
 		cursor = bookmark;
 	}
@@ -190,7 +190,7 @@ public class SeekableStringReader
 	/**
 	 * Sync the position and bookmark with the current position in another reader.
 	 */
-	public void Sync(SeekableStringReader inner)
+	public void sync(SeekableStringReader inner)
 	{
 		bookmark = inner.bookmark;
 		cursor = inner.cursor;
@@ -206,7 +206,7 @@ public class SeekableStringReader
 		public String right;
 	}
 
-	public StringContext Context(int crsr, int width)
+	public StringContext context(int crsr, int width)
 	{
 		if(crsr<0)
 			crsr=this.cursor;
