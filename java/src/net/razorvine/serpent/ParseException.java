@@ -10,7 +10,7 @@ package net.razorvine.serpent;
 /**
  * Exception that is used when a serpent parsing error occurs.
  */
-public class ParseException extends Exception {
+public class ParseException extends RuntimeException {
 
 	private static final long serialVersionUID = -667969719712045595L;
 
