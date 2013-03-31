@@ -212,6 +212,13 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"()", data)
 
+        ser = serpent.serialize((1,))
+        data = strip_header(ser)
+        self.assertEqual(b"(1,)", data)
+        ser = serpent.serialize((1,), indent=True)
+        data = strip_header(ser)
+        self.assertEqual(b"(\n  1,\n)", data)
+
         mytuple = (42, "Sally", 16.5)
         ser = serpent.serialize(mytuple)
         data = strip_header(ser)
@@ -239,6 +246,11 @@ class TestBasics(unittest.TestCase):
         ser = serpent.serialize(myset, indent=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
+
+        # test no set-literals
+        ser = serpent.serialize(myset, set_literals=False)
+        data = strip_header(ser)
+        self.assertEqual(b"(42,'Sally')", data)    # must output a tuple instead of a set-literal
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):

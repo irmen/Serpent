@@ -201,6 +201,12 @@ namespace Razorvine.Serpent.Test
 			serpent.Indent=true;
 			ser = strip_header(serpent.Serialize(set));
 			Assert.AreEqual("{\n  42,\n  'Sally',\n  16.5\n}", S(ser));
+			
+			// test no set literals
+			serpent.Indent=false;
+			serpent.SetLiterals=false;
+			ser = strip_header(serpent.Serialize(set));
+			Assert.AreEqual("(42,'Sally',16.5)", S(ser));	// needs to be tuple now
 		}
 
 		[Test]
@@ -285,16 +291,20 @@ namespace Razorvine.Serpent.Test
 			Serializer serpent = new Serializer();
 			byte[] ser = serpent.Serialize(intlist);
 			ser = strip_header(ser);
-			Assert.AreEqual(B("[42,43]"), ser);
+			Assert.AreEqual("[42,43]", S(ser));
 			
+			ser=strip_header(serpent.Serialize(new int[] {42}));
+			Assert.AreEqual("(42,)", S(ser));
 			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
-			Assert.AreEqual(B("(42,43)"), ser);
+			Assert.AreEqual("(42,43)", S(ser));
 			
 			serpent.Indent=true;
 			ser = strip_header(serpent.Serialize(intlist));
-			Assert.AreEqual(B("[\n  42,\n  43\n]"), ser);
+			Assert.AreEqual("[\n  42,\n  43\n]", S(ser));
+			ser=strip_header(serpent.Serialize(new int[] {42}));
+			Assert.AreEqual("(\n  42,\n)", S(ser));
 			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
-			Assert.AreEqual(B("(\n  42,\n  43\n)"), ser);
+			Assert.AreEqual("(\n  42,\n  43\n)", S(ser));
 		}
 		
 		

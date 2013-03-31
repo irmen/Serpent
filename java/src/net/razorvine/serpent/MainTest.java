@@ -37,11 +37,12 @@ public class MainTest {
 	public void run() throws IOException
 	{
 		Serializer ser = new Serializer();
+		ser.indent=true;
 		List<String> list = new LinkedList<String>();
 		list.add("one");
 		list.add("two");
 		list.add("three");
-		byte[] output = ser.serialize(list);
+		byte[] output = ser.serialize(new int[] {1});
 
 		FileOutputStream fos = new FileOutputStream("output.utf8.bin");
 		fos.write(output);

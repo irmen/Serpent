@@ -170,7 +170,7 @@ public class Serializer
 	{
 		// output a list
 		p.print("[");
-		serialize_sequence_elements(collection, p, level+1);
+		serialize_sequence_elements(collection, false, p, level+1);
 		if(this.indent && collection.size()>0)
 		{
 			for(int i=0; i<level; ++i)
@@ -179,14 +179,42 @@ public class Serializer
 		p.print("]");
 	}
 
-	protected void serialize_sequence_elements(Collection<?> elts, PrintWriter p, int i)
+	protected void serialize_sequence_elements(Collection<?> elts, boolean trailingComma, PrintWriter p, int level)
 	{
-		for(Object elt: elts)
+		if(elts.size()==0)
+			return;
+		int count=0;
+		if(this.indent)
 		{
-			p.print("elt=");
-			p.print(elt);
 			p.print("\n");
-			// @TODO
+			String innerindent = "";
+			for(int i=0; i<level; ++i)
+				innerindent += "  ";
+			for(Object e: elts)
+			{
+				p.print(innerindent);
+				serialize(e, p, level);
+				count++;
+				if(count<elts.size())
+				{
+					p.print(",\n");
+				}
+			}
+			if(trailingComma)
+				p.print(",");
+			p.print("\n");
+		}
+		else
+		{
+			for(Object e: elts)
+			{
+				serialize(e, p, level);
+				count++;
+				if(count<elts.size())
+					p.print(",");
+			}
+			if(trailingComma)
+				p.print(",");
 		}
 	}
 
@@ -212,16 +240,16 @@ public class Serializer
 		serialize_tuple(items, p, level);
 	}
 
-	protected void serialize_tuple(Iterable<?> items, PrintWriter p, int level)
+	protected void serialize_tuple(Collection<?> items, PrintWriter p, int level)
 	{
-		// output a tuple
-		for(Object item: items)
+		p.print("(");
+		serialize_sequence_elements(items, items.size()==1, p, level+1);
+		if(this.indent && items.size()>0)
 		{
-			p.print("item=");
-			p.print(item);
-			p.print("\n");
-			// @TODO
+			for(int i=0; i<level; ++i)
+				p.print("  ");
 		}
+		p.print(")");
 	}
 
 	protected void serialize_bytes(byte[] obj, PrintWriter p, int level)
@@ -356,16 +384,7 @@ public class Serializer
 			
 		protected void Serialize_tuple(ICollection array, TextWriter tw, int level)
 		{
-			tw.Write("(");
-			Serialize_sequence_elements(array, tw, level+1);
-			if(array.Count==1)
-			{
-				// tuple with 1 elements need special treatment (require a trailing comma)
-				tw.Write(",");
-			}
-			if(this.Indent && array.Count>0)
-				tw.Write(string.Join("  ", new string[level+1]));
-			tw.Write(")");
+
 		}
 
 		
@@ -456,38 +475,6 @@ public class Serializer
 			}
 		}
 		
-		protected void Serialize_sequence_elements(ICollection elements, TextWriter tw, int level)
-		{
-			if(elements.Count==0)
-				return;
-			int count=0;
-			if(this.Indent)
-			{
-				tw.Write("\n");
-				string innerindent = string.Join("  ", new string[level+1]);
-				foreach(object e in elements)
-				{
-					tw.Write(innerindent);
-					Serialize(e, tw, level);
-					count++;
-					if(count<elements.Count)
-					{
-						tw.Write(",\n");
-					}
-				}
-				tw.Write("\n");
-			}
-			else
-			{
-				foreach(object e in elements)
-				{
-					Serialize(e, tw, level);
-					count++;
-					if(count<elements.Count)
-						tw.Write(",");
-				}
-			}
-		}
 	}
 }
 ***/

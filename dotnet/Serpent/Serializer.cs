@@ -145,12 +145,7 @@ namespace Razorvine.Serpent
 		protected void Serialize_tuple(ICollection array, TextWriter tw, int level)
 		{
 			tw.Write("(");
-			Serialize_sequence_elements(array, tw, level+1);
-			if(array.Count==1)
-			{
-				// tuple with 1 elements need special treatment (require a trailing comma)
-				tw.Write(",");
-			}
+			Serialize_sequence_elements(array, array.Count==1, tw, level+1);
 			if(this.Indent && array.Count>0)
 				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write(")");
@@ -159,7 +154,7 @@ namespace Razorvine.Serpent
 		protected void Serialize_list(ICollection list, TextWriter tw, int level)
 		{
 			tw.Write("[");
-			Serialize_sequence_elements(list, tw, level+1);
+			Serialize_sequence_elements(list, false, tw, level+1);
 			if(this.Indent && list.Count>0)
 				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write("]");
@@ -227,6 +222,13 @@ namespace Razorvine.Serpent
 		
 		protected void Serialize_set(object[] set, TextWriter tw, int level)
 		{
+			if(!this.SetLiterals)
+			{
+				// output a tuple instead of a set-literal
+				Serialize_tuple(set, tw, level);
+				return;
+			}
+
 			if(set.Length>0)
 			{
 				tw.Write("{");
@@ -240,7 +242,7 @@ namespace Razorvine.Serpent
 						// ignore sorting of incomparable elements.
 					}
 				}
-				Serialize_sequence_elements(set, tw, level+1);
+				Serialize_sequence_elements(set, false, tw, level+1);
 				if(this.Indent)
 					tw.Write(string.Join("  ", new string[level+1]));
 				tw.Write("}");
@@ -252,7 +254,7 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		protected void Serialize_sequence_elements(ICollection elements, TextWriter tw, int level)
+		protected void Serialize_sequence_elements(ICollection elements, bool trailingComma, TextWriter tw, int level)
 		{
 			if(elements.Count==0)
 				return;
@@ -271,6 +273,8 @@ namespace Razorvine.Serpent
 						tw.Write(",\n");
 					}
 				}
+				if(trailingComma)
+					tw.Write(",");
 				tw.Write("\n");
 			}
 			else
@@ -282,6 +286,8 @@ namespace Razorvine.Serpent
 					if(count<elements.Count)
 						tw.Write(",");
 				}
+				if(trailingComma)
+					tw.Write(",");
 			}
 		}
 		
