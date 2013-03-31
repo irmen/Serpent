@@ -43,7 +43,7 @@ public class Serializer
 		this.setliterals = setliterals;
 	}
 	
-	public byte[] serialize(Object obj) throws IOException
+	public byte[] serialize(Object obj)
 	{
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
@@ -59,9 +59,12 @@ public class Serializer
 		pw.flush();
 		String ser = sw.toString();
 		pw.close();
-		sw.close();
-		
-		return ser.getBytes("utf-8");
+		try {
+			sw.close();
+			return ser.getBytes("utf-8");
+		} catch (IOException x) {
+			throw new IllegalArgumentException("error creating output bytes: "+x);
+		}
 	}
 	
 	protected void serialize(Object obj, PrintWriter p, int level)
@@ -71,13 +74,13 @@ public class Serializer
 		// hashset -> set
 		// array -> tuple
 		// byte arrays --> base64
-		// any other icollection --> list
-		// date/timespan/uuid/exception -> custom mapping
-		// random class --> public properties to dict
+		// any other collection --> list
+		// date//uuid/exception -> custom mapping
+		// random class --> public javabean properties to dictionary
 		// primitive types --> simple mapping
 		
-		Class type = obj==null? null : obj.getClass();
-		Class componentType = type==null? null : type.getComponentType();
+		Class<?> type = obj==null? null : obj.getClass();
+		Class<?> componentType = type==null? null : type.getComponentType();
 		
 		// primitive array?
 		if(componentType!=null)
@@ -222,12 +225,40 @@ public class Serializer
 	{
 		if(!this.setliterals)
 		{
-			// output a tuple instead
+			// output a tuple instead of a set-literal
 			serialize_tuple(set, p, level);
 			return;
 		}
 		
-		throw new NoSuchMethodError();  // @TODO
+		if(set.size()>0)
+		{
+			p.print("{");
+			Collection<?> output = set;
+			if(this.indent)
+			{
+				// try to sort the set
+				Set<?> outputset = set;
+				try {
+					outputset = new TreeSet<Object>(set);
+				} catch (ClassCastException x) {
+					// ignore unsortable elements
+				}
+				output = outputset;
+			}
+			serialize_sequence_elements(output, false, p, level+1);
+	
+			if(this.indent)
+			{
+				for(int i=0; i<level; ++i)
+					p.print("  ");
+			}
+			p.print("}");
+		}
+		else
+		{
+			// empty set literal doesn't exist, replace with empty tuple
+			serialize_tuple(Collections.EMPTY_LIST, p, level+1);
+		}
 	}
 
 	protected void serialize_primitive_array(Object array, PrintWriter p, int level)
@@ -264,14 +295,56 @@ public class Serializer
 
 	protected void serialize_dict(Map<?, ?> dict, PrintWriter p,int level)
 	{
-		for(Map.Entry<?,?> e: dict.entrySet())
+		if(dict.size()==0)
 		{
-			p.print("key=");
-			p.print(e.getKey());
-			p.print(" value=");
-			p.print(e.getValue());
+			p.print("{}");
+			return;
+		}
+
+		int counter=0;
+		if(this.indent)
+		{
+			String innerindent = "  ";
+			for(int i=0; i<level; ++i)
+				innerindent += "  ";
+			p.print("{\n");
+			
+			// try to sort the dictionary keys
+			Map<?,?> outputdict = dict;
+			try {
+				outputdict = new TreeMap<Object,Object>(dict);
+			} catch (ClassCastException x) {
+				// ignore unsortable keys
+			}
+			
+			for(Map.Entry<?,?> e: outputdict.entrySet())
+			{
+				p.print(innerindent);
+				serialize(e.getKey(), p, level+1);
+				p.print(": ");
+				serialize(e.getValue(), p, level+1);
+				counter++;
+				if(counter<dict.size())
+					p.print(",\n");
+			}
 			p.print("\n");
-			// @TODO
+			for(int i=0; i<level; ++i)
+				p.print("  ");
+			p.print("}");
+		}
+		else
+		{
+			p.print("{");
+			for(Map.Entry<?,?> e: dict.entrySet())
+			{
+				serialize(e.getKey(), p, level+1);
+				p.print(":");
+				serialize(e.getValue(), p, level+1);
+				counter++;
+				if(counter<dict.size())
+					p.print(",");
+			}
+			p.print("}");
 		}
 	}
 
@@ -307,18 +380,20 @@ public class Serializer
 		serialize_string(decimal.toEngineeringString(), p, level);
 	}
 
-	private static final HashSet<Class> boxedTypes = new HashSet<Class>() {{
-		add(Boolean.class);
-		add(Character.class);
-		add(Byte.class);
-		add(Short.class);
-		add(Integer.class);
-		add(Long.class);
-		add(Float.class);
-		add(Double.class);
-	}};
+	private static final HashSet<Class<?>> boxedTypes;
+	static {
+		boxedTypes = new HashSet<Class<?>>();
+		boxedTypes.add(Boolean.class);
+		boxedTypes.add(Character.class);
+		boxedTypes.add(Byte.class);
+		boxedTypes.add(Short.class);
+		boxedTypes.add(Integer.class);
+		boxedTypes.add(Long.class);
+		boxedTypes.add(Float.class);
+		boxedTypes.add(Double.class);
+	};
 
-	protected boolean isBoxed(Class type)
+	protected boolean isBoxed(Class<?> type)
 	{
 		return boxedTypes.contains(type);
 	}
@@ -379,102 +454,3 @@ public class Serializer
 		serialize_dict(dict, p, level);
 	}
 }
-
-/***
-			
-		protected void Serialize_tuple(ICollection array, TextWriter tw, int level)
-		{
-
-		}
-
-		
-		protected int DictentryCompare(DictionaryEntry d1, DictionaryEntry d2)
-		{
-			IComparable c1 = d1.Key as IComparable;
-			IComparable c2 = d2.Key as IComparable;
-			
-			if(c1==null) return 0;
-			return c1.CompareTo(c2);
-		}
-
-		protected void Serialize_dict(IDictionary dict, TextWriter tw, int level)
-		{
-			if(dict.Count==0)
-			{
-				tw.Write("{}");
-				return;
-			}
-			int counter=0;
-			if(this.Indent)
-			{
-				string innerindent = string.Join("  ", new string[level+2]);
-				tw.Write("{\n");
-				DictionaryEntry[] entries = new DictionaryEntry[dict.Count];
-				dict.CopyTo(entries, 0);
-				try {
-					Array.Sort(entries, DictentryCompare);
-				} catch (InvalidOperationException) {
-					// ignore sorting of incomparable elements
-				} catch (ArgumentException) {
-					// ignore sorting of incomparable elements
-				}
-				foreach(DictionaryEntry x in entries)
-				{
-					tw.Write(innerindent);
-					Serialize(x.Key, tw, level+1);
-					tw.Write(": ");
-					Serialize(x.Value, tw, level+1);
-					counter++;
-					if(counter<dict.Count)
-						tw.Write(",\n");
-				}
-				tw.Write("\n");
-				tw.Write(string.Join("  ", new string[level+1]));
-				tw.Write("}");
-			}
-			else
-			{
-				tw.Write("{");
-				foreach(DictionaryEntry x in dict)
-				{
-					Serialize(x.Key, tw, level+1);
-					tw.Write(":");
-					Serialize(x.Value, tw, level+1);
-					counter++;
-					if(counter<dict.Count)
-						tw.Write(",");
-				}
-				tw.Write("}");
-			}
-		}
-		
-		protected void Serialize_set(object[] set, TextWriter tw, int level)
-		{
-			if(set.Length>0)
-			{
-				tw.Write("{");
-				if(this.Indent)
-				{
-					try {
-						Array.Sort(set);
-					} catch (InvalidOperationException) {
-						// ignore sorting of incomparable elements.
-					} catch (ArgumentException) {
-						// ignore sorting of incomparable elements.
-					}
-				}
-				Serialize_sequence_elements(set, tw, level+1);
-				if(this.Indent)
-					tw.Write(string.Join("  ", new string[level+1]));
-				tw.Write("}");
-			}
-			else
-			{
-				// empty set literal doesn't exist, replace with empty tuple
-				Serialize_tuple(new object[0], tw, level+1);
-			}
-		}
-		
-	}
-}
-***/

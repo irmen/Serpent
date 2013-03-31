@@ -3,8 +3,12 @@ package net.razorvine.serpent;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class MainTest {
 
@@ -29,12 +33,12 @@ public class MainTest {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		MainTest t=new MainTest();
 		t.run();
 	}
 	
-	public void run() throws IOException
+	public void run()
 	{
 		Serializer ser = new Serializer();
 		ser.indent=true;
@@ -42,11 +46,35 @@ public class MainTest {
 		list.add("one");
 		list.add("two");
 		list.add("three");
-		byte[] output = ser.serialize(new int[] {1});
+		
+		Set<Object> set = new HashSet<Object>();
+		set.add("x");
+		set.add("y");
+		set.add("z");
+		set.add("b");
+		set.add("c");
+		set.add("a");
+		
+		Map<Object, String> map = new HashMap<Object, String>();
+		map.put("c", "blurp1");
+		map.put("b", "blurp2");
+		map.put("a", "blurp3");
+		map.put("z", "blurp4");
+		map.put("x", "blurp5");
+		map.put("y", "blurp6");
+		
+		
+		byte[] output = ser.serialize(set);
 
-		FileOutputStream fos = new FileOutputStream("output.utf8.bin");
-		fos.write(output);
-		fos.close();
+		FileOutputStream fos;
+		try {
+			fos = new FileOutputStream("output.utf8.bin");
+			fos.write(output);
+			fos.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
