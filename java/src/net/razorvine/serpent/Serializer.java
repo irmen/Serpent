@@ -355,7 +355,7 @@ public class Serializer
 		if(cal.get(Calendar.MILLISECOND)==0)
 			fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		else
-			fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+			fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 		fmt.setCalendar(cal);
 		serialize_string(fmt.format(cal.getTime()), p, level);
 	}
@@ -425,7 +425,14 @@ public class Serializer
 
 	protected void serialize_primitive(Object obj, PrintWriter p, int level) 
 	{
-		p.print(obj);
+		if(obj instanceof Boolean || obj.getClass()==Boolean.TYPE)
+		{
+			p.print(obj.equals(Boolean.TRUE)? "True": "False");
+		}
+		else
+		{
+			p.print(obj);
+		}
 	}
 
 	protected void serialize_string(String str, PrintWriter p, int level)
