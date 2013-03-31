@@ -4,7 +4,7 @@
   <property name="ant.build.javac.source" value="1.6" />
   <property name="libsrc" location="src" />
   <property name="testsrc" location="test" />
-  <property name="build" location="bin" />
+  <property name="build" location="bin-ant" />
   <property name="javadocs" location="docs" />
   <property name="jarfile" location="build/serpent.jar" />
   <property name="junitjar" location="lib/junit.jar" />

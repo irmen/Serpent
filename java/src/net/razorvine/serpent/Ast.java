@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Serpent, a Python literal expression serializer/deserializer
  * (a.k.a. Python's ast.literal_eval in .NET)
  * Software license: "MIT software license". See http://opensource.org/licenses/MIT
@@ -7,6 +7,7 @@
 
 package net.razorvine.serpent;
 
+/***
 
 namespace Razorvine.Serpent
 {
@@ -359,3 +360,5 @@ namespace Razorvine.Serpent
 		}
 	}
 }
+
+***/

@@ -24,5 +24,7 @@ Example usage can be found in ./dotnet/Serpent.Test/Example.cs
 
 JAVA
 ----
-@TODO
+Full source code can be found in ./java/ directory.
+Example usage can be found in ./java/test/SerpentExample.java
+
 
