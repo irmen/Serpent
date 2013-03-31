@@ -28,10 +28,4 @@ public class ParseException extends Exception {
 	public ParseException(String message, Throwable cause) {
 		super(message, cause);
 	}
-
-	public ParseException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
 }
