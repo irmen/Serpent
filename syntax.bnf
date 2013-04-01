@@ -1,0 +1,47 @@
+#  BNF-ish syntax of a Serpent-serialized data string.
+
+expr            =  single | compound .
+single          =  int | float | complex | string | bool | none .
+compound        =  tuple | dict | list | set .
+
+digit           =  '0'...'9' .
+digitnonzero    =  '1'...'9' .
+
+int             =  ['-'] digitnonzero {digit} .
+
+float           =  pointfloat | exponentfloat .
+pointfloat      =  [int] fraction .
+fraction        =  '.' digit { digit } .
+exponentfloat   =  (int | pointfloat) exponent .
+exponent        =  ("e" | "E") ["+" | "-"] digit { digit } .
+
+complex         = complextuple | imaginary .
+imaginary       = ['+' | '-' ] ( float | int ) 'j' .
+complextuple    = '(' ( float | int ) imaginary ')' .
+
+string          = singlequoted | doublequoted .
+singlequoted    = '\'' stringvalue_escaped_singlequoted '\'' .
+doublequoted    = '"' stringvalue_escaped_doublequotes '"' .
+
+bool            = 'True' | 'False' .
+none            = 'None' .
+
+
+expr_list       = expr { ',' expr } .
+tuple           = tuple_empty | tuple_one | tuple_more
+tuple_empty     = '()' .
+tuple_one       = '(' expr ',' <whitespace> ')' .
+tuple_more      = '(' expr_list ')' .
+
+
+list            = list_empty | list_nonempty .
+list_empty      = '[]' .
+list_nonempty   = '[' expr_list ']' .
+
+
+set             = '{' expr_list '}' .
+
+dict            = '{' keyvalue_list '}' .
+keyvalue_list   = keyvalue { ',' keyvalue } .
+keyvalue        = expr ':' expr .
+ 
