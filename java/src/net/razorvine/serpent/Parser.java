@@ -362,9 +362,9 @@ namespace Razorvine.Serpent
 				}
 				else
 					numberstr = sr.ReadUntil(new char[] {'+', '-'});
-				double realpart;
+				double real;
 				try {
-					realpart = double.Parse(numberstr, CultureInfo.InvariantCulture);
+					real = double.Parse(numberstr, CultureInfo.InvariantCulture);
 				} catch (FormatException x) {
 					throw new ParseException("invalid float format", x);
 				}
@@ -374,7 +374,7 @@ namespace Razorvine.Serpent
 					throw new ParseException("expected ) to end a complex number");
 				return new Ast.ComplexNumberNode()
 					{
-						realpart = realpart,
+						real = real,
 						imaginary = imaginarypart
 					};
 			}
@@ -384,7 +384,7 @@ namespace Razorvine.Serpent
 				double imag = ParseImaginaryPart(sr);
 				return new Ast.ComplexNumberNode()
 					{
-						realpart=0,
+						real=0,
 						imaginary=imag
 					};
 			}

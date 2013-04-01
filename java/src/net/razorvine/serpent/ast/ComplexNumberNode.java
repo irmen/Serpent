@@ -2,7 +2,7 @@ package net.razorvine.serpent.ast;
 
 public class ComplexNumberNode implements INode
 {
-	public double realpart;
+	public double real;
 	public double imaginary;
 	
 	public void accept(INodeVisitor visitor)
@@ -13,7 +13,7 @@ public class ComplexNumberNode implements INode
 	@Override
 	public String toString()
 	{
-		String strReal = ""+realpart;
+		String strReal = ""+real;
 		String strImag = ""+imaginary;
 		if(imaginary>=0)
 			return String.format("({0}+{1}j)", strReal, strImag);

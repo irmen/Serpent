@@ -16,7 +16,7 @@ import net.razorvine.serpent.ast.*;
 public class DebugVisitor implements INodeVisitor
 {
 	private StringBuilder result = new StringBuilder();
-	private int indent=0;
+	private int indentlevel=0;
 	
 	public DebugVisitor()
 	{
@@ -31,46 +31,46 @@ public class DebugVisitor implements INodeVisitor
 		return result.toString();
 	}
 	
-	protected void Indent()
+	protected void indent()
 	{
-		for(int i=0; i<indent; ++i)
+		for(int i=0; i<indentlevel; ++i)
 			result.append("    ");
 	}
 	
 	public void visit(ComplexNumberNode complex)
 	{
-		result.append(String.format("complexnumber {0}r {1}i\n", complex.realpart, complex.imaginary));
+		result.append(String.format("complexnumber {0}r {1}i\n", complex.real, complex.imaginary));
 	}
 	
 	public void visit(DictNode dict)
 	{
 		result.append("(dict\n");
-		indent++;
+		indentlevel++;
 		for(INode e: dict.elements)
 		{
-			Indent();
+			indent();
 			KeyValueNode kv = (KeyValueNode) e;
 			kv.key.accept(this);
 			result.append(" = ");
 			kv.value.accept(this);
 			result.append(",\n");
 		}
-		indent--;
-		Indent();
+		indentlevel--;
+		indent();
 		result.append(")");
 	}
 	
 	public void visit(ListNode list)
 	{
 		result.append("(list\n");
-		indent++;
+		indentlevel++;
 		for(INode node: list.elements)
 		{
-			Indent();
+			indent();
 			node.accept(this);
 		}
-		indent--;
-		Indent();
+		indentlevel--;
+		indent();
 		result.append(")");
 	}
 	
@@ -107,30 +107,30 @@ public class DebugVisitor implements INodeVisitor
 	public void visit(SetNode setnode)
 	{
 		result.append("(set\n");
-		indent++;
+		indentlevel++;
 		for(INode node: setnode.elements)
 		{
-			Indent();
+			indent();
 			node.accept(this);
 			result.append(",\n");
 		}
-		indent--;
-		Indent();
+		indentlevel--;
+		indent();
 		result.append(")");
 	}
 	
 	public void visit(TupleNode tuple)
 	{
 		result.append("(tuple\n");
-		indent++;
+		indentlevel++;
 		for(INode node: tuple.elements)
 		{
-			Indent();
+			indent();
 			node.accept(this);
 			result.append(",\n");
 		}
-		indent--;
-		Indent();
+		indentlevel--;
+		indent();
 		result.append(")");
 	}
 }
