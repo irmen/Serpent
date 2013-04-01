@@ -84,6 +84,11 @@ public class DebugVisitor implements INodeVisitor
 		result.append(String.format("int {0}", value.value));
 	}
 	
+	public void visit(BigIntNode value)
+	{
+		result.append(String.format("bigint {0}", value.value));
+	}
+
 	public void visit(LongNode value)
 	{
 		result.append(String.format("long {0}", value.value));

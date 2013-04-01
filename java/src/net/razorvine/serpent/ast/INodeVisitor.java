@@ -13,4 +13,5 @@ public interface INodeVisitor
 	void visit(StringNode value);
 	void visit(SetNode setnode);
 	void visit(TupleNode tuple);
+	void visit(BigIntNode value);
 }

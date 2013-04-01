@@ -7,481 +7,484 @@
 
 package net.razorvine.serpent;
 
-/***
-namespace Razorvine.Serpent
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import net.razorvine.serpent.ast.*;
+
+
+/**
+ * Parse a Python literal into an Ast (abstract syntax tree).
+ */
+public class Parser
 {
-	/// <summary>
-	/// Parse a Python literal into an Ast (abstract syntax tree).
-	/// </summary>
-	public class Parser
+	/**
+	 * Parse from a byte array (containing utf-8 encoded string with the Python literal expression in it)
+	 */
+	public Ast parse(byte[] serialized) throws ParseException
 	{
-		
-		/// <summary>
-		/// Parse from a byte array (containing utf-8 encoded string with the Python literal expression in it)
-		/// </summary>
-		public Ast Parse(byte[] serialized)
-		{
-			return Parse(Encoding.UTF8.GetString(serialized));
-		}
-		
-		/// <summary>
-		/// Parse from a string with the Python literal expression
-		/// </summary>
-		public Ast Parse(string expression)
-		{
-			Ast ast=new Ast();
-			if(string.IsNullOrEmpty(expression))
-				return ast;
-			
-			SeekableStringReader sr = new SeekableStringReader(expression);
-			if(sr.Peek()=='#')
-				sr.ReadUntil('\n');  // skip comment line
-			
-			try {
-				ast.Root = ParseExpr(sr);
-				sr.SkipWhitespace();
-				if(sr.HasMore())
-					throw new ParseException("garbage at end of expression");
-				return ast;
-			} catch (ParseException x) {
-				string faultLocation = ExtractFaultLocation(sr);
-				throw new ParseException(x.Message + " (at position "+sr.Bookmark()+"; '"+faultLocation+"')", x);
-			}
-		}
-		
-		string ExtractFaultLocation(SeekableStringReader sr)
-		{
-			string left, right;
-			sr.Context(-1, 20, out left, out right);
-			return string.Format("...{0}>>><<<{1}...", left, right);
-		}
-		
-		Ast.INode ParseExpr(SeekableStringReader sr)
-		{
-			// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
-			sr.SkipWhitespace();
-			char c = sr.Peek();
-			Ast.INode node;
-			if(c=='{' || c=='[' || c=='(')
-				node = ParseCompound(sr);
-			else
-				node = ParseSingle(sr);
-			sr.SkipWhitespace();
-			return node;
-		}
-		
-		Ast.INode ParseCompound(SeekableStringReader sr)
-		{
-			// compound =  tuple | dict | list | set .
-			sr.SkipWhitespace();
-			switch(sr.Peek())
-			{
-				case '[':
-					return ParseList(sr);
-				case '{':
-					{
-						int bm = sr.Bookmark();
-						try {
-							return ParseSet(sr);
-						} catch(ParseException) {
-							sr.FlipBack(bm);
-							return ParseDict(sr);
-						}
-					}
-				case '(':
-					// tricky case here, it can be a tuple but also a complex number.
-					// try complex number first
-					{
-						int bm = sr.Bookmark();
-						try {
-							return ParseComplex(sr);
-						} catch(ParseException) {
-							sr.FlipBack(bm);
-							return ParseTuple(sr);
-						}
-					}
-				default:
-					throw new ParseException("invalid sequencetype char");
-			}
-		}
-		
-		Ast.TupleNode ParseTuple(SeekableStringReader sr)
-		{
-			//tuple           = tuple_empty | tuple_one | tuple_more
-			//tuple_empty     = '()' .
-			//tuple_one       = '(' expr ',' <whitespace> ')' .
-			//tuple_more      = '(' expr_list ')' .
-			
-			sr.Read();	// (
-			sr.SkipWhitespace();
-			Ast.TupleNode tuple = new Ast.TupleNode();
-			if(sr.Peek() == ')')
-			{
-				sr.Read();
-				return tuple;		// empty tuple
-			}
-			
-			Ast.INode firstelement = ParseExpr(sr);
-			if(sr.Peek() == ',')
-			{
-				sr.Read();
-				sr.SkipWhitespace();
-				if(sr.Read() == ')')
-				{
-					// tuple with just a single element
-					tuple.Elements.Add(firstelement);
-					return tuple;
-				}
-				sr.Rewind(1);   // undo the thing that wasn't a )
-			}
-			
-			tuple.Elements = ParseExprList(sr);
-			tuple.Elements.Insert(0, firstelement);
-			if(!sr.HasMore())
-				throw new ParseException("missing ')'");
-			char closechar = sr.Read();
-			if(closechar==',')
-				closechar = sr.Read();
-			if(closechar!=')')
-				throw new ParseException("expected ')'");
-			return tuple;			
-		}
-		
-		List<Ast.INode> ParseExprList(SeekableStringReader sr)
-		{
-			//expr_list       = expr { ',' expr } .
-			List<Ast.INode> exprList = new List<Ast.INode>();
-			exprList.Add(ParseExpr(sr));
-			while(sr.HasMore() && sr.Peek() == ',')
-			{
-				sr.Read();
-				exprList.Add(ParseExpr(sr));
-			}
-			return exprList;
-		}
-		
-		List<Ast.INode> ParseKeyValueList(SeekableStringReader sr)
-		{
-			//keyvalue_list   = keyvalue { ',' keyvalue } .
-			List<Ast.INode> kvs = new List<Ast.INode>();
-			kvs.Add(ParseKeyValue(sr));
-			while(sr.HasMore() && sr.Peek()==',')
-			{
-				sr.Read();
-				kvs.Add(ParseKeyValue(sr));
-			}
-			return kvs;
-		}		
-		
-		Ast.KeyValueNode ParseKeyValue(SeekableStringReader sr)
-		{
-			//keyvalue        = expr ':' expr .
-			Ast.INode key = ParseExpr(sr);
-			if(sr.HasMore() && sr.Peek()==':')
-			{
-				sr.Read(); // :
-				Ast.INode value = ParseExpr(sr);
-				return new Ast.KeyValueNode
-					{
-						key = key,
-						value = value
-					};
-			}
-			throw new ParseException("expected ':'");
-		}
-		
-		Ast.SetNode ParseSet(SeekableStringReader sr)
-		{
-			// set = '{' expr_list '}' .
-			sr.Read();	// {
-			sr.SkipWhitespace();
-			Ast.SetNode setnode = new Ast.SetNode();
-			List<Ast.INode> elts = ParseExprList(sr);
-			if(!sr.HasMore())
-				throw new ParseException("missing '}'");
-			char closechar = sr.Read();
-			if(closechar!='}')
-				throw new ParseException("expected '}'");
-
-			// make sure it has set semantics (remove duplicate elements)
-			HashSet<Ast.INode> h = new HashSet<Ast.INode>(elts);
-			setnode.Elements = new List<Ast.INode>(h);
-			return setnode;
-		}
-		
-		Ast.ListNode ParseList(SeekableStringReader sr)
-		{
-			// list            = list_empty | list_nonempty .
-			// list_empty      = '[]' .
-			// list_nonempty   = '[' expr_list ']' .
-			sr.Read();	// [
-			sr.SkipWhitespace();
-			Ast.ListNode list = new Ast.ListNode();
-			if(sr.Peek() == ']')
-			{
-				sr.Read();
-				return list;		// empty list
-			}
-			
-			list.Elements = ParseExprList(sr);
-			if(!sr.HasMore())
-				throw new ParseException("missing ']'");
-			char closechar = sr.Read();
-			if(closechar!=']')
-				throw new ParseException("expected ']'");
-			return list;
-		}
-		
-		Ast.DictNode ParseDict(SeekableStringReader sr)
-		{
-			//dict            = '{' keyvalue_list '}' .
-			//keyvalue_list   = keyvalue { ',' keyvalue } .
-			//keyvalue        = expr ':' expr .
-			
-			sr.Read();	// {
-			sr.SkipWhitespace();
-			Ast.DictNode dict = new Ast.DictNode();
-			if(sr.Peek() == '}')
-			{
-				sr.Read();
-				return dict;		// empty dict
-			}
-			
-			List<Ast.INode> elts = ParseKeyValueList(sr);
-			if(!sr.HasMore())
-				throw new ParseException("missing '}'");
-			char closechar = sr.Read();
-			if(closechar!='}')
-				throw new ParseException("expected '}'");
-			
-			// make sure it has dict semantics (remove duplicate keys)
-			Dictionary<Ast.INode, Ast.INode> fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
-			foreach(Ast.KeyValueNode kv in elts)
-				fixedDict[kv.Key] = kv.Value;
-			foreach(var kv in fixedDict)
-			{
-				dict.Elements.Add(new Ast.KeyValueNode()
-				                  {
-				                  	key=kv.Key,
-				                  	value=kv.Value
-				                  });
-			}
-			return dict;
-		}		
-		
-		public Ast.INode ParseSingle(SeekableStringReader sr)
-		{
-			// single =  int | float | complex | string | bool | none .
-			sr.SkipWhitespace();
-			switch(sr.Peek())
-			{
-				case 'N':
-					return ParseNone(sr);
-				case 'T':
-				case 'F':
-					return ParseBool(sr);
-				case '\'':
-				case '"':
-					return ParseString(sr);
-			}
-			// int or float or complex.
-			int bookmark = sr.Bookmark();
-			try {
-				return ParseComplex(sr);
-			} catch (ParseException) {
-				sr.FlipBack(bookmark);
-				try {
-					return ParseFloat(sr);
-				} catch (ParseException) {
-					sr.FlipBack(bookmark);
-					return ParseInt(sr);
-				}
-			}
-		}
-		
-		Ast.INode ParseInt(SeekableStringReader sr)
-		{
-			// int =  ['-'] digitnonzero {digit} .
-			string numberstr = sr.ReadWhile('-','0','1','2','3','4','5','6','7','8','9');
-			if(numberstr.Length==0)
-				throw new ParseException("invalid int character");
-			try {
-				try {
-					return new Ast.IntegerNode(int.Parse(numberstr));
-				} catch (OverflowException) {
-					// try long
-					try {
-						return new Ast.LongNode(long.Parse(numberstr));
-					} catch (OverflowException) {
-						// try decimal, but it can still overflow because it's not arbitrary precision
-						try {
-							return new Ast.DecimalNode(decimal.Parse(numberstr));
-						} catch (OverflowException) {
-							throw new ParseException("number too large");
-						}
-					}
-				}
-			} catch (FormatException x) {
-				throw new ParseException("invalid integer format", x);
-			}
-		}
-
-		Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
-		{
-			string numberstr = sr.ReadWhile('-','+','.','e','E','0','1','2','3','4','5','6','7','8','9');
-			if(numberstr.Length==0)
-				throw new ParseException("invalid float character");
-			
-			// little bit of a hack:
-			// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
-			// in that case, we need to reject it as a float.
-			if(numberstr.IndexOfAny(new char[] {'.','e','E'}) < 0)
-				throw new ParseException("number is not a valid float");
-
-			try {
-				return new Ast.DoubleNode(double.Parse(numberstr, CultureInfo.InvariantCulture));
-			} catch (FormatException x) {
-				throw new ParseException("invalid float format", x);
-			}
-		}
-
-		Ast.ComplexNumberNode ParseComplex(SeekableStringReader sr)
-		{
-			//complex         = complextuple | imaginary .
-			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-			//complextuple    = '(' ( float | int ) imaginary ')' .
-			if(sr.Peek()=='(')
-			{
-				// complextuple
-				sr.Read();  // (
-				string numberstr;
-				if(sr.Peek()=='-' || sr.Peek()=='+')
-				{
-					// starts with a sign, read that first otherwise the readuntil will return immediately
-					numberstr = sr.Read(1) + sr.ReadUntil(new char[] {'+', '-'});
-				}
-				else
-					numberstr = sr.ReadUntil(new char[] {'+', '-'});
-				double real;
-				try {
-					real = double.Parse(numberstr, CultureInfo.InvariantCulture);
-				} catch (FormatException x) {
-					throw new ParseException("invalid float format", x);
-				}
-				sr.Rewind(1); // rewind the +/-
-				double imaginarypart = ParseImaginaryPart(sr);
-				if(sr.Read()!=')')
-					throw new ParseException("expected ) to end a complex number");
-				return new Ast.ComplexNumberNode()
-					{
-						real = real,
-						imaginary = imaginarypart
-					};
-			}
-			else
-			{
-				// imaginary
-				double imag = ParseImaginaryPart(sr);
-				return new Ast.ComplexNumberNode()
-					{
-						real=0,
-						imaginary=imag
-					};
-			}
-		}
-		
-		double ParseImaginaryPart(SeekableStringReader sr)
-		{
-			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-			string numberstr = sr.ReadUntil('j');
-			try {
-				return double.Parse(numberstr, CultureInfo.InvariantCulture);
-			} catch(FormatException x) {
-				throw new ParseException("invalid float format", x);
-			}
-		}
-		
-		Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)
-		{
-			char quotechar = sr.Read();   // ' or "
-			StringBuilder sb = new StringBuilder(10);
-			while(sr.HasMore())
-			{
-				char c = sr.Read();
-				if(c=='\\')
-				{
-					// backslash unescape
-					c = sr.Read();
-					switch(c)
-					{
-						case '\\':
-							sb.Append('\\');
-							break;
-						case '\'':
-							sb.Append('\'');
-							break;
-						case '"':
-							sb.Append('"');
-							break;
-						case 'a':
-							sb.Append('\a');
-							break;
-						case 'b':
-							sb.Append('\b');
-							break;
-						case 'f':
-							sb.Append('\f');
-							break;
-						case 'n':
-							sb.Append('\n');
-							break;
-						case 'r':
-							sb.Append('\r');
-							break;
-						case 't':
-							sb.Append('\t');
-							break;
-						case 'v':
-							sb.Append('\v');
-							break;
-						default:
-							sb.Append(c);
-							break;
-					}
-				}
-				else if(c==quotechar)
-				{
-					// end of string
-					return new Ast.StringNode(sb.ToString());
-				}
-				else
-				{
-					sb.Append(c);
-				}
-			}
-			throw new ParseException("unclosed string");
-		}
-		
-		Ast.PrimitiveNode<bool> ParseBool(SeekableStringReader sr)
-		{
-			// True,False
-			string b = sr.ReadUntil('e');
-			if(b=="Tru")
-				return new Ast.BooleanNode(true);
-			if(b=="Fals")
-				return new Ast.BooleanNode(false);
-			throw new ParseException("expected bool, True or False");
-		}
-		
-		Ast.NoneNode ParseNone(SeekableStringReader sr)
-		{
-			// None
-			string n = sr.ReadUntil('e');
-			if(n=="Non")
-				return Ast.NoneNode.Instance;
-			throw new ParseException("expected None");
+		try {
+			return parse(new String(serialized, "utf-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw new ParseException(e.toString());
 		}
 	}
-}
+	
+	/**
+	 * Parse from a string with the Python literal expression
+	 */
+	public Ast parse(String expression)
+	{
+		Ast ast=new Ast();
+		if(expression==null || expression.length()==0)
+			return ast;
+		
+		SeekableStringReader sr = new SeekableStringReader(expression);
+		if(sr.peek()=='#')
+			sr.readUntil('\n');  // skip comment line
+		
+		try {
+			ast.root = parseExpr(sr);
+			sr.skipWhitespace();
+			if(sr.hasMore())
+				throw new ParseException("garbage at end of expression");
+			return ast;
+		} catch (ParseException x) {
+			String faultLocation = extractFaultLocation(sr);
+			throw new ParseException(x.getMessage() + " (at position "+sr.bookmark()+"; '"+faultLocation+"')", x);
+		}
+	}
+	
+	String extractFaultLocation(SeekableStringReader sr)
+	{
+		SeekableStringReader.StringContext ctx = sr.context(-1, 20);
+		return String.format("...{0}>>><<<{1}...", ctx.left, ctx.right);
+	}
 
-***/
+	INode parseExpr(SeekableStringReader sr)
+	{
+		// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
+		sr.skipWhitespace();
+		char c = sr.peek();
+		INode node;
+		if(c=='{' || c=='[' || c=='(')
+			node = parseCompound(sr);
+		else
+			node = parseSingle(sr);
+		sr.skipWhitespace();
+		return node;
+	}
+
+	INode parseCompound(SeekableStringReader sr)
+	{
+		// compound =  tuple | dict | list | set .
+		sr.skipWhitespace();
+		switch(sr.peek())
+		{
+			case '[':
+				return parseList(sr);
+			case '{':
+				{
+					int bm = sr.bookmark();
+					try {
+						return parseSet(sr);
+					} catch(ParseException x) {
+						sr.flipBack(bm);
+						return parseDict(sr);
+					}
+				}
+			case '(':
+				// tricky case here, it can be a tuple but also a complex number.
+				// try complex number first
+				{
+					int bm = sr.bookmark();
+					try {
+						return parseComplex(sr);
+					} catch(ParseException x) {
+						sr.flipBack(bm);
+						return parseTuple(sr);
+					}
+				}
+			default:
+				throw new ParseException("invalid sequencetype char");
+		}
+	}
+
+	TupleNode parseTuple(SeekableStringReader sr)
+	{
+		//tuple           = tuple_empty | tuple_one | tuple_more
+		//tuple_empty     = '()' .
+		//tuple_one       = '(' expr ',' <whitespace> ')' .
+		//tuple_more      = '(' expr_list ')' .
+		
+		sr.read();	// (
+		sr.skipWhitespace();
+		TupleNode tuple = new TupleNode();
+		if(sr.peek() == ')')
+		{
+			sr.read();
+			return tuple;		// empty tuple
+		}
+		
+		INode firstelement = parseExpr(sr);
+		if(sr.peek() == ',')
+		{
+			sr.read();
+			sr.skipWhitespace();
+			if(sr.read() == ')')
+			{
+				// tuple with just a single element
+				tuple.elements.add(firstelement);
+				return tuple;
+			}
+			sr.rewind(1);   // undo the thing that wasn't a )
+		}
+		
+		tuple.elements = parseExprList(sr);
+		tuple.elements.add(0, firstelement);
+		if(!sr.hasMore())
+			throw new ParseException("missing ')'");
+		char closechar = sr.read();
+		if(closechar==',')
+			closechar = sr.read();
+		if(closechar!=')')
+			throw new ParseException("expected ')'");
+		return tuple;			
+	}
+	
+	List<INode> parseExprList(SeekableStringReader sr)
+	{
+		//expr_list       = expr { ',' expr } .
+		List<INode> exprList = new ArrayList<INode>();
+		exprList.add(parseExpr(sr));
+		while(sr.hasMore() && sr.peek() == ',')
+		{
+			sr.read();
+			exprList.add(parseExpr(sr));
+		}
+		return exprList;
+	}
+
+	List<INode> parseKeyValueList(SeekableStringReader sr)
+	{
+		//keyvalue_list   = keyvalue { ',' keyvalue } .
+		List<INode> kvs = new ArrayList<INode>();
+		kvs.add(parseKeyValue(sr));
+		while(sr.hasMore() && sr.peek()==',')
+		{
+			sr.read();
+			kvs.add(parseKeyValue(sr));
+		}
+		return kvs;
+	}		
+
+	KeyValueNode parseKeyValue(SeekableStringReader sr)
+	{
+		//keyvalue        = expr ':' expr .
+		INode key = parseExpr(sr);
+		if(sr.hasMore() && sr.peek()==':')
+		{
+			sr.read(); // :
+			INode value = parseExpr(sr);
+			KeyValueNode kv = new KeyValueNode();
+			kv.key = key;
+			kv.value = value;
+			return kv;
+		}
+		throw new ParseException("expected ':'");
+	}
+	
+	
+	SetNode parseSet(SeekableStringReader sr)
+	{
+		// set = '{' expr_list '}' .
+		sr.read();	// {
+		sr.skipWhitespace();
+		SetNode setnode = new SetNode();
+		List<INode> elts = parseExprList(sr);
+		if(!sr.hasMore())
+			throw new ParseException("missing '}'");
+		char closechar = sr.read();
+		if(closechar!='}')
+			throw new ParseException("expected '}'");
+
+		// make sure it has set semantics (remove duplicate elements)
+		Set<INode> h = new HashSet<INode>(elts);
+		setnode.elements = new ArrayList<INode>(h);
+		return setnode;
+	}
+	
+	ListNode parseList(SeekableStringReader sr)
+	{
+		// list            = list_empty | list_nonempty .
+		// list_empty      = '[]' .
+		// list_nonempty   = '[' expr_list ']' .
+		sr.read();	// [
+		sr.skipWhitespace();
+		ListNode list = new ListNode();
+		if(sr.peek() == ']')
+		{
+			sr.read();
+			return list;		// empty list
+		}
+		
+		list.elements = parseExprList(sr);
+		if(!sr.hasMore())
+			throw new ParseException("missing ']'");
+		char closechar = sr.read();
+		if(closechar!=']')
+			throw new ParseException("expected ']'");
+		return list;
+	}
+	
+	DictNode parseDict(SeekableStringReader sr)
+	{
+		//dict            = '{' keyvalue_list '}' .
+		//keyvalue_list   = keyvalue { ',' keyvalue } .
+		//keyvalue        = expr ':' expr .
+		
+		sr.read();	// {
+		sr.skipWhitespace();
+		DictNode dict = new DictNode();
+		if(sr.peek() == '}')
+		{
+			sr.read();
+			return dict;		// empty dict
+		}
+		
+		List<INode> elts = parseKeyValueList(sr);
+		if(!sr.hasMore())
+			throw new ParseException("missing '}'");
+		char closechar = sr.read();
+		if(closechar!='}')
+			throw new ParseException("expected '}'");
+		
+		// make sure it has dict semantics (remove duplicate keys)
+		Map<INode, INode> fixedDict = new HashMap<INode, INode>(elts.size());
+		for(INode e: elts)
+		{
+			KeyValueNode kv = (KeyValueNode)e;
+			fixedDict.put(kv.key, kv.value);
+		}
+		for(Map.Entry<INode, INode> e: fixedDict.entrySet())
+		{
+			KeyValueNode kvnode = new KeyValueNode();
+			kvnode.key = e.getKey();
+			kvnode.value = e.getValue();
+			dict.elements.add(kvnode);
+		}
+		return dict;
+	}		
+	
+	INode parseSingle(SeekableStringReader sr)
+	{
+		// single =  int | float | complex | string | bool | none .
+		sr.skipWhitespace();
+		switch(sr.peek())
+		{
+			case 'N':
+				return parseNone(sr);
+			case 'T':
+			case 'F':
+				return parseBool(sr);
+			case '\'':
+			case '"':
+				return parseString(sr);
+		}
+		// int or float or complex.
+		int bookmark = sr.bookmark();
+		try {
+			return parseComplex(sr);
+		} catch (ParseException x1) {
+			sr.flipBack(bookmark);
+			try {
+				return parseFloat(sr);
+			} catch (ParseException x2) {
+				sr.flipBack(bookmark);
+				return parseInt(sr);
+			}
+		}
+	}
+	
+	INode parseInt(SeekableStringReader sr)
+	{
+		// int =  ['-'] digitnonzero {digit} .
+		String numberstr = sr.readWhile('-','0','1','2','3','4','5','6','7','8','9');
+		if(numberstr.length()==0)
+			throw new ParseException("invalid int character");
+		try {
+			try {
+				return new IntegerNode(Integer.parseInt(numberstr));
+			} catch (NumberFormatException x1) {
+				// try long
+				try {
+					return new LongNode(Long.parseLong(numberstr));
+				} catch (NumberFormatException x2) {
+					// try bigint, but it can still overflow because it's not arbitrary precision
+					try {
+						return new BigIntNode(new BigInteger(numberstr));
+					} catch (NumberFormatException x3) {
+						throw new ParseException("number too large or invalid");
+					}
+				}
+			}
+		} catch (NumberFormatException x) {
+			throw new ParseException("invalid integer format", x);
+		}
+	}
+
+	PrimitiveNode<Double> parseFloat(SeekableStringReader sr)
+	{
+		String numberstr = sr.readWhile('-','+','.','e','E','0','1','2','3','4','5','6','7','8','9');
+		if(numberstr.length()==0)
+			throw new ParseException("invalid float character");
+		
+		// little bit of a hack:
+		// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
+		// in that case, we need to reject it as a float.
+		if(numberstr.indexOf('.')<0 && numberstr.indexOf('e')<0 && numberstr.indexOf('E')<0)
+			throw new ParseException("number is not a valid float");
+
+		try {
+			return new DoubleNode(Double.parseDouble(numberstr));
+		} catch (NumberFormatException x) {
+			throw new ParseException("invalid float format", x);
+		}
+	}
+
+	ComplexNumberNode parseComplex(SeekableStringReader sr)
+	{
+		//complex         = complextuple | imaginary .
+		//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
+		//complextuple    = '(' ( float | int ) imaginary ')' .
+		if(sr.peek()=='(')
+		{
+			// complextuple
+			sr.read();  // (
+			String numberstr;
+			if(sr.peek()=='-' || sr.peek()=='+')
+			{
+				// starts with a sign, read that first otherwise the readuntil will return immediately
+				numberstr = sr.read(1) + sr.readUntil(new char[] {'+', '-'});
+			}
+			else
+				numberstr = sr.readUntil(new char[] {'+', '-'});
+			double real;
+			try {
+				real = Double.parseDouble(numberstr);
+			} catch (NumberFormatException x) {
+				throw new ParseException("invalid float format", x);
+			}
+			sr.rewind(1); // rewind the +/-
+			double imaginarypart = parseImaginaryPart(sr);
+			if(sr.read()!=')')
+				throw new ParseException("expected ) to end a complex number");
+			
+			ComplexNumberNode c = new ComplexNumberNode();
+			c.real = real;
+			c.imaginary = imaginarypart;
+			return c;
+		}
+		else
+		{
+			// imaginary
+			double imag = parseImaginaryPart(sr);
+			ComplexNumberNode c = new ComplexNumberNode();
+			c.real = 0;
+			c.imaginary = imag;
+			return c;
+		}
+	}
+	
+	double parseImaginaryPart(SeekableStringReader sr)
+	{
+		//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
+		String numberstr = sr.readUntil('j');
+		try {
+			return Double.parseDouble(numberstr);
+		} catch(NumberFormatException x) {
+			throw new ParseException("invalid float format", x);
+		}
+	}
+	
+	PrimitiveNode<String> parseString(SeekableStringReader sr)
+	{
+		char quotechar = sr.read();   // ' or "
+		StringBuilder sb = new StringBuilder(10);
+		while(sr.hasMore())
+		{
+			char c = sr.read();
+			if(c=='\\')
+			{
+				// backslash unescape
+				c = sr.read();
+				switch(c)
+				{
+					case '\\':
+						sb.append('\\');
+						break;
+					case '\'':
+						sb.append('\'');
+						break;
+					case '"':
+						sb.append('"');
+						break;
+					case 'b':
+						sb.append('\b');
+						break;
+					case 'f':
+						sb.append('\f');
+						break;
+					case 'n':
+						sb.append('\n');
+						break;
+					case 'r':
+						sb.append('\r');
+						break;
+					case 't':
+						sb.append('\t');
+						break;
+					default:
+						sb.append(c);
+						break;
+				}
+			}
+			else if(c==quotechar)
+			{
+				// end of string
+				return new StringNode(sb.toString());
+			}
+			else
+			{
+				sb.append(c);
+			}
+		}
+		throw new ParseException("unclosed string");
+	}
+	
+	PrimitiveNode<Boolean> parseBool(SeekableStringReader sr)
+	{
+		// True,False
+		String b = sr.readUntil('e');
+		if(b.equals("Tru"))
+			return new BooleanNode(true);
+		if(b.equals("Fals"))
+			return new BooleanNode(false);
+		throw new ParseException("expected bool, True or False");
+	}
+	
+	NoneNode parseNone(SeekableStringReader sr)
+	{
+		// None
+		String n = sr.readUntil('e');
+		if(n.equals("Non"))
+			return NoneNode.Instance;
+		throw new ParseException("expected None");
+	}
+}

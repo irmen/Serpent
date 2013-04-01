@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-abstract class PrimitiveNode<T> implements INode, Comparable<T>
+public abstract class PrimitiveNode<T> implements INode, Comparable<T>
 {
 	public T value;
 	public PrimitiveNode(T value)
