@@ -282,7 +282,7 @@ public class Parser
 		return dict;
 	}		
 	
-	INode parseSingle(SeekableStringReader sr)
+	public INode parseSingle(SeekableStringReader sr)
 	{
 		// single =  int | float | complex | string | bool | none .
 		sr.skipWhitespace();

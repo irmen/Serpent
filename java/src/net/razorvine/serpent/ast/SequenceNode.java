@@ -3,7 +3,7 @@ package net.razorvine.serpent.ast;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract class SequenceNode implements INode
+public abstract class SequenceNode implements INode
 {
 	public List<INode> elements = new ArrayList<INode>();
 	public abstract char getOpenChar();
@@ -41,7 +41,7 @@ abstract class SequenceNode implements INode
 			}
 		}
 		if(elements.size()>0)
-			sb.deleteCharAt(sb.length()); // remove last comma
+			sb.deleteCharAt(sb.length()-1); // remove last comma
 		sb.append(getCloseChar());
 		return sb.toString();
 	}

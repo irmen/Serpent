@@ -16,7 +16,7 @@ import org.junit.Test;
 public class StringreaderTest
 {
 	@Test
-	public void TestStuff()
+	public void testStuff()
 	{
 		SeekableStringReader s=new SeekableStringReader("hello");
 		assertEquals('h', s.peek());
@@ -46,7 +46,7 @@ public class StringreaderTest
 	}
 	
 	@Test
-	public void TestRanges()
+	public void testRanges()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello");
 		try {
@@ -70,7 +70,7 @@ public class StringreaderTest
 	}
 	
 	@Test
-	public void TestReadUntil()
+	public void testReadUntil()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello there");
 		s.read();
@@ -105,7 +105,7 @@ public class StringreaderTest
 	}
 
 	@Test
-	public void TestReadWhile()
+	public void testReadWhile()
 	{
 		SeekableStringReader s = new SeekableStringReader("123.456 foo");
 		assertEquals("123.456", s.readWhile('0','1','2','3','4','5','6','7','8','9','.'));
@@ -115,7 +115,7 @@ public class StringreaderTest
 	}
 	
 	@Test
-	public void TestRead()
+	public void testRead()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello");
 		assertEquals('h', s.read());
@@ -131,7 +131,7 @@ public class StringreaderTest
 	}
 
 	@Test
-	public void TestBookmark()
+	public void testBookmark()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello");
 		s.read(2);
@@ -143,7 +143,7 @@ public class StringreaderTest
 	}
 	
 	@Test
-	public void TestNesting()
+	public void testNesting()
 	{
 		SeekableStringReader outer = new SeekableStringReader("hello!");
 		outer.read(1);
@@ -162,7 +162,7 @@ public class StringreaderTest
 	}
 
 	@Test
-	public void TestContext()
+	public void testContext()
 	{
 		SeekableStringReader s = new SeekableStringReader("abcdefghijklmnopqrstuvwxyz");
 		s.read(10);

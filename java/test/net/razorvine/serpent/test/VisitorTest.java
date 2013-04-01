@@ -19,7 +19,7 @@ import net.razorvine.serpent.ast.Ast;
 public class VisitorTest
 {
 	@Test
-	public void TestObjectify() throws IOException
+	public void testObjectify() throws IOException
 	{
 		Parser p = new Parser();
 		File testdatafile = new File("test/testserpent.utf8.bin");
