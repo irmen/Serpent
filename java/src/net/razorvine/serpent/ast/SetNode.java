@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-public class SetNode extends SequenceNode
+public class SetNode extends UnorderedSequenceNode
 {
 	@Override
 	public void accept(INodeVisitor visitor)

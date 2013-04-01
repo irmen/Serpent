@@ -16,7 +16,16 @@ public class ComplexNumberNode implements INode
 		String strReal = ""+real;
 		String strImag = ""+imaginary;
 		if(imaginary>=0)
-			return String.format("({0}+{1}j)", strReal, strImag);
-		return String.format("({0}{1}j)", strReal, strImag);
+			return String.format("(%s+%sj)", strReal, strImag);
+		return String.format("(%s%sj)", strReal, strImag);
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(!(obj instanceof ComplexNumberNode))
+			return false;
+		ComplexNumberNode other = (ComplexNumberNode) obj;
+		return real==other.real && imaginary==other.imaginary;
 	}
 }

@@ -8,11 +8,26 @@ public class KeyValueNode implements INode
 	@Override
 	public String toString()
 	{
-		return String.format("{0}:{1}", key, value);
+		return String.format("%s:%s", key, value);
 	}
 	
 	public void accept(INodeVisitor visitor)
 	{
 		throw new NoSuchMethodError("don't visit a keyvaluenode");
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(!(obj instanceof KeyValueNode))
+			return false;
+		KeyValueNode other = (KeyValueNode) obj;
+		return key.equals(other.key) && value.equals(other.value);
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		return key.hashCode() ^ (1000000007 * value.hashCode());
 	}
 }

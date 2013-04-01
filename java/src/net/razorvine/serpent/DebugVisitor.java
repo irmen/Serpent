@@ -81,32 +81,32 @@ public class DebugVisitor implements INodeVisitor
 	
 	public void visit(IntegerNode value)
 	{
-		result.append(String.format("int {0}", value.value));
+		result.append(String.format("int %s", value.value));
 	}
 	
 	public void visit(BigIntNode value)
 	{
-		result.append(String.format("bigint {0}", value.value));
+		result.append(String.format("bigint %s", value.value));
 	}
 
 	public void visit(LongNode value)
 	{
-		result.append(String.format("long {0}", value.value));
+		result.append(String.format("long %s", value.value));
 	}
 	
 	public void visit(DoubleNode value)
 	{
-		result.append(String.format("double {0}", value.value));
+		result.append(String.format("double %s", value.value));
 	}
 	
 	public void visit(BooleanNode value)
 	{
-		result.append(String.format("bool {0}", value.value));
+		result.append(String.format("bool %s", value.value));
 	}
 	
 	public void visit(StringNode value)
 	{
-		result.append(String.format("string '{0}'", value.value));
+		result.append(String.format("string '%s'", value.value));
 	}
 	
 	public void visit(SetNode setnode)

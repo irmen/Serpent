@@ -64,7 +64,7 @@ public class Parser
 	String extractFaultLocation(SeekableStringReader sr)
 	{
 		SeekableStringReader.StringContext ctx = sr.context(-1, 20);
-		return String.format("...{0}>>><<<{1}...", ctx.left, ctx.right);
+		return String.format("...%s>>><<<%s...", ctx.left, ctx.right);
 	}
 
 	INode parseExpr(SeekableStringReader sr)

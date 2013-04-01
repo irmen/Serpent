@@ -15,5 +15,5 @@ public class NoneNode implements INode
 	public void accept(INodeVisitor visitor)
 	{
 		visitor.visit(this);
-	}			
+	}
 }

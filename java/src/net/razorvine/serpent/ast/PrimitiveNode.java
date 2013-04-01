@@ -1,5 +1,6 @@
 package net.razorvine.serpent.ast;
 
+
 public abstract class PrimitiveNode<T> implements INode, Comparable<T>
 {
 	public T value;
@@ -71,7 +72,11 @@ public abstract class PrimitiveNode<T> implements INode, Comparable<T>
 			sb.append("'");
 			return sb.toString();
 		}
-		else if(value instanceof Number)
+		else if(value instanceof Boolean)
+		{
+			return value.equals(Boolean.TRUE)? "True": "False";
+		}
+		else if(value instanceof Float || value instanceof Double)
 		{
 			String d = value.toString();
 			if(d.indexOf('.')<=0 && d.indexOf('e')<=0 && d.indexOf('E')<=0)

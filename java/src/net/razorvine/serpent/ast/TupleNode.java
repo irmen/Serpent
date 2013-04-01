@@ -16,7 +16,7 @@ public class TupleNode extends SequenceNode
 			}
 		}
 		if(elements.size()>1)
-			sb.deleteCharAt(sb.length());  // remove last comma
+			sb.deleteCharAt(sb.length()-1);  // remove last comma
 		sb.append(getCloseChar());
 		return sb.toString();
 	}

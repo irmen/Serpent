@@ -18,6 +18,7 @@ import net.razorvine.serpent.ast.Ast;
 
 public class VisitorTest
 {
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectify() throws IOException
 	{
