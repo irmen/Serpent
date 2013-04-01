@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import net.razorvine.serpent.ComplexNumber;
+import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 import org.junit.Test;
 
@@ -153,10 +154,9 @@ public class SerializeTests {
 		byte[] ser = serpent.serialize(bytes);
 		assertEquals("{\n  'data': 'YWJjZGVm',\n  'encoding': 'base64'\n}", S(strip_header(ser)));
 
-		// TODO
-		//Parser p = new Parser();
-		//String parsed = p.Parse(ser).Root.ToString();
-		//assertEquals(39, parsed.Length);
+		Parser p = new Parser();
+		String parsed = p.parse(ser).root.toString();
+		assertEquals(39, parsed.length());
 	}
 	
 
@@ -347,26 +347,23 @@ public class SerializeTests {
 	public void testDictionary()
 	{
 		Serializer serpent = new Serializer();
-		// TODO
-		// Parser p = new Parser();
+		Parser p = new Parser();
 		
 		// test empty dict
 		Hashtable<Object, Object> ht = new Hashtable<Object, Object>();
 		byte[] ser = serpent.serialize(ht);
 		assertEquals("{}", S(strip_header(ser)));
 		
-		// TODO
-		// String parsed = p.Parse(ser).Root.ToString();
-		/// assertEquals("{}", parsed);
+		String parsed = p.parse(ser).root.toString();
+		assertEquals("{}", parsed);
 		
 		//empty dict with indentation
 	    serpent.indent=true;
 		ser = serpent.serialize(ht);
 		assertEquals("{}", S(strip_header(ser)));
 		
-		// TODO
-		// parsed = p.Parse(ser).Root.ToString();
-        // assertEquals("{}", parsed);
+		parsed = p.parse(ser).root.toString();
+        assertEquals("{}", parsed);
 		
 		// test dict with values
 		serpent.indent=false;
@@ -380,9 +377,8 @@ public class SerializeTests {
 		assertEquals('}', ser[ser.length-1]);
 		assertTrue(ser[ser.length-2]!=',');
 		
-		// TODO
-		//parsed = p.Parse(ser).Root.ToString();
-		//assertEquals(69, parsed.length);
+		parsed = p.parse(ser).root.toString();
+		assertEquals(69, parsed.length());
       
         // test indentation
         serpent.indent=true;
@@ -396,9 +392,8 @@ public class SerializeTests {
 		assertTrue(ser_str.contains("42: 'fortytwo'"));
 		assertTrue(ser_str.contains("'sixteen-and-half': 16.5"));
 		
-		// TODO
-		// parsed = p.Parse(ser).Root.ToString();
-        // assertEquals(69, parsed.length);
+		parsed = p.parse(ser).root.toString();
+        assertEquals(69, parsed.length());
 		
         serpent.indent=false;
       
