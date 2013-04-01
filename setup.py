@@ -44,6 +44,10 @@ Serpent can't serialize object graphs (when an object refers to itself); it will
 
 Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
+*There is also a Java and a .NET (C#) implementation available. This allows for easy data transfer between the various ecosystems.
+You can get the full source distribution, a Java .jar file, and a .NET assembly dll.*  `Download location here <http://irmen.home.xs4all.nl/serpent/>`_
+
+
 **Demo**
 
 .. code:: python
