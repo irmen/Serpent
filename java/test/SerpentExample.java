@@ -5,7 +5,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import net.razorvine.serpent.DebugVisitor;
+import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
+import net.razorvine.serpent.ast.Ast;
 
 public class SerpentExample {
 
@@ -45,6 +49,7 @@ public class SerpentExample {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void run() throws IOException
 	{
 		// some example use of Serpent
@@ -66,31 +71,42 @@ public class SerpentExample {
 		System.out.println("Serialized:");
 		System.out.println(new String(ser, "utf-8"));  
 		
-		/*** @todo
 		// parse the serialized bytes back into an abstract syntax tree of the datastructure
 		Parser parser = new Parser();
-		Ast ast = parser.Parse(ser);
+		Ast ast = parser.parse(ser);
 		System.out.println("\nParsed AST:");
-		System.out.println(ast.Root.toString());
+		System.out.println(ast.root.toString());
 		
+		// print debug representation
+		DebugVisitor dv = new DebugVisitor();
+		ast.accept(dv);
+		System.out.println("DEBUG string representation:");
+		System.out.println(dv.toString());
+
 		// turn the Ast into regular Java objects
-		ObjectifyVistior visitor = new ObjectifyVisitor();
-		ast.Accept(visitor);
-		var dict = (IDictionary<Object, Object>) visitor.GetObject();
+		Map<Object, Object> dict = (Map<Object, Object>)ast.getData();
+		// You can get the data out of the Ast manually as well, by using the supplied visitor:
+		// ObjectifyVisitor visitor = new ObjectifyVisitor();
+		// ast.accept(visitor);
+		// Map<Object, Object> dict = (Map<Object, Object>) visitor.getObject();
 
 		// print the results
-		System.out.print("Tuple items: ");
-		Object[] tuple = (object[]) dict["tuple"];
-		System.out.println(string.Join(", ", tuple.Select(e=>e.ToString()).ToArray()));
-		System.out.println("Date: {0}", dict["date"]);
-		System.out.print("Set items: ");
-		HashSet<Object> set = (HashSet<Object>) dict["set"];
-		System.out.println(string.Join(", ", set.Select(e=>e.ToString()).ToArray()));
-		System.out.println("Class attributes:");
-		var clazz = (IDictionary<Object, Object>) dict["class"];	// custom classes are serialized as dicts
-		System.out.println("type: {0}", clazz["__class__"]);
-		System.out.println("name: {0}", clazz["name"]);
-		System.out.println("age: {0}", clazz["age"]);
-		***/
+		System.out.println("PARSED results:");
+		System.out.print("tuple items: ");
+		Object[] tuple = (Object[]) dict.get("tuple");
+		for(Object o: tuple)
+			System.out.print(" "+o.toString()+",");
+		System.out.println("");
+		System.out.println("date: "+dict.get("date"));
+		System.out.print("set items: ");
+		Set<Object> set2 = (Set<Object>) dict.get("set");
+		for(Object o: set2)
+			System.out.print(" "+o.toString()+",");
+		System.out.println("");
+		System.out.println("class attributes:");
+		Map<Object, Object> clazz = (Map<Object, Object>) dict.get("class");	// custom classes are serialized as dicts
+		System.out.println("  type: "+clazz.get("__class__"));
+		System.out.println("  name: "+clazz.get("name"));
+		System.out.println("  age: "+clazz.get("age"));
 	}
 }

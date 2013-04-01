@@ -7,7 +7,12 @@
 
 package net.razorvine.serpent.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -16,33 +21,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import net.razorvine.serpent.ObjectifyVisitor;
 import net.razorvine.serpent.ParseException;
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.SeekableStringReader;
-import net.razorvine.serpent.ast.Ast;
-import net.razorvine.serpent.ast.BigIntNode;
-import net.razorvine.serpent.ast.BooleanNode;
-import net.razorvine.serpent.ast.ComplexNumberNode;
-import net.razorvine.serpent.ast.DictNode;
-import net.razorvine.serpent.ast.DoubleNode;
-import net.razorvine.serpent.ast.INode;
-import net.razorvine.serpent.ast.IntegerNode;
-import net.razorvine.serpent.ast.KeyValueNode;
-import net.razorvine.serpent.ast.ListNode;
-import net.razorvine.serpent.ast.LongNode;
-import net.razorvine.serpent.ast.NoneNode;
-import net.razorvine.serpent.ast.SequenceNode;
-import net.razorvine.serpent.ast.SetNode;
-import net.razorvine.serpent.ast.StringNode;
-import net.razorvine.serpent.ast.TupleNode;
+import net.razorvine.serpent.ast.*;
 
 import org.junit.Ignore;
 import org.junit.Test;

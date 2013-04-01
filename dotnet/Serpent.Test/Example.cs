@@ -55,18 +55,19 @@ namespace Razorvine.Serpent.Test
 			// var dict = (IDictionary<object, object>) visitor.GetObject();
 
 			// print the results
-			Console.Write("Tuple items: ");
+			Console.WriteLine("PARSED results:");
+			Console.Write("tuple items: ");
 			object[] tuple = (object[]) dict["tuple"];
 			Console.WriteLine(string.Join(", ", tuple.Select(e=>e.ToString()).ToArray()));
-			Console.WriteLine("Date: {0}", dict["date"]);
-			Console.Write("Set items: ");
+			Console.WriteLine("date: {0}", dict["date"]);
+			Console.Write("set items: ");
 			HashSet<object> set = (HashSet<object>) dict["set"];
 			Console.WriteLine(string.Join(", ", set.Select(e=>e.ToString()).ToArray()));
-			Console.WriteLine("Class attributes:");
+			Console.WriteLine("class attributes:");
 			var clazz = (IDictionary<object, object>) dict["class"];	// custom classes are serialized as dicts
-			Console.WriteLine("type: {0}", clazz["__class__"]);
-			Console.WriteLine("name: {0}", clazz["name"]);
-			Console.WriteLine("age: {0}", clazz["age"]);
+			Console.WriteLine("  type: {0}", clazz["__class__"]);
+			Console.WriteLine("  name: {0}", clazz["name"]);
+			Console.WriteLine("  age: {0}", clazz["age"]);
 		}
 		
 		[Serializable]
