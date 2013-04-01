@@ -7,6 +7,8 @@
 
 package net.razorvine.serpent.ast;
 
+import net.razorvine.serpent.ObjectifyVisitor;
+
 /// <summary>
 /// Abstract syntax tree for the literal expression. This is what the parser returns.
 /// </summary>
@@ -18,6 +20,16 @@ public class Ast
 	public String toString()
 	{
 		return "# serpent utf-8 .net\n" + root.toString();
+	}
+
+	/**
+	 * get the actual data as Java objects.
+	 */
+	public Object getData()
+	{
+		ObjectifyVisitor v = new ObjectifyVisitor();
+		this.accept(v);
+		return v.getObject();
 	}
 
 	public void accept(INodeVisitor visitor)

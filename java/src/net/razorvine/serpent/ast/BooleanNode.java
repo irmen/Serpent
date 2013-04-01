@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class BooleanNode extends PrimitiveNode<Boolean>
+public class BooleanNode extends PrimitiveNode<Boolean>
 {
 	public BooleanNode(boolean value)
 	{

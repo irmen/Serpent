@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class LongNode extends PrimitiveNode<Long>
+public class LongNode extends PrimitiveNode<Long>
 {
 	public LongNode(long value)
 	{

@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class TupleNode extends SequenceNode
+public class TupleNode extends SequenceNode
 {
 	@Override
 	public String toString()

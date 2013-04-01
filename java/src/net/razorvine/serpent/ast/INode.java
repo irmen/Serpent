@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-interface INode
+public interface INode
 {
 	String toString();
 	boolean equals(Object obj);

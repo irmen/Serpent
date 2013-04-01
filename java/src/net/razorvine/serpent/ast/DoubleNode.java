@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class DoubleNode extends PrimitiveNode<Double>
+public class DoubleNode extends PrimitiveNode<Double>
 {
 	public DoubleNode(double value)
 	{

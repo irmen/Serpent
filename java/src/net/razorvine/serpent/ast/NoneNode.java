@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class NoneNode implements INode
+public class NoneNode implements INode
 {
 	public static NoneNode Instance = new NoneNode();
 	private NoneNode()

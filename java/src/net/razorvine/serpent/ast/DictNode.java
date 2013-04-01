@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class DictNode extends SequenceNode
+public class DictNode extends SequenceNode
 {
 	@Override
 	public void accept(INodeVisitor visitor)

@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class StringNode extends PrimitiveNode<String>
+public class StringNode extends PrimitiveNode<String>
 {
 	public StringNode(String value)
 	{

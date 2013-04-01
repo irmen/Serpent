@@ -7,6 +7,79 @@
 
 package net.razorvine.serpent;
 
+import java.util.Stack;
+import net.razorvine.serpent.ast.*;
+
+
+public class ObjectifyVisitor implements INodeVisitor
+{
+	Stack<Object> generated = new Stack<Object>();
+	
+	/**
+	 * get the resulting object tree.
+	 */
+	public Object getObject()
+	{
+		return generated.pop();
+	}
+
+	public void visit(ComplexNumberNode complex) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(DictNode dict) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(ListNode list) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(NoneNode none) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(IntegerNode value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(LongNode value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(DoubleNode value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(BooleanNode value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(StringNode value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(SetNode setnode) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void visit(TupleNode tuple) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+}
+
 /***
 namespace Razorvine.Serpent
 {

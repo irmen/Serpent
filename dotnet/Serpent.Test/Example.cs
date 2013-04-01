@@ -40,11 +40,19 @@ namespace Razorvine.Serpent.Test
 			Ast ast = parser.Parse(ser);
 			Console.WriteLine("\nParsed AST:");
 			Console.WriteLine(ast.Root.ToString());
+
+			// print debug representation
+			DebugVisitor dv = new DebugVisitor();
+			ast.Accept(dv);
+			Console.WriteLine("DEBUG string representation:");
+			Console.WriteLine(dv.ToString());
 			
 			// turn the Ast into regular .net objects
-			var visitor = new ObjectifyVisitor();
-			ast.Accept(visitor);
-			var dict = (IDictionary<object, object>) visitor.GetObject();
+			var dict = (IDictionary<object, object>) ast.GetData();
+			// You can get the data out of the Ast manually as well, by using the supplied visitor:
+			// var visitor = new ObjectifyVisitor();
+			// ast.Accept(visitor);
+			// var dict = (IDictionary<object, object>) visitor.GetObject();
 
 			// print the results
 			Console.Write("Tuple items: ");

@@ -26,6 +26,16 @@ namespace Razorvine.Serpent
 		{
 			return "# serpent utf-8 .net\n" + Root.ToString();
 		}
+		
+		/// <summary>
+		/// Get the actual parsed data as C# object(s).
+		/// </summary>
+		public object GetData()
+		{
+			var visitor = new ObjectifyVisitor();
+			Root.Accept(visitor);
+			return visitor.GetObject();
+		}
 
 		public interface INodeVisitor
 		{
@@ -43,6 +53,9 @@ namespace Razorvine.Serpent
 			void Visit(Ast.TupleNode tuple);
 		}
 
+		/// <summary>
+		/// Visitor pattern: visit all nodes in the Ast with the given visitor.
+		/// </summary>
 		public void Accept(INodeVisitor visitor)
 		{
 			Root.Accept(visitor);

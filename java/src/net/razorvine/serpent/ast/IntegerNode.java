@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class IntegerNode extends PrimitiveNode<Integer>
+public class IntegerNode extends PrimitiveNode<Integer>
 {
 	public IntegerNode(int value)
 	{

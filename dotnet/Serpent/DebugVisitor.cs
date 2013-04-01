@@ -8,115 +8,135 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Razorvine.Serpent
 {
 	/// <summary>
-	/// Ast nodevisitor that turns the AST into actual .NET objects (array, int, IDictionary, string, etc...)
+	/// Ast nodevisitor that prints out the Ast as a string for debugging purposes
 	/// </summary>
-	public class ObjectifyVisitor: Ast.INodeVisitor
+	public class DebugVisitor: Ast.INodeVisitor
 	{
-		private Stack<object> generated;
+		private StringBuilder result = new StringBuilder();
+		private int indent=0;
 		
-		public ObjectifyVisitor()
+		public DebugVisitor()
 		{
-			generated = new Stack<object>();
 		}
 		
 		/// <summary>
-		/// get the resulting object tree.
+		/// Get the debug string representation result.
 		/// </summary>
-		public object GetObject()
+		public override string ToString()
 		{
-			return generated.Pop();
+			return result.ToString();
+		}
+		
+		protected void Indent()
+		{
+			for(int i=0; i<indent; ++i)
+				result.Append("    ");
 		}
 		
 		public void Visit(Ast.ComplexNumberNode complex)
 		{
-			generated.Push(new ComplexNumber(complex.Real, complex.Imaginary));
+			result.AppendFormat("complexnumber {0}r {1}i\n", complex.Real, complex.Imaginary);
 		}
 		
 		public void Visit(Ast.DictNode dict)
 		{
-			IDictionary<object, object> obj = new Dictionary<object, object>(dict.Elements.Count);
+			result.AppendLine("(dict");
+			indent++;
 			foreach(Ast.KeyValueNode kv in dict.Elements)
 			{
+				Indent();
 				kv.Key.Accept(this);
-				object key = generated.Pop();
+				result.Append(" = ");
 				kv.Value.Accept(this);
-				object value = generated.Pop();
-				obj[key] = value;
+				result.AppendLine(",");
 			}
-			generated.Push(obj);
+			indent--;
+			Indent();
+			result.Append(")");
 		}
 		
 		public void Visit(Ast.ListNode list)
 		{
-			IList<object> obj = new List<object>(list.Elements.Count);
+			result.AppendLine("(list");
+			indent++;
 			foreach(Ast.INode node in list.Elements)
 			{
+				Indent();
 				node.Accept(this);
-				obj.Add(generated.Pop());
 			}
-			generated.Push(obj);
+			indent--;
+			Indent();
+			result.Append(")");
 		}
 		
 		public void Visit(Ast.NoneNode none)
 		{
-			generated.Push(null);
+			result.Append("None");
 		}
 		
 		public void Visit(Ast.IntegerNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("int {0}", value.Value);
 		}
 		
 		public void Visit(Ast.LongNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("long {0}", value.Value);
 		}
 		
 		public void Visit(Ast.DoubleNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("double {0}", value.Value);
 		}
 		
 		public void Visit(Ast.BooleanNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("bool {0}", value.Value);
 		}
 		
 		public void Visit(Ast.StringNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("string '{0}'", value.Value);
 		}
 		
 		public void Visit(Ast.DecimalNode value)
 		{
-			generated.Push(value.Value);
+			result.AppendFormat("decimal {0}", value.Value);
 		}
 		
 		public void Visit(Ast.SetNode setnode)
 		{
-			HashSet<object> obj = new HashSet<object>();
+			result.AppendLine("(set");
+			indent++;
 			foreach(Ast.INode node in setnode.Elements)
 			{
+				Indent();
 				node.Accept(this);
-				obj.Add(generated.Pop());
+				result.AppendLine(",");
 			}
-			generated.Push(obj);
+			indent--;
+			Indent();
+			result.Append(")");
 		}
 		
 		public void Visit(Ast.TupleNode tuple)
 		{
-			object[] array = new object[tuple.Elements.Count];
-			int index=0;
+			result.AppendLine("(tuple");
+			indent++;
 			foreach(Ast.INode node in tuple.Elements)
 			{
+				Indent();
 				node.Accept(this);
-				array[index++] = generated.Pop();
+				result.AppendLine(",");
 			}
-			generated.Push(array);
+			indent--;
+			Indent();
+			result.Append(")");
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class ComplexNumberNode implements INode
+public class ComplexNumberNode implements INode
 {
 	public double realpart;
 	public double imaginary;

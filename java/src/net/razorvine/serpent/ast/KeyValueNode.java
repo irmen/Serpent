@@ -1,6 +1,6 @@
 package net.razorvine.serpent.ast;
 
-class KeyValueNode implements INode
+public class KeyValueNode implements INode
 {
 	public INode key;
 	public INode value;
