@@ -210,6 +210,70 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestDictEquality()
+		{
+			Ast.DictNode dict1 = new Ast.DictNode();
+			Ast.KeyValueNode kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key1"),
+				Value=new Ast.IntegerNode(42)
+			};
+			dict1.Elements.Add(kv);
+			kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key2"),
+				Value=new Ast.IntegerNode(43)
+			};
+			dict1.Elements.Add(kv);
+			kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key3"),
+				Value=new Ast.IntegerNode(44)
+			};
+			dict1.Elements.Add(kv);
+	
+			Ast.DictNode dict2 = new Ast.DictNode();
+			kv=new Ast.KeyValueNode(){
+				Key=new Ast.StringNode("key2"),
+				Value=new Ast.IntegerNode(43)
+			};
+			dict2.Elements.Add(kv);
+			kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key3"),
+				Value=new Ast.IntegerNode(44)
+			};
+			dict2.Elements.Add(kv);
+			kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key1"),
+				Value=new Ast.IntegerNode(42)
+			};
+			dict2.Elements.Add(kv);
+			
+			Assert.AreEqual(dict1, dict2);
+			kv=new Ast.KeyValueNode() {
+				Key=new Ast.StringNode("key4"),
+				Value=new Ast.IntegerNode(45)
+			};
+			dict2.Elements.Add(kv);
+			Assert.AreNotEqual(dict1, dict2);
+		}
+		
+		[Test]
+		public void TestSetEquality()
+		{
+			Ast.SetNode set1 = new Ast.SetNode();
+			set1.Elements.Add(new Ast.IntegerNode(1));
+			set1.Elements.Add(new Ast.IntegerNode(2));
+			set1.Elements.Add(new Ast.IntegerNode(3));
+			
+			Ast.SetNode set2 = new Ast.SetNode();
+			set2.Elements.Add(new Ast.IntegerNode(2));
+			set2.Elements.Add(new Ast.IntegerNode(3));
+			set2.Elements.Add(new Ast.IntegerNode(1));
+	
+			Assert.AreEqual(set1, set2);
+			set2.Elements.Add(new Ast.IntegerNode(0));
+			Assert.AreNotEqual(set1, set2);
+		}
+	
+		[Test]
 		public void TestPrintSingle()
 		{
 			Parser p = new Parser();

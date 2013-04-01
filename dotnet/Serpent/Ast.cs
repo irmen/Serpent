@@ -340,7 +340,32 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		public class SetNode : SequenceNode
+		public abstract class UnorderedSequenceNode : SequenceNode
+		{
+			public override bool Equals(object obj)
+			{
+				if(!(obj is UnorderedSequenceNode))
+					return false;
+				var set1 = ElementsAsSet();
+				var set2 = (obj as UnorderedSequenceNode).ElementsAsSet();
+				return set1.SetEquals(set2);
+			}
+			
+			public override int GetHashCode()
+			{
+				return ElementsAsSet().GetHashCode();
+			}
+			
+			private HashSet<INode> ElementsAsSet()
+			{
+				var set = new HashSet<INode>();
+				foreach(INode kv in Elements)
+					set.Add(kv);
+				return set;
+			}
+		}
+		
+		public class SetNode : UnorderedSequenceNode
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
@@ -350,7 +375,7 @@ namespace Razorvine.Serpent
 			}
 		}
 		
-		public class DictNode : SequenceNode
+		public class DictNode : UnorderedSequenceNode
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
