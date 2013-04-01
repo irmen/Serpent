@@ -39,7 +39,7 @@ public class DebugVisitor implements INodeVisitor
 	
 	public void visit(ComplexNumberNode complex)
 	{
-		result.append(String.format("complexnumber {0}r {1}i\n", complex.real, complex.imaginary));
+		result.append(String.format("complexnumber (%sr,%si)", complex.real, complex.imaginary));
 	}
 	
 	public void visit(DictNode dict)
@@ -68,6 +68,7 @@ public class DebugVisitor implements INodeVisitor
 		{
 			indent();
 			node.accept(this);
+			result.append(",\n");
 		}
 		indentlevel--;
 		indent();

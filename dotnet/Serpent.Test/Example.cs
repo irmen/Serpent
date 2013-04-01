@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Security;
 using System.Text;
 using System.Linq;
+using System.IO;
 using NUnit.Framework;
 using Razorvine.Serpent;
 
@@ -68,6 +69,16 @@ namespace Razorvine.Serpent.Test
 			Console.WriteLine("  type: {0}", clazz["__class__"]);
 			Console.WriteLine("  name: {0}", clazz["name"]);
 			Console.WriteLine("  age: {0}", clazz["age"]);
+			
+			Console.WriteLine("");
+
+			// parse and print the example file
+			ser=File.ReadAllBytes("testserpent.utf8.bin");
+			ast = parser.Parse(ser);
+			dv = new DebugVisitor();
+			ast.Accept(dv);
+			Console.WriteLine("DEBUG string representation of the test file:");
+			Console.WriteLine(dv.ToString());
 		}
 		
 		[Serializable]

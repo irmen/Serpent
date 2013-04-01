@@ -40,7 +40,7 @@ namespace Razorvine.Serpent
 		
 		public void Visit(Ast.ComplexNumberNode complex)
 		{
-			result.AppendFormat("complexnumber {0}r {1}i\n", complex.Real, complex.Imaginary);
+			result.AppendFormat("complexnumber ({0}r,{1}i)", complex.Real, complex.Imaginary);
 		}
 		
 		public void Visit(Ast.DictNode dict)
@@ -68,6 +68,7 @@ namespace Razorvine.Serpent
 			{
 				Indent();
 				node.Accept(this);
+				result.AppendLine(",");
 			}
 			indent--;
 			Indent();

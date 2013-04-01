@@ -727,6 +727,8 @@ public class ParserTest
 		FileInputStream fis=new FileInputStream(testdatafile);
 		DataInputStream dis = new DataInputStream(fis);
 		dis.readFully(ser);
+		dis.close();
+		fis.close();
 
 		Ast ast = p.parse(ser);
 	
@@ -758,6 +760,8 @@ public class ParserTest
 		FileInputStream fis=new FileInputStream(testdatafile);
 		DataInputStream dis = new DataInputStream(fis);
 		dis.readFully(ser);
+		dis.close();
+		fis.close();
 
 		Ast ast = p.parse(ser);
 		Ast ast2 = p.parse(ser);

@@ -28,6 +28,8 @@ public class VisitorTest
 		FileInputStream fis=new FileInputStream(testdatafile);
 		DataInputStream dis = new DataInputStream(fis);
 		dis.readFully(ser);
+		dis.close();
+		fis.close();
 		
 		Ast ast = p.parse(ser);
 		ObjectifyVisitor visitor = new ObjectifyVisitor();

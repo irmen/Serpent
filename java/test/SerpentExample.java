@@ -1,4 +1,7 @@
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -18,28 +21,6 @@ public class SerpentExample {
 		Jarjar
 	}
 
-	public class SampleClass implements Serializable
-	{
-		int a;
-		String n;
-		
-		public SampleClass(String name, int age)
-		{
-			a=age;
-			n=name;
-		}
-
-		public int getAge()
-		{
-			return a;
-		}
-		
-		public String getName()
-		{
-			return n;
-		}
-	}
-	
 	public static void main(String[] args) {
 		SerpentExample t=new SerpentExample();
 		try {
@@ -108,5 +89,43 @@ public class SerpentExample {
 		System.out.println("  type: "+clazz.get("__class__"));
 		System.out.println("  name: "+clazz.get("name"));
 		System.out.println("  age: "+clazz.get("age"));
+
+		System.out.println("");
+
+		// parse and print the example file
+		File testdatafile = new File("test/testserpent.utf8.bin");
+		ser = new byte[(int) testdatafile.length()];
+		FileInputStream fis=new FileInputStream(testdatafile);
+		DataInputStream dis = new DataInputStream(fis);
+		dis.readFully(ser);
+		dis.close();
+		fis.close();
+		ast = parser.parse(ser);
+		dv = new DebugVisitor();
+		ast.accept(dv);
+		System.out.println("DEBUG string representation of the test file:");
+		System.out.println(dv.toString());
 	}
+	
+	public class SampleClass implements Serializable
+	{
+		int a;
+		String n;
+		
+		public SampleClass(String name, int age)
+		{
+			a=age;
+			n=name;
+		}
+
+		public int getAge()
+		{
+			return a;
+		}
+		
+		public String getName()
+		{
+			return n;
+		}
+	}	
 }
