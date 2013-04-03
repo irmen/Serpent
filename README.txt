@@ -6,13 +6,15 @@ passed as-is to ast.literal_eval() to rebuild it as the original object tree.
 As such it is safe to send serpent data to other machines over the network for instance
 (because only 'safe' literals are encoded).
 
+More info on Pypi: https://pypi.python.org/pypi/serpent
+
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 
 
 PYTHON
 ------
-Package can also be found on Pypi: https://pypi.python.org/pypi/serpent
+Package can be found on Pypi as 'serpent': https://pypi.python.org/pypi/serpent
 Example usage can be found in ./example.py
 
 

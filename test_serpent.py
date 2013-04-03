@@ -250,7 +250,7 @@ class TestBasics(unittest.TestCase):
         # test no set-literals
         ser = serpent.serialize(myset, set_literals=False)
         data = strip_header(ser)
-        self.assertEqual(b"(42,'Sally')", data)    # must output a tuple instead of a set-literal
+        self.assertTrue(data==b"(42,'Sally')" or data==b"('Sally',42)")    # must output a tuple instead of a set-literal
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):
@@ -376,7 +376,7 @@ class TestIndent(unittest.TestCase):
   'gg': 1,
   'hh': 1
 }""", ser)
-        data = set("irmen de jong")
+        data = set("irmen de jong irmen de jong")
         ser = serpent.serialize(data, False)
         ser = strip_header(ser)
         self.assertNotEqual(b"' ','d','e','g','i','j','m','n','o','r'", ser[1:-1])
