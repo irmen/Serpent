@@ -1,16 +1,19 @@
 """
-Serpent: ast.literal_eval() compatible object tree serialization.
-Serializes an object tree into bytes (utf-8 encoded string) that can be decoded and then
-passed as-is to ast.literal_eval() to rebuild it as the original object tree.
-As such it is safe to send serpent data to other machines over the network for instance
-(because only 'safe' literals are encoded).
+ast.literal_eval() compatible object tree serialization.
+
+Serpent serializes an object tree into bytes (utf-8 encoded string) that can
+be decoded and then passed as-is to ast.literal_eval() to rebuild it as the
+original object tree. As such it is safe to send serpent data to other
+machines over the network for instance (because only 'safe' literals are
+encoded).
 
 Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
 Serpent handles several special Python types to make life easier:
 
  - str  --> promoted to unicode (see below why this is)
- - bytes, bytearrays, memoryview, buffer  --> string, base-64  (you'll have to manually un-base64 them though)
+ - bytes, bytearrays, memoryview, buffer  --> string, base-64
+   (you'll have to manually un-base64 them though)
  - uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
  - array.array typecode 'c'/'u' --> string/unicode
@@ -18,21 +21,29 @@ Serpent handles several special Python types to make life easier:
  - Exception  --> dict with some fields of the exception (message, args)
  - all other types  --> dict with  __getstate__  or vars() of the object
 
-Note: all str will be promoted to unicode. This is done because it is the default
-anyway for Python 3.x, and it solves the problem of the str/unicode difference between different
-Python versions. Also it means the serialized output doesn't have those problematic 'u' prefixes on strings.
-Note: the serializer is not thread-safe. Make sure you're not making changes to the
-object tree that is being serialized, and don't use the same serializer in different threads.
-Caveat: Python 2.6 cannot deserialize complex numbers (limitation of ast.literal_eval in 2.6)
-Note: because the serialized format is just valid Python source code, it can contain comments.
-Note: set literals are not supported on python <3.2 (ast.literal_eval limitation). If you need Python < 3.2
-compatibility, you'll have to use set_literals=False when serializing.
+Note: all str will be promoted to unicode. This is done because it is the
+default anyway for Python 3.x, and it solves the problem of the str/unicode
+difference between different Python versions. Also it means the serialized
+output doesn't have those problematic 'u' prefixes on strings.
 
-@TODO: java implementation, both serializers and deserializers
+Note: the serializer is not thread-safe. Make sure you're not making changes
+to the object tree that is being serialized, and don't use the same
+serializer in different threads.
+
+Caveat: Python 2.6 cannot deserialize complex numbers (limitation of
+ast.literal_eval in 2.6)
+
+Note: because the serialized format is just valid Python source code, it can
+contain comments.
+
+Note: set literals are not supported on python <3.2 (ast.literal_eval
+limitation). If you need Python < 3.2 compatibility, you'll have to use
+set_literals=False when serializing.
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
+
 from __future__ import print_function, division
 import __future__
 import ast
