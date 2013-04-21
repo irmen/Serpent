@@ -52,7 +52,7 @@ import sys
 import types
 import os
 
-__version__ = "0.9"
+__version__ = "1.0"
 __all__ = ["serialize", "deserialize"]
 
 
