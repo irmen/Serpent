@@ -460,28 +460,6 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
-		public void TestDynamic()
-		{
-			Serializer serpent = new Serializer(indent: true);
-			dynamic obj = new {
-				Name="Harry",
-				Age=33,
-				Country="NL"
-			};
-			
-			byte[] ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("{\n  'Age': 33,\n  'Country': 'NL',\n  'Name': 'Harry'\n}", S(ser));
-			
-			obj = new int[] {1,2,3};
-			ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("(\n  1,\n  2,\n  3\n)", S(ser));
-			
-			obj = "hello";
-			ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("'hello'", S(ser));
-		}
-
-		[Test]
 		public void TestDateTime()
 		{
 			Serializer serpent = new Serializer();
