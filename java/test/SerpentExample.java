@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.razorvine.serpent.DebugVisitor;
+import net.razorvine.serpent.LibraryVersion;
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 import net.razorvine.serpent.ast.Ast;
@@ -34,6 +35,8 @@ public class SerpentExample {
 	public void run() throws IOException
 	{
 		// some example use of Serpent
+		System.out.println("Using serpent library version "+LibraryVersion.VERSION);
+		
 		Map<String, Object> data = new HashMap<String, Object>();
 		data.put("tuple", new int[] { 1,2,3 });
 		data.put("date", new java.util.Date());

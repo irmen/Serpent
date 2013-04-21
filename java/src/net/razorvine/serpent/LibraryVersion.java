@@ -7,6 +7,6 @@
 
 package net.razorvine.serpent;
 
-public final class Version {
-	public static String version = "0.8";
+public final class LibraryVersion {
+	public static final String VERSION = "0.9";
 }
