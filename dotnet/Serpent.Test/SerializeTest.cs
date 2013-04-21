@@ -397,10 +397,22 @@ namespace Razorvine.Serpent.Test
 			public int i {get; set;}
 		}
 		
+		[Serializable]
+		public struct SerializeTestStruct
+		{
+			public int x;
+			public string s {get; set;}
+			public int i {get; set;}
+		}
+
 		public class UnserializableClass
 		{
 		}
 		
+		public struct UnserializableStruct
+		{
+		}
+
 		[Test]
 		public void TestClass()
 		{
@@ -417,7 +429,58 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
 		}
 		
+		[Test]
+		public void TestStruct()
+		{
+			Serializer serpent = new Serializer(indent: true);
+			UnserializableStruct obj;
+			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
+			
+			var obj2 = new SerializeTestStruct() {
+				i = 99,
+				s = "hi",
+				x = 42
+			};
+			byte[] ser = strip_header(serpent.Serialize(obj2));
+			Assert.AreEqual("{\n  '__class__': 'SerializeTestStruct',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+		}
 		
+		[Test]
+		public void TestAnonymousClass()
+		{
+			Serializer serpent = new Serializer(indent: true);
+			Object obj = new {
+				Name="Harry",
+				Age=33,
+				Country="NL"
+			};
+			
+			byte[] ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("{\n  'Age': 33,\n  'Country': 'NL',\n  'Name': 'Harry'\n}", S(ser));
+		}
+		
+		[Test]
+		public void TestDynamic()
+		{
+			Serializer serpent = new Serializer(indent: true);
+			dynamic obj = new {
+				Name="Harry",
+				Age=33,
+				Country="NL"
+			};
+			
+			byte[] ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("{\n  'Age': 33,\n  'Country': 'NL',\n  'Name': 'Harry'\n}", S(ser));
+			
+			obj = new int[] {1,2,3};
+			ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("(\n  1,\n  2,\n  3\n)", S(ser));
+			
+			obj = "hello";
+			ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("'hello'", S(ser));
+		}
+
 		[Test]
 		public void TestDateTime()
 		{

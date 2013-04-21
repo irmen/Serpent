@@ -370,14 +370,17 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_class(object obj, TextWriter tw, int level)
 		{
-			// only if class has serializableattribute
-			if(!obj.GetType().IsSerializable)
+			// if it is an anonymous class type, accept it.
+			// any other class needs to have [Serializable] attribute
+			bool isAnonymousClass = obj.GetType().Name.StartsWith("<>");
+			if(!isAnonymousClass && !obj.GetType().IsSerializable)
 			{
 				throw new SerializationException("object of type "+obj.GetType().Name+" is not serializable");
 			}
 			
 			var dict = new Hashtable();
-			dict["__class__"] = obj.GetType().Name;
+			if(!isAnonymousClass)
+				dict["__class__"] = obj.GetType().Name;		// only when it is not an anonymous class
 			PropertyInfo[] properties=obj.GetType().GetProperties();
 			foreach(var propinfo in properties) {
 				if(propinfo.CanRead) {

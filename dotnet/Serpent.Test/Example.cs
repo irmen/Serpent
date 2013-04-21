@@ -13,12 +13,14 @@ namespace Razorvine.Serpent.Test
 	/// Example usage.
 	/// </summary>
 	[TestFixture]
-	[Ignore("example")]
+	[Explicit("example")]
 	public class Example 
 	{
 		[Test]
 		public void ExampleUsage()
 		{
+			Console.WriteLine("using serpent library version {0}", LibraryVersion.Version);
+			
 			var data = new Dictionary<string, object> {
 				{"tuple", new int[] { 1,2,3 } },
 				{"date", DateTime.Now},
