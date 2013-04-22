@@ -3,4 +3,8 @@ echo "Building..."
 . ./build-dotnet-mono.sh
 
 echo "Running tests"
-nunit-console -noshadow -nothread Serpent.Test/bin/Release/Razorvine.Serpent.Test.dll
+
+# note: nunit-2.6.2 crashes on Mono. Stick with 2.6.1 for the time being.
+NUNIT="mono ${MONO_OPTIONS} ${HOME}/Projects/NUnit-2.6.1/bin/nunit-console.exe"
+
+${NUNIT} -noshadow -nothread Serpent.Test/bin/Release/Razorvine.Serpent.Test.dll
