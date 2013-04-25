@@ -20,13 +20,13 @@ def example():
     }
 
     # serialize the object
-    ser = serpent.serialize(data, indent=True, set_literals=use_set_literals)
+    ser = serpent.dumps(data, indent=True, set_literals=use_set_literals)
     # print it to the screen, but usually you'd save the bytes to a file or transfer them over a network connection
     print("Serialized data:")
     print(ser.decode("UTF-8"))
 
     # deserialize the bytes and print the objects
-    obj = serpent.deserialize(ser)
+    obj = serpent.loads(ser)
     print("Deserialized data:")
     print("tuple:", obj["tuple"])
     print("date:", obj["date"])

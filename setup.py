@@ -28,8 +28,8 @@ You can get the full source distribution, a Java .jar file, and a .NET assembly 
 
 **API**
 
-- ``ser_bytes = serpent.serialize(obj, indent=False)``      # serialize obj tree to bytes
-- ``obj = serpent.deserialize(ser_bytes)``     # deserialize bytes back into object tree
+- ``ser_bytes = serpent.dumps(obj, indent=False)``      # serialize obj tree to bytes
+- ``obj = serpent.loads(ser_bytes)``     # deserialize bytes back into object tree
 - You can use ``ast.literal_eval`` yourself to deserialize, but ``serpent.deserialize`` works around a few corner cases. See source for details.
 
 Serpent is more sophisticated than a simple repr() + literal_eval():
@@ -90,15 +90,14 @@ Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
  }
 
  # serialize it
- ser = serpent.serialize(data, indent=True)
+ ser = serpent.dumps(data, indent=True)
  open("data.serpent", "wb").write(ser)
 
  print("Serialized form:")
  print(ser.decode("utf-8"))
 
  # read it back
- ser = open("data.serpent", "rb").read()
- data = serpent.deserialize(ser)
+ data = serpent.load(open("data.serpent", "rb"))
  print("Data:")
  pprint.pprint(data)
 

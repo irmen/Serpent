@@ -52,16 +52,19 @@ import sys
 import types
 import os
 
-__version__ = "1.0"
-__all__ = ["serialize", "deserialize"]
+__version__ = "1.1"
+__all__ = ["dump", "dumps", "load", "loads"]
 
 
-def serialize(obj, indent=False, set_literals=True):
+def dumps(obj, indent=False, set_literals=True):
     """Serialize object tree to bytes"""
     return Serializer(indent, set_literals).serialize(obj)
 
+def dump(obj, file, indent=False, set_literals=True):
+    """Serialize object tree to a file"""
+    file.write(dumps(obj, indent=indent, set_literals=set_literals))
 
-def deserialize(serialized_bytes):
+def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     serialized = serialized_bytes.decode("utf-8")
     if sys.version_info < (3, 0) and sys.platform != "cli":
@@ -75,6 +78,11 @@ def deserialize(serialized_bytes):
             # python 2.x: parse with unicode_literals (promotes all strings to unicode)
             serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     return ast.literal_eval(serialized)
+
+def load(file):
+    """Deserialize bytes from a file back to object tree. Uses ast.literal_eval (safe)."""
+    data = file.read()
+    return loads(data)
 
 
 class BytesWrapper(object):
