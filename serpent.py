@@ -52,17 +52,19 @@ import sys
 import types
 import os
 
-__version__ = "1.1"
-__all__ = ["dump", "dumps", "load", "loads"]
+__version__ = "1.2"
+__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 
 def dumps(obj, indent=False, set_literals=True):
     """Serialize object tree to bytes"""
     return Serializer(indent, set_literals).serialize(obj)
 
+
 def dump(obj, file, indent=False, set_literals=True):
     """Serialize object tree to a file"""
     file.write(dumps(obj, indent=indent, set_literals=set_literals))
+
 
 def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
@@ -79,10 +81,28 @@ def loads(serialized_bytes):
             serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     return ast.literal_eval(serialized)
 
+
 def load(file):
     """Deserialize bytes from a file back to object tree. Uses ast.literal_eval (safe)."""
     data = file.read()
     return loads(data)
+
+
+_special_classes_registry = {}
+
+
+def unregister_class(clazz):
+    """Unregister the specialcase serializer for the given class."""
+    if clazz in _special_classes_registry:
+        del _special_classes_registry[clazz]
+
+
+def register_class(clazz, serializer):
+    """
+    Register a specialcase serializer function for objects of the given class.
+    The function will be called with (object, serpent_serializer, outputstream, indentlevel) arguments.
+    """
+    _special_classes_registry[clazz] = serializer
 
 
 class BytesWrapper(object):
@@ -360,6 +380,11 @@ class Serializer(object):
             self._serialize(array_obj.tolist(), out, level)
 
     def ser_default_class(self, obj, out, level):
+        global _special_classes_registry
+        for clazz in _special_classes_registry:
+            if isinstance(obj, clazz):
+                _special_classes_registry[clazz](obj, self, out, level)
+                return
         try:
             value = obj.__getstate__()
             if isinstance(value, dict):

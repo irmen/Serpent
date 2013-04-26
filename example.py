@@ -1,7 +1,9 @@
 from __future__ import print_function
-import serpent
 import datetime
 import sys
+
+import serpent
+
 
 class CustomClass(object):
     def __init__(self, name, age):
@@ -13,7 +15,7 @@ def example():
     use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
     data = {
-        "tuple": (1,2,3),
+        "tuple": (1, 2, 3),
         "date": datetime.datetime.now(),
         "set": {'a', 'b', 'c'},
         "class": CustomClass("Sally", 26)
@@ -36,5 +38,5 @@ def example():
         clazz["__class__"], clazz["name"], clazz["age"]))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     example()

@@ -12,9 +12,10 @@ import datetime
 import uuid
 import decimal
 import array
-import serpent
 import tempfile
 import os
+
+import serpent
 
 
 if sys.version_info >= (3, 0):
@@ -66,11 +67,11 @@ class TestBasics(unittest.TestCase):
    3, 4]    # more here
 # and here."""
         data = serpent.loads(ser)
-        self.assertEqual([1,2,3,4], data)
+        self.assertEqual([1, 2, 3, 4], data)
 
         ser = b"[ 1, 2 ]"       # no header whatsoever
         data = serpent.loads(ser)
-        self.assertEqual([1,2], data)
+        self.assertEqual([1, 2], data)
 
     def test_sorting(self):
         obj = [3, 2, 1]
@@ -144,7 +145,7 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(decimal.Decimal("1234.9999999999"))
         data = strip_header(ser)
         self.assertEqual(b"'1234.9999999999'", data)
-        ser = serpent.dumps(2+3j)
+        ser = serpent.dumps(2 + 3j)
         data = strip_header(ser)
         self.assertEqual(b"(2+3j)", data)
 
@@ -252,7 +253,7 @@ class TestBasics(unittest.TestCase):
         # test no set-literals
         ser = serpent.dumps(myset, set_literals=False)
         data = strip_header(ser)
-        self.assertTrue(data==b"(42,'Sally')" or data==b"('Sally',42)")    # must output a tuple instead of a set-literal
+        self.assertTrue(data == b"(42,'Sally')" or data == b"('Sally',42)")    # must output a tuple instead of a set-literal
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):
@@ -271,13 +272,17 @@ class TestBasics(unittest.TestCase):
         class Class1(object):
             def __init__(self):
                 self.attr = 1
+
         class Class2(object):
             def __getstate__(self):
                 return {"attr": 42}
+
         class SlotsClass(object):
             __slots__ = ["attr"]
+
             def __init__(self):
                 self.attr = 1
+
         c = Class1()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
@@ -321,14 +326,14 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"12345.0", data)
 
     def test_pickle_api(self):
-        ser = serpent.dumps([1,2,3])
+        ser = serpent.dumps([1, 2, 3])
         serpent.loads(ser)
         tmpfn = tempfile.mktemp()
         with open(tmpfn, "wb") as outf:
-            serpent.dump([1,2,3], outf, indent=True, set_literals=True)
+            serpent.dump([1, 2, 3], outf, indent=True, set_literals=True)
         with open(tmpfn, "rb") as inf:
             data = serpent.load(inf)
-            self.assertEqual([1,2,3], data)
+            self.assertEqual([1, 2, 3], data)
         os.remove(tmpfn)
 
 
@@ -427,7 +432,7 @@ class TestIndent(unittest.TestCase):
   'one': 1
 }""", ser)
 
-        data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": set([1,2])}
+        data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": set([1, 2])}
         ser = serpent.dumps(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
@@ -456,7 +461,38 @@ class TestFiledump(unittest.TestCase):
         with open("testserpent.utf8.bin", "rb") as file:
             data = file.read()
         obj = serpent.loads(data)
-        self.assertEqual(-3+8j, obj["numbers"][3])
+        self.assertEqual(-3 + 8j, obj["numbers"][3])
+
+
+class Something(object):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __getstate__(self):
+        return ("bogus", "state")
+
+
+class TestCustomClasses(unittest.TestCase):
+    def testCustom(self):
+        def something_serializer(obj, serializer, stream, level):
+            d = {
+                "__class__": type(obj).__name__,
+                "custom": True,
+                "name": obj.name,
+                "value": obj.value
+            }
+            serializer.ser_builtins_dict(d, stream, level)
+
+        serpent.register_class(Something, something_serializer)
+        s = Something("hello", 42)
+        d = serpent.dumps(s)
+        x = serpent.loads(d)
+        self.assertEqual({"__class__": "Something", "custom": True, "name": "hello", "value": 42}, x)
+        serpent.unregister_class(Something)
+        d = serpent.dumps(s)
+        x = serpent.loads(d)
+        self.assertEqual(("bogus", "state"), x)
 
 
 if __name__ == '__main__':
