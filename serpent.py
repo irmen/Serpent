@@ -364,7 +364,7 @@ class Serializer(object):
 
     def ser_exception_class(self, exc_obj, out, level):
         value = {
-            "__class__": type(exc_obj).__name__,
+            "__class__": exc_obj.__class__.__name__,
             "__exception__": True,
             "args": exc_obj.args,
             "message": str(exc_obj)
@@ -393,14 +393,14 @@ class Serializer(object):
         except AttributeError:
             try:
                 value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
-                value["__class__"] = type(obj).__name__
+                value["__class__"] = obj.__class__.__name__
             except TypeError:
                 if hasattr(obj, "__slots__"):
                     # use the __slots__ instead of the vars dict
                     value = {}
                     for slot in obj.__slots__:
                         value[slot] = getattr(obj, slot)
-                    value["__class__"] = type(obj).__name__
+                    value["__class__"] = obj.__class__.__name__
                 else:
-                    raise TypeError("don't know how to serialize class " + str(type(obj)) + ". Give it vars() or an appropriate __getstate__")
+                    raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
         self._serialize(value, out, level)

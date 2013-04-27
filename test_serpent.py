@@ -268,6 +268,17 @@ class TestBasics(unittest.TestCase):
             data = serpent.loads(ser)
             self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
+    def test_exception(self):
+        x = ZeroDivisionError("wrong", 42)
+        ser = serpent.dumps(x)
+        data = serpent.loads(ser)
+        self.assertEqual({
+            '__class__': 'ZeroDivisionError',
+            '__exception__': True,
+            'args': ('wrong', 42),
+            'message': "('wrong', 42)"
+        }, data)
+
     def test_class(self):
         class Class1(object):
             def __init__(self):
@@ -295,6 +306,13 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
         self.assertEqual({'__class__': 'SlotsClass', 'attr': 1}, data)
+        import pprint
+        p = pprint.PrettyPrinter(stream="dummy", width=99)
+        ser = serpent.dumps(p)
+        data = serpent.loads(ser)
+        self.assertEqual("PrettyPrinter", data["__class__"])
+        self.assertEqual(99, data["_width"])
+
 
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
@@ -477,7 +495,7 @@ class TestCustomClasses(unittest.TestCase):
     def testCustom(self):
         def something_serializer(obj, serializer, stream, level):
             d = {
-                "__class__": type(obj).__name__,
+                "__class__": "Something",
                 "custom": True,
                 "name": obj.name,
                 "value": obj.value
