@@ -276,7 +276,18 @@ class TestBasics(unittest.TestCase):
             '__class__': 'ZeroDivisionError',
             '__exception__': True,
             'args': ('wrong', 42),
-            'message': "('wrong', 42)"
+            'message': "('wrong', 42)",
+            'attributes': {}
+        }, data)
+        x.custom_attribute = "custom_attr"
+        ser = serpent.dumps(x)
+        data = serpent.loads(ser)
+        self.assertEqual({
+            '__class__': 'ZeroDivisionError',
+            '__exception__': True,
+            'args': ('wrong', 42),
+            'message': "('wrong', 42)",
+            'attributes': {'custom_attribute': 'custom_attr'}
         }, data)
 
     def test_class(self):
@@ -496,7 +507,7 @@ class TestInterceptClass(unittest.TestCase):
         ser = serpent.dumps(ex)
         data = serpent.loads(ser)
         # default behavior is to serialize the exception to a dict
-        self.assertEqual({'__exception__': True, 'args': ('wrong',), 'message': 'wrong', '__class__': 'ZeroDivisionError'}, data)
+        self.assertEqual({'__exception__': True, 'args': ('wrong',), 'message': 'wrong', '__class__': 'ZeroDivisionError', 'attributes': {}}, data)
 
         def custom_exception_translate(obj, serializer, stream, indent):
             serializer._serialize("custom_exception!", stream, indent)

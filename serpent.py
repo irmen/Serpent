@@ -375,7 +375,8 @@ class Serializer(object):
             "__class__": exc_obj.__class__.__name__,
             "__exception__": True,
             "args": exc_obj.args,
-            "message": str(exc_obj)
+            "message": str(exc_obj),
+            "attributes": vars(exc_obj)  # add any custom attributes
         }
         self._serialize(value, out, level)
 
