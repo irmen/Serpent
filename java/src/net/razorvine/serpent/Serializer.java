@@ -458,6 +458,7 @@ public class Serializer
 		dict.put("__exception__", true);
 		dict.put("args", null);
 		dict.put("message", ex.getMessage());
+		dict.put("attributes", java.util.Collections.EMPTY_MAP);
 		serialize_dict(dict, p, level);
 	}
 }

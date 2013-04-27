@@ -88,7 +88,7 @@ public class SerializeTests {
 		Exception x = new IllegalArgumentException("errormessage");
 		Serializer serpent = new Serializer(true, true);
 		byte[] ser = strip_header(serpent.serialize(x));
-		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': None,\n  'message': 'errormessage'\n}", S(ser));
+		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {},\n  'message': 'errormessage'\n}", S(ser));
 	}
 
 
