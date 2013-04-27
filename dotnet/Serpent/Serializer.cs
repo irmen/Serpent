@@ -337,7 +337,8 @@ namespace Razorvine.Serpent
 				{"__class__", exc.GetType().Name},
 				{"__exception__", true},
 				{"args", null},
-				{"message", exc.Message}
+				{"message", exc.Message},
+				{"attributes", exc.Data}
 			};
 			Serialize_dict(dict, tw, level);
 		}

@@ -483,7 +483,11 @@ namespace Razorvine.Serpent.Test
 			Exception x = new ApplicationException("errormessage");
 			Serializer serpent = new Serializer(indent:true);
 			byte[] ser = strip_header(serpent.Serialize(x));
-			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'message': 'errormessage'\n}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {},\n  'message': 'errormessage'\n}", S(ser));
+
+			x.Data["custom_attribute"]=999;
+			ser = strip_header(serpent.Serialize(x));
+			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {\n    'custom_attribute': 999\n  },\n  'message': 'errormessage'\n}", S(ser));
 		}
 		
 		enum FooType {
