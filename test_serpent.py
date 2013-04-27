@@ -482,6 +482,34 @@ class TestFiledump(unittest.TestCase):
         self.assertEqual(-3 + 8j, obj["numbers"][3])
 
 
+class TestInterceptClass(unittest.TestCase):
+    def testRegular(self):
+        import pprint
+        p = pprint.PrettyPrinter(stream="dummy", width=42)
+        ser = serpent.dumps(p)
+        data = serpent.loads(ser)
+        self.assertEqual(42, data["_width"])
+        self.assertEqual("PrettyPrinter", data["__class__"])
+
+    def testIntercept(self):
+        ex = ZeroDivisionError("wrong")
+        ser = serpent.dumps(ex)
+        data = serpent.loads(ser)
+        # default behavior is to serialize the exception to a dict
+        self.assertEqual({'__exception__': True, 'args': ('wrong',), 'message': 'wrong', '__class__': 'ZeroDivisionError'}, data)
+
+        def custom_exception_translate(obj, serializer, stream, indent):
+            serializer._serialize("custom_exception!", stream, indent)
+
+        try:
+            serpent.register_class(Exception, custom_exception_translate)
+            ser = serpent.dumps(ex)
+            data = serpent.loads(ser)
+            self.assertEqual("custom_exception!", data)
+        finally:
+            serpent.unregister_class(Exception)
+
+
 class Something(object):
     def __init__(self, name, value):
         self.name = name
@@ -492,7 +520,7 @@ class Something(object):
 
 
 class TestCustomClasses(unittest.TestCase):
-    def testCustom(self):
+    def testCustomClass(self):
         def something_serializer(obj, serializer, stream, level):
             d = {
                 "__class__": "Something",
@@ -511,6 +539,24 @@ class TestCustomClasses(unittest.TestCase):
         d = serpent.dumps(s)
         x = serpent.loads(d)
         self.assertEqual(("bogus", "state"), x)
+
+    def testUUID(self):
+        uid = uuid.uuid4()
+        string_uid = str(uid)
+        ser = serpent.dumps(uid)
+        x = serpent.loads(ser)
+        self.assertEqual(string_uid, x)
+
+        def custom_uuid_translate(obj, serp, stream, level):
+            serp._serialize("custom_uuid!", stream, level)
+
+        serpent.register_class(uuid.UUID, custom_uuid_translate)
+        try:
+            ser = serpent.dumps(uid)
+            x = serpent.loads(ser)
+            self.assertEqual("custom_uuid!", x)
+        finally:
+            serpent.unregister_class(uuid.UUID)
 
 
 if __name__ == '__main__':

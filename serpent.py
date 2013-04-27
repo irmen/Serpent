@@ -203,9 +203,17 @@ class Serializer(object):
             t = type(obj)
         if t in self.repr_types:
             out.append(repr(obj).encode("utf-8"))    # just a simple repr() is enough for these objects
-        elif isinstance(obj, BaseException):
+            return
+        # check special registered types:
+        for clazz in _special_classes_registry:
+            if isinstance(obj, clazz):
+                _special_classes_registry[clazz](obj, self, out, level)
+                return
+        # exception?
+        if isinstance(obj, BaseException):
             self.ser_exception_class(obj, out, level)
         else:
+            # serialize dispatch
             module = t.__module__
             if module == "__builtin__":
                 module = "builtins"  # python 2.x compatibility
@@ -380,11 +388,6 @@ class Serializer(object):
             self._serialize(array_obj.tolist(), out, level)
 
     def ser_default_class(self, obj, out, level):
-        global _special_classes_registry
-        for clazz in _special_classes_registry:
-            if isinstance(obj, clazz):
-                _special_classes_registry[clazz](obj, self, out, level)
-                return
         try:
             value = obj.__getstate__()
             if isinstance(value, dict):
