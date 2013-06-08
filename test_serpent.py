@@ -324,7 +324,6 @@ class TestBasics(unittest.TestCase):
         self.assertEqual("PrettyPrinter", data["__class__"])
         self.assertEqual(99, data["_width"])
 
-
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
         data = strip_header(ser)

@@ -51,6 +51,7 @@ import base64
 import sys
 import types
 import os
+import gc
 
 __version__ = "1.2"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
@@ -79,7 +80,12 @@ def loads(serialized_bytes):
         else:
             # python 2.x: parse with unicode_literals (promotes all strings to unicode)
             serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
-    return ast.literal_eval(serialized)
+    try:
+        if os.name != "java":
+            gc.disable()
+        return ast.literal_eval(serialized)
+    finally:
+        gc.enable()
 
 
 def load(file):
@@ -191,7 +197,12 @@ class Serializer(object):
         else:
             header += "python2.6\n"
         out = [header.encode("utf-8")]
-        self._serialize(obj, out, 0)
+        try:
+            if os.name != "java":
+                gc.disable()
+            self._serialize(obj, out, 0)
+        finally:
+            gc.enable()
         if sys.platform == "cli":
             return "".join(out)
         return b"".join(out)
