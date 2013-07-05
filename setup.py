@@ -58,7 +58,7 @@ Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 - But I don't care about readability. Answer: too bad, ``ast.literal_eval()`` wants a literal string.
 - But I want better performance. Answer: ok, maybe you shouldn't use serpent in this case. Find an efficient binary protocol (protobuf?)
 - Why only Python, Java and .NET, but no bindings for insert-favorite-language-here? Answer: I don't speak that language. Maybe you could port serpent yourself?
-- Where is the source?  Read-only Subversion repo is here: ``svn://svn.razorvine.net/Various/Serpent``   (downloadable tarball is mentioned above)
+- Where is the source?  It's on Github: https://github.com/irmen/Serpent
 
 **Demo**
 
