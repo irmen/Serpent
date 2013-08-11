@@ -14,6 +14,8 @@ import decimal
 import array
 import tempfile
 import os
+import hashlib
+import traceback
 
 import serpent
 
@@ -131,6 +133,19 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps("quotes2'")
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
+
+    def test_unicode(self):
+        u = "euro"+unichr(0x20ac)
+        self.assertTrue(type(u) is unicode)
+        ser = serpent.dumps(u)
+        data = serpent.loads(ser)
+        self.assertEqual(u, data)
+
+    def test_unicode_with_escapes(self):
+        line = "euro"+unichr(0x20ac)+"\nlastline\ttab\\@slash"
+        ser = serpent.dumps(line)
+        data = serpent.loads(ser)
+        self.assertEqual(line, data)
 
     def test_numbers(self):
         ser = serpent.dumps(12345)
@@ -567,6 +582,24 @@ class TestCustomClasses(unittest.TestCase):
             self.assertEqual("custom_uuid!", x)
         finally:
             serpent.unregister_class(uuid.UUID)
+
+class TestPyro4(unittest.TestCase):
+    def testException(self):
+        try:
+            hashlib.new("non-existing-hash-name")
+        except:
+            et, ev, etb = sys.exc_info()
+            tb_lines = traceback.format_exception(et, ev, etb)
+            ev._pyroTraceback = tb_lines
+        ser = serpent.dumps(ev)
+        data = serpent.loads(ser)
+        self.assertTrue(data["__exception__"])
+        attrs = data["attributes"]
+        self.assertIsInstance(attrs["_pyroTraceback"], list)
+        tb_txt = "".join(attrs["_pyroTraceback"])
+        self.assertTrue(tb_txt.startswith("Traceback"))
+        self.assertTrue(data["message"].startswith("unsupported hash"))
+        self.assertEqual("ValueError", data["__class__"])
 
 
 if __name__ == '__main__':

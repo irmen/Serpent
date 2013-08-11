@@ -53,7 +53,7 @@ import types
 import os
 import gc
 
-__version__ = "1.2"
+__version__ = "1.3"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 
@@ -107,6 +107,7 @@ def register_class(clazz, serializer):
     """
     Register a specialcase serializer function for objects of the given class.
     The function will be called with (object, serpent_serializer, outputstream, indentlevel) arguments.
+    The function must write the serialized data to outputstream. It doesn't return a value.
     """
     _special_classes_registry[clazz] = serializer
 
@@ -243,6 +244,13 @@ class Serializer(object):
         # for python 2.x
         z = unicode_obj.encode("utf-8")
         z = z.replace("\\", "\\\\")  # double-escape the backslashes
+        z = z.replace("\a", "\\a")
+        z = z.replace("\b", "\\b")
+        z = z.replace("\f", "\\f")
+        z = z.replace("\n", "\\n")
+        z = z.replace("\r", "\\r")
+        z = z.replace("\t", "\\t")
+        z = z.replace("\v", "\\v")
         if "'" not in z:
             z = "'" + z + "'"
         elif '"' not in z:
