@@ -7,6 +7,7 @@ As such it is safe to send serpent data to other machines over the network for i
 (because only 'safe' literals are encoded).
 
 More info on Pypi: https://pypi.python.org/pypi/serpent
+Source code is on Github: https://github.com/irmen/Serpent
 
 Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
