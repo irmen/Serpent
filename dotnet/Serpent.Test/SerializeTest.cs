@@ -103,6 +103,30 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestUnicode()
+		{
+			Serializer serpent = new Serializer();
+			byte[] ser = serpent.Serialize("euro\u20ac");
+			byte[] data = strip_header(ser);
+			Assert.AreEqual(new byte[] {39, 101, 117, 114, 111, 0xe2, 0x82, 0xac, 39}, data);
+
+			ser = serpent.Serialize("A\n\t\\Z");
+			// 'A\\n\\t\\\\Z'  (10 bytes)
+			data = strip_header(ser);
+			Assert.AreEqual(new byte[] {39, 65, 92, 110, 92, 116, 92, 92, 90, 39}, data);
+			
+			ser = serpent.Serialize("euro\u20ac\nlastline\ttab\\@slash");
+			// 'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'   (32 bytes)
+			data = strip_header(ser);
+			Assert.AreEqual(new byte[] {
+								39, 101, 117, 114, 111, 226, 130, 172,
+								92, 110, 108, 97, 115, 116, 108, 105,
+								110, 101, 92, 116, 116, 97, 98, 92,
+								92, 64, 115, 108, 97, 115, 104, 39}
+				                , data);
+		}
+
+		[Test]
 		public void TestNumbers()
 		{
 			Serializer serpent = new Serializer();

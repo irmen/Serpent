@@ -134,6 +134,30 @@ public class SerializeTests {
 	}
 	
 	@Test
+	public void testUnicode()
+	{
+		Serializer serpent = new Serializer();
+		byte[] ser = serpent.serialize("euro\u20ac");
+		byte[] data = strip_header(ser);
+		assertArrayEquals(new byte[] {39, 101, 117, 114, 111, (byte) 0xe2, (byte) 0x82, (byte) 0xac, 39}, data);
+
+		ser = serpent.serialize("A\n\t\\Z");
+		// 'A\\n\\t\\\\Z'  (10 bytes)
+		data = strip_header(ser);
+		assertArrayEquals(new byte[] {39, 65, 92, 110, 92, 116, 92, 92, 90, 39}, data);
+		
+		ser = serpent.serialize("euro\u20ac\nlastline\ttab\\@slash");
+		// 'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'   (32 bytes)
+		data = strip_header(ser);
+		assertArrayEquals(new byte[] {
+							39, 101, 117, 114, 111, (byte) 226, (byte) 130, (byte) 172,
+							92, 110, 108, 97, 115, 116, 108, 105,
+							110, 101, 92, 116, 116, 97, 98, 92,
+							92, 64, 115, 108, 97, 115, 104, 39}
+			                , data);
+	}
+
+	@Test
 	public void testBool()
 	{
 		Serializer serpent = new Serializer();

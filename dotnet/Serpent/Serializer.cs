@@ -306,6 +306,13 @@ namespace Razorvine.Serpent
 		{
 			// backslash-escaped string
 			str = str.Replace("\\", "\\\\");  // double-escape the backslashes
+	        str = str.Replace("\a", "\\a");
+	        str = str.Replace("\b", "\\b");
+	        str = str.Replace("\f", "\\f");
+	        str = str.Replace("\n", "\\n");
+	        str = str.Replace("\r", "\\r");
+	        str = str.Replace("\t", "\\t");
+	        str = str.Replace("\v", "\\v");
 			if(!str.Contains("'"))
             	str = "'" + str + "'";
 			else if(!str.Contains("\""))

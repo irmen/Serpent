@@ -439,6 +439,11 @@ public class Serializer
 	{
 		// backslash-escaped string
 		str = str.replace("\\", "\\\\");  // double-escape the backslashes
+        str = str.replace("\b", "\\b");
+        str = str.replace("\f", "\\f");
+        str = str.replace("\n", "\\n");
+        str = str.replace("\r", "\\r");
+        str = str.replace("\t", "\\t");
 		if(!str.contains("'"))
         	str = "'" + str + "'";
 		else if(!str.contains("\""))
