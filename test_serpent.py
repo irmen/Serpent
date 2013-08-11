@@ -5,7 +5,6 @@ Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
-import unittest
 import sys
 import timeit
 import datetime
@@ -16,6 +15,10 @@ import tempfile
 import os
 import hashlib
 import traceback
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import serpent
 
