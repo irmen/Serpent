@@ -53,7 +53,7 @@ import types
 import os
 import gc
 
-__version__ = "1.3"
+__version__ = "1.4-dev"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 
@@ -146,6 +146,13 @@ class BytesWrapper(object):
         return BytesWrapper(data)
 
 
+if sys.version_info < (3, 0):
+    _repr = repr     # python <3.0 won't need explicit encoding to utf-8, so we optimize this
+else:
+    def _repr(obj):
+        return repr(obj).encode("utf-8")
+
+
 class Serializer(object):
     """
     Serialize an object tree to a byte stream.
@@ -214,7 +221,7 @@ class Serializer(object):
             obj = self.translate_types[t](obj)
             t = type(obj)
         if t in self.repr_types:
-            out.append(repr(obj).encode("utf-8"))    # just a simple repr() is enough for these objects
+            out.append(_repr(obj))    # just a simple repr() is enough for these objects
             return
         # check special registered types:
         for clazz in _special_classes_registry:
@@ -261,7 +268,8 @@ class Serializer(object):
         out.append(z)
 
     def ser_builtins_long(self, long_obj, out, level):
-        out.append(str(long_obj).encode("utf-8"))        # for python 2.x
+        # used with python 2.x
+        out.append(str(long_obj))
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
         if self.indent and tuple_obj:
@@ -375,13 +383,14 @@ class Serializer(object):
     def ser_datetime_datetime(self, datetime_obj, out, level):
         self._serialize(datetime_obj.isoformat(), out, level)
 
-    def ser_datetime_timedelta(self, timedelta_obj, out, level):
-        if os.name == "java" or sys.version_info < (2, 7):
-            # jython bug http://bugs.jython.org/issue2010
+    if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
+        def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10**6 + timedelta_obj.microseconds) / 10**6
-        else:
+            self._serialize(secs, out, level)
+    else:
+        def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = timedelta_obj.total_seconds()
-        self._serialize(secs, out, level)
+            self._serialize(secs, out, level)
 
     def ser_datetime_time(self, time_obj, out, level):
         self._serialize(str(time_obj), out, level)
@@ -394,7 +403,6 @@ class Serializer(object):
             "__class__": exc_obj.__class__.__name__,
             "__exception__": True,
             "args": exc_obj.args,
-            "message": str(exc_obj),
             "attributes": vars(exc_obj)  # add any custom attributes
         }
         self._serialize(value, out, level)

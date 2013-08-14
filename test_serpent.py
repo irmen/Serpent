@@ -147,6 +147,8 @@ class TestBasics(unittest.TestCase):
     def test_unicode_with_escapes(self):
         line = "euro"+unichr(0x20ac)+"\nlastline\ttab\\@slash"
         ser = serpent.dumps(line)
+        d = strip_header(ser)
+        self.assertEqual(b"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'", d)
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 
@@ -287,6 +289,15 @@ class TestBasics(unittest.TestCase):
             self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
     def test_exception(self):
+        x = ZeroDivisionError("wrong")
+        ser = serpent.dumps(x)
+        data = serpent.loads(ser)
+        self.assertEqual({
+            '__class__': 'ZeroDivisionError',
+            '__exception__': True,
+            'args': ('wrong',),
+            'attributes': {}
+        }, data)
         x = ZeroDivisionError("wrong", 42)
         ser = serpent.dumps(x)
         data = serpent.loads(ser)
@@ -294,7 +305,6 @@ class TestBasics(unittest.TestCase):
             '__class__': 'ZeroDivisionError',
             '__exception__': True,
             'args': ('wrong', 42),
-            'message': "('wrong', 42)",
             'attributes': {}
         }, data)
         x.custom_attribute = "custom_attr"
@@ -304,7 +314,6 @@ class TestBasics(unittest.TestCase):
             '__class__': 'ZeroDivisionError',
             '__exception__': True,
             'args': ('wrong', 42),
-            'message': "('wrong', 42)",
             'attributes': {'custom_attribute': 'custom_attr'}
         }, data)
 
@@ -524,7 +533,7 @@ class TestInterceptClass(unittest.TestCase):
         ser = serpent.dumps(ex)
         data = serpent.loads(ser)
         # default behavior is to serialize the exception to a dict
-        self.assertEqual({'__exception__': True, 'args': ('wrong',), 'message': 'wrong', '__class__': 'ZeroDivisionError', 'attributes': {}}, data)
+        self.assertEqual({'__exception__': True, 'args': ('wrong',), '__class__': 'ZeroDivisionError', 'attributes': {}}, data)
 
         def custom_exception_translate(obj, serializer, stream, indent):
             serializer._serialize("custom_exception!", stream, indent)
@@ -601,7 +610,7 @@ class TestPyro4(unittest.TestCase):
         self.assertIsInstance(attrs["_pyroTraceback"], list)
         tb_txt = "".join(attrs["_pyroTraceback"])
         self.assertTrue(tb_txt.startswith("Traceback"))
-        self.assertTrue(data["message"].startswith("unsupported hash"))
+        self.assertTrue(data["args"][0].startswith("unsupported hash"))
         self.assertEqual("ValueError", data["__class__"])
 
 
