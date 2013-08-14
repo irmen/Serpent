@@ -1,5 +1,10 @@
+"""
+Prints a comparison between different serializers.
+Compares results based on size of the output, and time taken to (de)serialize.
+"""
+
 from __future__ import print_function
-import timeit
+from timeit import default_timer as perf_timer
 import sys
 
 class Person(object):
@@ -10,10 +15,10 @@ class Person(object):
 
 data = {
 
-    "bytes": b"0123456789abcdefghijklmnopqrstuvwxyz" * 1000,
-    "bytearray": bytearray(b"0123456789abcdefghijklmnopqrstuvwxyz") * 1000,
-    "str": "\"0123456789\"\n'abcdefghijklmnopqrstuvwxyz'\t" * 1000,
-    "unicode": u"abc\u20ac" * 10 * 1000,
+    "bytes": b"0123456789abcdefghijklmnopqrstuvwxyz" * 2000,
+    "bytearray": bytearray(b"0123456789abcdefghijklmnopqrstuvwxyz") * 2000,
+    "str": "\"0123456789\"\n'abcdefghijklmnopqrstuvwxyz'\t" * 2000,
+    "unicode": u"abcdefghijklmnopqrstuvwxyz\u20ac\u20ac\u20ac\u20ac\u20ac" * 2000,
     "int": [123456789] * 1000,
     "double": [12345.987654321] * 1000,
     "long": [123456789123456789123456789123456789] * 1000,
@@ -28,34 +33,38 @@ data = {
 serializers = {}
 try:
     import pickle
-    serializers["pickle"] = pickle.dumps
+    serializers["pickle"] = (pickle.dumps, pickle.loads)
 except ImportError:
     pass
 try:
     import cPickle
-    serializers["cpickle"] = cPickle.dumps
+    serializers["cpickle"] = (cPickle.dumps, cPickle.loads)
 except ImportError:
     pass
 import json
-serializers["json"] = json.dumps
+serializers["json"] = (lambda d: json.dumps(d).encode("utf-8"), lambda d: json.loads(d.decode("utf-8")))
 import serpent
-serializers["serpent"] = serpent.dumps
+if sys.version_info < (3, 0):
+    # don't use set literals otherwise ast crashes on python < 3.0
+    def serpent_dumps(data):
+        return serpent.dumps(data, set_literals=False)
+    serializers["serpent"] = (serpent_dumps, serpent.loads)
+else:
+    serializers["serpent"] = (serpent.dumps, serpent.loads)
 import marshal
-serializers["marshal"] = marshal.dumps
-try:
-    import xmlrpclib
-    def xmldumps(data):
-        return xmlrpclib.dumps((data,))
-    serializers["xmlrpc"]=xmldumps
-except ImportError:
-    pass
+serializers["marshal"] = (marshal.dumps, marshal.loads)
 try:
     import xmlrpclib as xmlrpc
 except ImportError:
     import xmlrpc.client as xmlrpc
 def xmldumps(data):
-    return xmlrpc.dumps((data,))
-serializers["xmlrpc"]=xmldumps
+    return xmlrpc.dumps((data,)).encode("utf-8")
+def xmlloads(data):
+    return xmlrpc.loads(data.decode("utf-8"))[0]
+serializers["xmlrpc"] = (xmldumps, xmlloads)
+
+
+no_result = 9999999999
 
 
 
@@ -65,24 +74,37 @@ def run():
     repeat = 3
     for ser in serializers:
         print("serializer:", ser)
-        results[ser] = {"sizes": {}, "timings": {}}
+        results[ser] = {"sizes": {}, "ser-times": {}, "deser-times": {}}
         for key in sorted(data):
             print(key, end="; ")
             sys.stdout.flush()
             try:
-                serialized = serializers[ser](data[key])
+                serialized = serializers[ser][0](data[key])
             except (TypeError, ValueError, OverflowError) as x:
                 print("error!")
-                results[ser]["sizes"][key] = 0
-                results[ser]["timings"][key] = 0
+                results[ser]["sizes"][key] = no_result
+                results[ser]["ser-times"][key] = no_result
+                results[ser]["deser-times"][key] = no_result
             else:
                 results[ser]["sizes"][key] = len(serialized)
-                durations = [
-                                timeit.timeit("_=serializers['%s'](data[key])" % ser, "from performance import data, serializers; key='%s'" % key, number=number)
-                                for _ in range(repeat)
-                            ]
-                duration = min(durations)
-                results[ser]["timings"][key] = round(duration * 1e6 / number, 2)
+                durations_ser = []
+                durations_deser = []
+                serializer, deserializer = serializers[ser]
+                serialized_data = serializer(data[key])
+                for _ in range(repeat):
+                    start = perf_timer()
+                    for _ in range(number):
+                        serializer(data[key])
+                    durations_ser.append(perf_timer() - start)
+                for _ in range(repeat):
+                    start = perf_timer()
+                    for _ in range(number):
+                        deserializer(serialized_data)
+                    durations_deser.append(perf_timer() - start)
+                duration_ser = min(durations_ser)
+                duration_deser = min(durations_deser)
+                results[ser]["ser-times"][key] = round(duration_ser * 1e6 / number, 2)
+                results[ser]["deser-times"][key] = round(duration_deser * 1e6 / number, 2)
         print()
     return results
 
@@ -100,15 +122,19 @@ def tables_size(results):
     for dt in sorted(sizes_per_datatype):
         print(dt)
         for pos, (size, serializer) in enumerate(sizes_per_datatype[dt]):
-            print(" %2d: %-8s %6d" % (pos+1, serializer, size))
+            if size==no_result:
+                size = "unsupported"
+            else:
+                size = "%8d" % size
+            print(" %2d: %-8s  %s" % (pos+1, serializer, size))
     print()
 
-def tables_speed(results):
-    print("\nSPEED RESULTS\n")
+def tables_speed(results, what_times, header):
+    print("\n%s\n" % header)
     durations_per_datatype = {}
     for ser in results:
         for datatype in results[ser]["sizes"]:
-            duration = results[ser]["timings"][datatype]
+            duration = results[ser][what_times][datatype]
             if datatype not in durations_per_datatype:
                 durations_per_datatype[datatype] = []
             durations_per_datatype[datatype].append((duration, ser))
@@ -116,12 +142,17 @@ def tables_speed(results):
     for dt in sorted(durations_per_datatype):
         print(dt)
         for pos, (duration, serializer) in enumerate(durations_per_datatype[dt]):
-            print(" %2d: %-8s %6d" % (pos+1, serializer, duration))
+            if duration==no_result:
+                duration = "unsupported"
+            else:
+                duration = "%8d" % duration
+            print(" %2d: %-8s  %s" % (pos+1, serializer, duration))
     print()
 
 if __name__=="__main__":
     results = run()
     tables_size(results)
-    tables_speed(results)
+    tables_speed(results, "ser-times", "SPEED RESULTS (SERIALIZATION)")
+    tables_speed(results, "deser-times", "SPEED RESULTS (DESERIALIZATION)")
 
 
