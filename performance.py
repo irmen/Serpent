@@ -6,6 +6,7 @@ Compares results based on size of the output, and time taken to (de)serialize.
 from __future__ import print_function
 from timeit import default_timer as perf_timer
 import sys
+import datetime
 
 class Person(object):
     def __init__(self, name, age):
@@ -27,7 +28,9 @@ data = {
     "set": set(x*x for x in range(1000)),
     "dict": {i*i: {1000+j: chr(j+65) for j in range(5)} for i in range(100)},
     "exception": [ZeroDivisionError("test exeception", x*x) for x in range(1000)],
-    "class": [Person("harry", x*x) for x in range(1000)]
+    "class": [Person("harry", x*x) for x in range(1000)],
+    "datetime": [datetime.datetime.now() for x in range(1000)],
+    "complex": [complex(x+x, x*x) for x in range(1000)]
 }
 
 serializers = {}
