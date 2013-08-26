@@ -81,7 +81,7 @@ def loads(serialized_bytes):
             # python 2.x: parse with unicode_literals (promotes all strings to unicode)
             serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
     try:
-        if os.name != "java":
+        if os.name != "java" and sys.platform != "cli":
             gc.disable()
         return ast.literal_eval(serialized)
     finally:
@@ -206,7 +206,7 @@ class Serializer(object):
             header += "python2.6\n"
         out = [header.encode("utf-8")]
         try:
-            if os.name != "java":
+            if os.name != "java" and sys.platform != "cli":
                 gc.disable()
             self._serialize(obj, out, 0)
         finally:
