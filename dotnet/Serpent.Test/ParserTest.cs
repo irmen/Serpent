@@ -644,6 +644,41 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new ComplexNumber(-3, 8), list[3]);
 			string euro = dict["unicode"] as string;
 			Assert.AreEqual("\u20ac", euro);
+			IDictionary<object,object> exc = (IDictionary<object,object>)dict["exc"];
+			Assert.AreEqual("fault", exc["message"]);
+			Assert.AreEqual("ZeroDivisionError", exc["__class__"]);
+		}
+
+		
+		public object DictToDivideZero(IDictionary<object, object> dict)
+		{
+			return new DivideByZeroException(dict["message"] as string);
+		}
+
+		[Test]
+		public void TestObjectifyDictToClass()
+		{
+			Parser p = new Parser();
+			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
+			Ast ast = p.Parse(ser);
+			
+			var dictToInstances = new Dictionary<string, Func<IDictionary<object, object>, object>>();
+			dictToInstances["ZeroDivisionError"] = DictToDivideZero;
+				
+			var visitor = new ObjectifyVisitor(dictToInstances);
+			ast.Accept(visitor);
+			object thing = visitor.GetObject();
+			
+			IDictionary<object,object> dict = thing as IDictionary<object,object>;
+			Assert.AreEqual(11, dict.Count);
+			DivideByZeroException ex = (DivideByZeroException) dict["exc"];
+			Assert.AreEqual("fault", ex.Message);
+			
+			thing = ast.GetData(dictToInstances);
+			dict = thing as IDictionary<object,object>;
+			Assert.AreEqual(11, dict.Count);
+			ex = (DivideByZeroException) dict["exc"];
+			Assert.AreEqual("fault", ex.Message);
 		}
 	}
 }

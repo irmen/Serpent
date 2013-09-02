@@ -16,13 +16,27 @@ namespace Razorvine.Serpent
 	/// </summary>
 	public class ObjectifyVisitor: Ast.INodeVisitor
 	{
-		private Stack<object> generated;
-		
+		private Stack<object> generated = new Stack<object>();
+		private IDictionary<string, Func<IDictionary<object,object>, object>> dictToInstance = null;
+
+		/// <summary>
+		/// Create the visitor that converts AST in actual objects.
+		/// </summary>
 		public ObjectifyVisitor()
 		{
-			generated = new Stack<object>();
 		}
 		
+		/// <summary>
+		/// Create the visitor that converts AST in actual objects.
+		/// </summary>
+		/// <param name="dictToInstance">dictionary to convert dicts to actual instances for a class,
+		/// instead of leaving them as dictionaries. Requires the __class__ key to be present
+		/// in the dict node.</param>
+		public ObjectifyVisitor(IDictionary<string, Func<IDictionary<object,object>, object>> dictToInstance)
+		{
+			this.dictToInstance = dictToInstance;
+		}
+
 		/// <summary>
 		/// get the resulting object tree.
 		/// </summary>
@@ -47,7 +61,19 @@ namespace Razorvine.Serpent
 				object value = generated.Pop();
 				obj[key] = value;
 			}
-			generated.Push(obj);
+
+			if(dictToInstance==null || !obj.ContainsKey("__class__"))
+			{
+				generated.Push(obj);
+			}
+			else
+			{
+				string className = (string)obj["__class__"];
+				if(dictToInstance.ContainsKey(className))
+					generated.Push(this.dictToInstance[className](obj));
+				else
+					generated.Push(obj);
+			}
 		}
 		
 		public void Visit(Ast.ListNode list)

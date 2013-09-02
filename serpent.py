@@ -53,7 +53,7 @@ import types
 import os
 import gc
 
-__version__ = "1.4-dev"
+__version__ = "1.4"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 

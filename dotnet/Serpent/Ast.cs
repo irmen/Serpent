@@ -36,6 +36,19 @@ namespace Razorvine.Serpent
 			Root.Accept(visitor);
 			return visitor.GetObject();
 		}
+		
+		/// <summary>
+		/// Get the actual parsed data as C# object(s).
+		/// </summary>
+		/// <param name="dictToInstance">dictionary to convert dicts to actual instances for a class,
+		/// instead of leaving them as dictionaries. Requires the __class__ key to be present
+		/// in the dict node.</param>
+		public object GetData(IDictionary<string, Func<IDictionary<object,object>, object>> dictToInstance)
+		{
+			var visitor = new ObjectifyVisitor(dictToInstance);
+			Root.Accept(visitor);
+			return visitor.GetObject();
+		}
 
 		public interface INodeVisitor
 		{
