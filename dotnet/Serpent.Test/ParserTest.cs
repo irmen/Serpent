@@ -648,13 +648,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("fault", exc["message"]);
 			Assert.AreEqual("ZeroDivisionError", exc["__class__"]);
 		}
-
 		
-		public object DictToDivideZero(IDictionary<object, object> dict)
-		{
-			return new DivideByZeroException(dict["message"] as string);
-		}
-
 		[Test]
 		public void TestObjectifyDictToClass()
 		{
@@ -663,7 +657,7 @@ namespace Razorvine.Serpent.Test
 			Ast ast = p.Parse(ser);
 			
 			var dictToInstances = new Dictionary<string, Func<IDictionary<object, object>, object>>();
-			dictToInstances["ZeroDivisionError"] = DictToDivideZero;
+			dictToInstances["ZeroDivisionError"] = (d=>new DivideByZeroException((string) d["message"]));
 				
 			var visitor = new ObjectifyVisitor(dictToInstances);
 			ast.Accept(visitor);
