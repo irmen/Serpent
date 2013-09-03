@@ -7,6 +7,7 @@
 /// </summary>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -636,7 +637,7 @@ namespace Razorvine.Serpent.Test
 			ast.Accept(visitor);
 			object thing = visitor.GetObject();
 			
-			IDictionary<object,object> dict = thing as IDictionary<object,object>;
+			IDictionary dict = (IDictionary) thing;
 			Assert.AreEqual(11, dict.Count);
 			IList<object> list = dict["numbers"] as IList<object>;
 			Assert.AreEqual(4, list.Count);
@@ -644,9 +645,21 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new ComplexNumber(-3, 8), list[3]);
 			string euro = dict["unicode"] as string;
 			Assert.AreEqual("\u20ac", euro);
-			IDictionary<object,object> exc = (IDictionary<object,object>)dict["exc"];
-			Assert.AreEqual("fault", exc["message"]);
+			IDictionary exc = (IDictionary)dict["exc"];
+			object[] args = (object[]) exc["args"];
+			Assert.AreEqual("fault", args[0]);
 			Assert.AreEqual("ZeroDivisionError", exc["__class__"]);
+		}
+		
+		object ZerodivisionFromDict(IDictionary dict)
+		{
+			string classname = (string)dict["__class__"];
+			if(classname=="ZeroDivisionError")
+			{
+				object[] args = (object[]) dict["args"];
+				return new DivideByZeroException((string)args[0]);
+			}
+			return null;
 		}
 		
 		[Test]
@@ -656,20 +669,17 @@ namespace Razorvine.Serpent.Test
 			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			
-			var dictToInstances = new Dictionary<string, Func<IDictionary<object, object>, object>>();
-			dictToInstances["ZeroDivisionError"] = (d=>new DivideByZeroException((string) d["message"]));
-				
-			var visitor = new ObjectifyVisitor(dictToInstances);
+			var visitor = new ObjectifyVisitor(ZerodivisionFromDict);
 			ast.Accept(visitor);
 			object thing = visitor.GetObject();
 			
-			IDictionary<object,object> dict = thing as IDictionary<object,object>;
+			IDictionary dict = (IDictionary) thing;
 			Assert.AreEqual(11, dict.Count);
 			DivideByZeroException ex = (DivideByZeroException) dict["exc"];
 			Assert.AreEqual("fault", ex.Message);
 			
-			thing = ast.GetData(dictToInstances);
-			dict = thing as IDictionary<object,object>;
+			thing = ast.GetData(ZerodivisionFromDict);
+			dict = (IDictionary) thing;
 			Assert.AreEqual(11, dict.Count);
 			ex = (DivideByZeroException) dict["exc"];
 			Assert.AreEqual("fault", ex.Message);

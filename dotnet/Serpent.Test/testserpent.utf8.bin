@@ -28,7 +28,7 @@
     'args': (
       'fault',
     ),
-    'message': 'fault'
+    'attributes': {}
   },
   'list': [
     1,

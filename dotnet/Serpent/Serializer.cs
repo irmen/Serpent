@@ -19,13 +19,15 @@ namespace Razorvine.Serpent
 {
 	/// <summary>
 	/// Serialize an object tree to a byte stream.
-    /// It is not thread-safe: make sure you're not making changes to the object tree that is being serialized.
+	/// It is not thread-safe: make sure you're not making changes to the object tree that is being serialized.
 	/// </summary>
 	public class Serializer
 	{
 		public bool Indent;
 		public bool SetLiterals;
+		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
 		
+
 		/// <summary>
 		/// Initialize the serializer.
 		/// </summary>
@@ -34,6 +36,14 @@ namespace Razorvine.Serpent
 		{
 			this.Indent = indent;
 			this.SetLiterals = setLiterals;
+		}
+		
+		/// <summary>
+		/// Register a custom class-to-dict converter.
+		/// </summary>
+		public static void RegisterClass(Type clazz, Func<object, IDictionary> converter)
+		{
+			classToDictRegistry[clazz] = converter;
 		}
 
 		/// <summary>
@@ -296,7 +306,7 @@ namespace Razorvine.Serpent
 			// base-64 struct output
 			string str = Convert.ToBase64String(data);
 			var dict = new Hashtable() {
-				{"data", str},    
+				{"data", str},	
 				{"encoding", "base64"}
 			};
 			Serialize_dict(dict, tw, level);
@@ -306,23 +316,23 @@ namespace Razorvine.Serpent
 		{
 			// backslash-escaped string
 			str = str.Replace("\\", "\\\\");  // double-escape the backslashes
-	        str = str.Replace("\a", "\\a");
-	        str = str.Replace("\b", "\\b");
-	        str = str.Replace("\f", "\\f");
-	        str = str.Replace("\n", "\\n");
-	        str = str.Replace("\r", "\\r");
-	        str = str.Replace("\t", "\\t");
-	        str = str.Replace("\v", "\\v");
+			str = str.Replace("\a", "\\a");
+			str = str.Replace("\b", "\\b");
+			str = str.Replace("\f", "\\f");
+			str = str.Replace("\n", "\\n");
+			str = str.Replace("\r", "\\r");
+			str = str.Replace("\t", "\\t");
+			str = str.Replace("\v", "\\v");
 			if(!str.Contains("'"))
-            	str = "'" + str + "'";
+				str = "'" + str + "'";
 			else if(!str.Contains("\""))
 				str = '"' + str + '"';
-        	else
-        	{
-            	str = str.Replace("'", "\\'");
-            	str = "'" + str + "'";
-        	}
-        	tw.Write(str);
+			else
+			{
+				str = str.Replace("'", "\\'");
+				str = "'" + str + "'";
+			}
+			tw.Write(str);
 		}
 
 		protected void Serialize_datetime(DateTime dt, TextWriter tw, int level)
@@ -340,13 +350,24 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_exception(Exception exc, TextWriter tw, int level)
 		{
-			var dict = new Hashtable() {
-				{"__class__", exc.GetType().Name},
-				{"__exception__", true},
-				{"args", null},
-				{"message", exc.Message},
-				{"attributes", exc.Data}
-			};
+			IDictionary dict;
+			Func<object, IDictionary> converter = null;
+			classToDictRegistry.TryGetValue(exc.GetType(), out converter);
+			
+			if(converter!=null)
+			{
+				// build a custom property dict from the object.
+				dict = converter(exc);
+			}
+			else
+			{
+				dict = new Hashtable() {
+					{"__class__", exc.GetType().Name},
+					{"__exception__", true},
+					{"args", new string[]{exc.Message} },
+					{"attributes", exc.Data}
+				};
+			}
 			Serialize_dict(dict, tw, level);
 		}
 
@@ -378,25 +399,39 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_class(object obj, TextWriter tw, int level)
 		{
-			// if it is an anonymous class type, accept it.
-			// any other class needs to have [Serializable] attribute
-			bool isAnonymousClass = obj.GetType().Name.StartsWith("<>");
-			if(!isAnonymousClass && !obj.GetType().IsSerializable)
-			{
-				throw new SerializationException("object of type "+obj.GetType().Name+" is not serializable");
-			}
+			Type obj_type = obj.GetType();
 			
-			var dict = new Hashtable();
-			if(!isAnonymousClass)
-				dict["__class__"] = obj.GetType().Name;		// only when it is not an anonymous class
-			PropertyInfo[] properties=obj.GetType().GetProperties();
-			foreach(var propinfo in properties) {
-				if(propinfo.CanRead) {
-					string name=propinfo.Name;
-					try {
-						dict[name]=propinfo.GetValue(obj, null);
-					} catch (Exception x) {
-						throw new SerializationException("cannot serialize a property:",x);
+			IDictionary dict;
+			Func<object, IDictionary> converter = null;
+			classToDictRegistry.TryGetValue(obj_type, out converter);
+			
+			if(converter!=null)
+			{
+				// build a custom property dict from the object.
+				dict = converter(obj);
+			}
+			else
+			{
+				// if it is an anonymous class type, accept it.
+				// any other class needs to have [Serializable] attribute
+				bool isAnonymousClass = obj_type.Name.StartsWith("<>");
+				if(!isAnonymousClass && !obj_type.IsSerializable)
+				{
+					throw new SerializationException("object of type "+obj_type.Name+" is not serializable");
+				}
+				
+				dict = new Hashtable();
+				if(!isAnonymousClass)
+					dict["__class__"] = obj_type.Name;		// only when it is not an anonymous class
+				PropertyInfo[] properties=obj_type.GetProperties();
+				foreach(var propinfo in properties) {
+					if(propinfo.CanRead) {
+						string name=propinfo.Name;
+						try {
+							dict[name]=propinfo.GetValue(obj, null);
+						} catch (Exception x) {
+							throw new SerializationException("cannot serialize a property:",x);
+						}
 					}
 				}
 			}

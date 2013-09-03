@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Razorvine.Serpent
 {
@@ -17,7 +18,7 @@ namespace Razorvine.Serpent
 	public class ObjectifyVisitor: Ast.INodeVisitor
 	{
 		private Stack<object> generated = new Stack<object>();
-		private IDictionary<string, Func<IDictionary<object,object>, object>> dictToInstance = null;
+		private Func<IDictionary, object> dictToInstance = null;
 
 		/// <summary>
 		/// Create the visitor that converts AST in actual objects.
@@ -29,10 +30,10 @@ namespace Razorvine.Serpent
 		/// <summary>
 		/// Create the visitor that converts AST in actual objects.
 		/// </summary>
-		/// <param name="dictToInstance">dictionary to convert dicts to actual instances for a class,
+		/// <param name="dictToInstance">functin to convert dicts to actual instances for a class,
 		/// instead of leaving them as dictionaries. Requires the __class__ key to be present
-		/// in the dict node.</param>
-		public ObjectifyVisitor(IDictionary<string, Func<IDictionary<object,object>, object>> dictToInstance)
+		/// in the dict node. If it returns null, the normal processing is done.</param>
+		public ObjectifyVisitor(Func<IDictionary, object> dictToInstance)
 		{
 			this.dictToInstance = dictToInstance;
 		}
@@ -52,7 +53,7 @@ namespace Razorvine.Serpent
 		
 		public void Visit(Ast.DictNode dict)
 		{
-			IDictionary<object, object> obj = new Dictionary<object, object>(dict.Elements.Count);
+			IDictionary obj = new Hashtable(dict.Elements.Count);
 			foreach(Ast.KeyValueNode kv in dict.Elements)
 			{
 				kv.Key.Accept(this);
@@ -62,17 +63,17 @@ namespace Razorvine.Serpent
 				obj[key] = value;
 			}
 
-			if(dictToInstance==null || !obj.ContainsKey("__class__"))
+			if(dictToInstance==null || !obj.Contains("__class__"))
 			{
 				generated.Push(obj);
 			}
 			else
 			{
-				string className = (string)obj["__class__"];
-				if(dictToInstance.ContainsKey(className))
-					generated.Push(this.dictToInstance[className](obj));
-				else
+				object result = dictToInstance(obj);
+				if(result==null)
 					generated.Push(obj);
+				else
+					generated.Push(result);
 			}
 		}
 		

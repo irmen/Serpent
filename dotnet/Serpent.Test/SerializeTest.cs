@@ -205,7 +205,9 @@ namespace Razorvine.Serpent.Test
 		[Test]
 		public void TestSet()
 		{
+			// test with set literals
 			Serializer serpent = new Serializer();
+			serpent.SetLiterals = true;
 			HashSet<object> set = new HashSet<object>();
 			
 			// test empty set
@@ -440,6 +442,7 @@ namespace Razorvine.Serpent.Test
 		[Test]
 		public void TestClass()
 		{
+			Serializer.RegisterClass(typeof(SerializeTestClass), null);
 			Serializer serpent = new Serializer(indent: true);
 			Object obj = new UnserializableClass();
 			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
@@ -451,6 +454,32 @@ namespace Razorvine.Serpent.Test
 			};
 			byte[] ser = strip_header(serpent.Serialize(obj));
 			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+		}
+
+		protected IDictionary testclassConverter(object obj)
+		{
+			SerializeTestClass o = (SerializeTestClass) obj;
+			IDictionary result = new Hashtable();
+			result["__class@__"] = o.GetType().Name+"@";
+			result["i@"] = o.i;
+			result["s@"] = o.s;
+			result["x@"] = o.x;
+			return result;
+		}
+		
+		[Test]
+		public void TestCustomClassDict()
+		{
+			Serializer.RegisterClass(typeof(SerializeTestClass), testclassConverter);
+			Serializer serpent = new Serializer(indent: true);
+			
+			var obj = new SerializeTestClass() {
+				i = 99,
+				s = "hi",
+				x = 42
+			};
+			byte[] ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("{\n  '__class@__': 'SerializeTestClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
 		}
 		
 		[Test]
@@ -507,11 +536,11 @@ namespace Razorvine.Serpent.Test
 			Exception x = new ApplicationException("errormessage");
 			Serializer serpent = new Serializer(indent:true);
 			byte[] ser = strip_header(serpent.Serialize(x));
-			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {},\n  'message': 'errormessage'\n}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 
 			x.Data["custom_attribute"]=999;
 			ser = strip_header(serpent.Serialize(x));
-			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {\n    'custom_attribute': 999\n  },\n  'message': 'errormessage'\n}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {\n    'custom_attribute': 999\n  }\n}", S(ser));
 		}
 		
 		enum FooType {
