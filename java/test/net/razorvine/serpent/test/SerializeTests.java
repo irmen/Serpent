@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import net.razorvine.serpent.ComplexNumber;
+import net.razorvine.serpent.IClassSerializer;
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 import org.junit.Test;
@@ -85,10 +86,11 @@ public class SerializeTests {
 	@Test
 	public void testException()
 	{
+		Serializer.registerClass(IllegalArgumentException.class, null);
 		Exception x = new IllegalArgumentException("errormessage");
 		Serializer serpent = new Serializer(true, true);
 		byte[] ser = strip_header(serpent.serialize(x));
-		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': None,\n  'attributes': {},\n  'message': 'errormessage'\n}", S(ser));
+		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 	}
 
 
@@ -292,6 +294,7 @@ public class SerializeTests {
 	@Test
 	public void testClassOk()
 	{
+		Serializer.registerClass(SerializeTestClass.class, null);
 		Serializer serpent = new Serializer(true, true);
 		SerializeTestClass obj = new SerializeTestClass();
 		obj.i=99;
@@ -301,7 +304,58 @@ public class SerializeTests {
 		assertEquals("{\n  '__class__': 'SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi'\n}", S(ser));
 	}
 	
+	class TestclassConverter implements IClassSerializer
+	{
+		@Override
+		public Map<String, Object> convert(Object obj) {
+		    SerializeTestClass o = (SerializeTestClass) obj;
+		    Map<String, Object> result = new HashMap<String, Object>();
+		    result.put("__class@__", o.getClass().getSimpleName()+"@");
+		    result.put("i@", o.i);
+		    result.put("s@", o.s);
+		    result.put("x@", o.x);
+		    return result; 
+		}
+	}
 
+	class ExceptionConverter implements IClassSerializer
+	{
+		@Override
+		public Map<String, Object> convert(Object obj) {
+			IllegalArgumentException e = (IllegalArgumentException) obj;
+		    Map<String, Object> result = new HashMap<String, Object>();
+		    result.put("__class@__", e.getClass().getSimpleName());
+		    result.put("msg@", e.getMessage());
+		    return result; 
+		}
+	}
+	
+	@Test
+	public void testCustomClassDict()
+	{
+		Serializer.registerClass(SerializeTestClass.class, new TestclassConverter());
+	    Serializer serpent = new Serializer(true, true);
+	      
+		SerializeTestClass obj = new SerializeTestClass();
+		obj.i=99;
+		obj.s="hi";
+		obj.x=42;
+
+		byte[] ser = strip_header(serpent.serialize(obj));
+	    assertEquals("{\n  '__class@__': 'SerializeTestClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
+	} 
+	
+	@Test
+	public void testCustomExceptionDict()
+	{
+		Serializer.registerClass(IllegalArgumentException.class, new ExceptionConverter());
+	    Serializer serpent = new Serializer(true, true);
+	      
+		Exception x = new IllegalArgumentException("errormessage");
+		byte[] ser = strip_header(serpent.serialize(x));
+		assertEquals("{\n  '__class@__': 'IllegalArgumentException',\n  'msg@': 'errormessage'\n}", S(ser));
+	} 
+	
 	@Test
 	public void testSet()
 	{

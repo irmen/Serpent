@@ -32,6 +32,7 @@ public class Serializer
 {
 	public boolean indent = false;
 	public boolean setliterals = true;
+	private static Map<Class<?>, IClassSerializer> classToDictRegistry = new HashMap<Class<?>, IClassSerializer>();
 	
 	public Serializer()
 	{
@@ -42,6 +43,11 @@ public class Serializer
 		this.indent = indent;
 		this.setliterals = setliterals;
 	}
+	
+	public static void registerClass(Class<?> clazz, IClassSerializer converter)
+	{
+		classToDictRegistry.put(clazz, converter);
+	} 
 	
 	public byte[] serialize(Object obj)
 	{
@@ -400,27 +406,36 @@ public class Serializer
 
 	protected void serialize_class(Object obj, PrintWriter p, int level) 
 	{
-		Map<String,Object> map=new HashMap<String,Object>();
-		try {
-			BeanInfo info=Introspector.getBeanInfo(obj.getClass(), Object.class);
-			for(PropertyDescriptor pd: info.getPropertyDescriptors()) {
-				String name=pd.getName();
-				Method readmethod=pd.getReadMethod();
-				if(readmethod==null) {
-					throw new IllegalArgumentException("can't find public read method for bean property '"+name+"' in class "+obj.getClass());
-				}
-				Object value=readmethod.invoke(obj);
-				map.put(name, value);
-			}
-			map.put("__class__", obj.getClass().getSimpleName());
-			serialize_dict(map, p, level);
-		} catch (IntrospectionException e) {
-			throw new IllegalArgumentException("couldn't introspect javabean: "+e);
-		} catch (IllegalAccessException e) {
-			throw new IllegalArgumentException("couldn't introspect javabean: "+e);
-		} catch (InvocationTargetException e) {
-			throw new IllegalArgumentException("couldn't introspect javabean: "+e);
+		Map<String,Object> map;
+		IClassSerializer converter=classToDictRegistry.get(obj.getClass());
+		if(null!=converter)
+		{
+			map = converter.convert(obj);
 		}
+		else
+		{
+			map=new HashMap<String,Object>();
+			try {
+				BeanInfo info=Introspector.getBeanInfo(obj.getClass(), Object.class);
+				for(PropertyDescriptor pd: info.getPropertyDescriptors()) {
+					String name=pd.getName();
+					Method readmethod=pd.getReadMethod();
+					if(readmethod==null) {
+						throw new IllegalArgumentException("can't find public read method for bean property '"+name+"' in class "+obj.getClass());
+					}
+					Object value=readmethod.invoke(obj);
+					map.put(name, value);
+				}
+				map.put("__class__", obj.getClass().getSimpleName());
+			} catch (IntrospectionException e) {
+				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
+			} catch (IllegalAccessException e) {
+				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
+			} catch (InvocationTargetException e) {
+				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
+			}
+		}
+		serialize_dict(map, p, level);
 	}
 
 	protected void serialize_primitive(Object obj, PrintWriter p, int level) 
@@ -458,12 +473,20 @@ public class Serializer
 	
 	protected void serialize_exception(Exception ex, PrintWriter p, int level)
 	{
-		Map<String, Object> dict = new HashMap<String,Object>();
-		dict.put("__class__", ex.getClass().getSimpleName());
-		dict.put("__exception__", true);
-		dict.put("args", null);
-		dict.put("message", ex.getMessage());
-		dict.put("attributes", java.util.Collections.EMPTY_MAP);
+		Map<String, Object> dict;
+		IClassSerializer converter=classToDictRegistry.get(ex.getClass());
+		if(null!=converter)
+		{
+			dict = converter.convert(ex);
+		}
+		else
+		{
+			dict = new HashMap<String,Object>();
+			dict.put("__class__", ex.getClass().getSimpleName());
+			dict.put("__exception__", true);
+			dict.put("args", new String[]{ex.getMessage()});
+			dict.put("attributes", java.util.Collections.EMPTY_MAP);
+		}
 		serialize_dict(dict, p, level);
 	}
 }

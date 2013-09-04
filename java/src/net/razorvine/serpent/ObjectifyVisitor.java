@@ -22,7 +22,15 @@ import net.razorvine.serpent.ast.*;
 public class ObjectifyVisitor implements INodeVisitor
 {
 	Stack<Object> generated = new Stack<Object>();
+	protected IDictToInstance dictConverter = null;
 	
+	public ObjectifyVisitor() {
+	}
+	
+	public ObjectifyVisitor(IDictToInstance dictConverter) {
+		this.dictConverter = dictConverter;
+	}
+
 	/**
 	 * get the resulting object tree.
 	 */
@@ -48,7 +56,19 @@ public class ObjectifyVisitor implements INodeVisitor
 			Object value = generated.pop();
 			obj.put(key, value);
 		}
-		generated.push(obj);
+
+		if(dictConverter==null || !obj.containsKey("__class__"))
+		{
+			generated.push(obj);
+		}
+		else
+		{
+			Object result = dictConverter.convert(obj);
+			if(result==null)
+				generated.push(obj);
+			else
+				generated.push(result);
+		}
 	}
 
 	public void visit(ListNode list)

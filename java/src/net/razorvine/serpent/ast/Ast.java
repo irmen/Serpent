@@ -7,6 +7,7 @@
 
 package net.razorvine.serpent.ast;
 
+import net.razorvine.serpent.IDictToInstance;
 import net.razorvine.serpent.ObjectifyVisitor;
 
 /// <summary>
@@ -28,6 +29,19 @@ public class Ast
 	public Object getData()
 	{
 		ObjectifyVisitor v = new ObjectifyVisitor();
+		this.accept(v);
+		return v.getObject();
+	}
+
+	/**
+	 * get the actual data as Java objects.
+	 * @param dictConverter object to convert dicts to actual instances for a class,
+	 *   instead of leaving them as dictionaries. Requires the __class__ key to be present
+	 *   in the dict node. If it returns null, the normal processing is done.
+	 */
+	public Object getData(IDictToInstance dictConverter)
+	{
+		ObjectifyVisitor v = new ObjectifyVisitor(dictConverter);
 		this.accept(v);
 		return v.getObject();
 	}
