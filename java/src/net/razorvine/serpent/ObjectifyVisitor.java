@@ -7,6 +7,7 @@
 
 package net.razorvine.serpent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,7 +64,12 @@ public class ObjectifyVisitor implements INodeVisitor
 		}
 		else
 		{
-			Object result = dictConverter.convert(obj);
+			Object result;
+			try {
+				result = dictConverter.convert(obj);
+			} catch (IOException e) {
+				throw new RuntimeException("problem converting dict to class", e);
+			}
 			if(result==null)
 				generated.push(obj);
 			else

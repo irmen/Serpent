@@ -82,7 +82,7 @@ public class VisitorTest
 		
 		Ast ast = p.parse(ser);
 		
-		ObjectifyVisitor visitor = new ObjectifyVisitor(new ArithmeticExcFromDict()); // TODO ArithmeticExcFromDict argument
+		ObjectifyVisitor visitor = new ObjectifyVisitor(new ArithmeticExcFromDict());
 		ast.accept(visitor);
 		Object thing = visitor.getObject();
 		

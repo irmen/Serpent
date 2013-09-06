@@ -7,6 +7,7 @@
 
 package net.razorvine.serpent;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -17,5 +18,5 @@ public interface IDictToInstance {
 	 * Convert the given dictionary to a specific object.
 	 * Can return null to use the default behavior.
 	 */
-	public Object convert(Map<Object,Object> dict);
+	public Object convert(Map<Object,Object> dict) throws IOException;
 }
