@@ -277,6 +277,9 @@ public class SerializeTests {
 		
 		public String getTheString() { return s; }
 		public int getTheInteger() { return i; }
+		public boolean isThingy() { return true; }
+		public int getNUMBER() { return 42; }
+		public String getX() { return "X"; }
 	}
 	
 	public class UnserializableClass
@@ -301,7 +304,7 @@ public class SerializeTests {
 		obj.s="hi";
 		obj.x=42;
 		byte[] ser = strip_header(serpent.serialize(obj));
-		assertEquals("{\n  '__class__': 'SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi'\n}", S(ser));
+		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
 	}
 	
 	class TestclassConverter implements IClassSerializer

@@ -7,10 +7,6 @@
 
 package net.razorvine.serpent;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -18,6 +14,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -416,19 +413,29 @@ public class Serializer
 		{
 			map=new HashMap<String,Object>();
 			try {
-				BeanInfo info=Introspector.getBeanInfo(obj.getClass(), Object.class);
-				for(PropertyDescriptor pd: info.getPropertyDescriptors()) {
-					String name=pd.getName();
-					Method readmethod=pd.getReadMethod();
-					if(readmethod==null) {
-						throw new IllegalArgumentException("can't find public read method for bean property '"+name+"' in class "+obj.getClass());
+				// note: don't use the java.bean api, because that is not available on Android.
+				for(Method m: obj.getClass().getMethods()) {
+					int modifiers = m.getModifiers();
+					if((modifiers & Modifier.PUBLIC)!=0 && (modifiers & Modifier.STATIC)==0) {
+						String methodname = m.getName();
+						int prefixlen = 0;
+						if(methodname.equals("getClass")) continue;
+						if(methodname.startsWith("get")) prefixlen=3;
+						else if(methodname.startsWith("is")) prefixlen=2;
+						else continue;
+						Object value = m.invoke(obj);
+						String name = methodname.substring(prefixlen);
+						if(name.length()==1) {
+							name = name.toLowerCase();
+						} else {
+							if(!Character.isUpperCase(name.charAt(1))) {
+								name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+							}
+						}
+						map.put(name, value);
 					}
-					Object value=readmethod.invoke(obj);
-					map.put(name, value);
 				}
 				map.put("__class__", obj.getClass().getSimpleName());
-			} catch (IntrospectionException e) {
-				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
 			} catch (IllegalAccessException e) {
 				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
 			} catch (InvocationTargetException e) {
