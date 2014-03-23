@@ -112,6 +112,7 @@ public class SerpentExample {
 	
 	public class SampleClass implements Serializable
 	{
+		private static final long serialVersionUID = -782424804184940436L;
 		int a;
 		String n;
 		

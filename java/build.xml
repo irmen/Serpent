@@ -1,7 +1,7 @@
 <!-- ANT project build file for Serpent -->
 <project name="Serpent-java" default="all">
-  <property name="ant.build.javac.target" value="1.6" />
-  <property name="ant.build.javac.source" value="1.6" />
+  <property name="ant.build.javac.target" value="1.7" />
+  <property name="ant.build.javac.source" value="1.7" />
   <property name="libsrc" location="src" />
   <property name="testsrc" location="test" />
   <property name="build" location="bin" />

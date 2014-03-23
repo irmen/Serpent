@@ -271,6 +271,7 @@ public class SerializeTests {
 	
 	public class SerializeTestClass implements Serializable
 	{
+		private static final long serialVersionUID = 5151254868567404093L;
 		public int x;
 		public String s;
 		public int i;
