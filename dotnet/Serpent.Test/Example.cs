@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security;
 using System.Text;
@@ -51,11 +52,11 @@ namespace Razorvine.Serpent.Test
 			Console.WriteLine(dv.ToString());
 			
 			// turn the Ast into regular .net objects
-			var dict = (IDictionary<object, object>) ast.GetData();
+			var dict = (IDictionary) ast.GetData();
 			// You can get the data out of the Ast manually as well, by using the supplied visitor:
 			// var visitor = new ObjectifyVisitor();
 			// ast.Accept(visitor);
-			// var dict = (IDictionary<object, object>) visitor.GetObject();
+			// var dict = (IDictionary) visitor.GetObject();
 
 			// print the results
 			Console.WriteLine("PARSED results:");
@@ -67,7 +68,7 @@ namespace Razorvine.Serpent.Test
 			HashSet<object> set = (HashSet<object>) dict["set"];
 			Console.WriteLine(string.Join(", ", set.Select(e=>e.ToString()).ToArray()));
 			Console.WriteLine("class attributes:");
-			var clazz = (IDictionary<object, object>) dict["class"];	// custom classes are serialized as dicts
+			var clazz = (IDictionary) dict["class"];	// custom classes are serialized as dicts
 			Console.WriteLine("  type: {0}", clazz["__class__"]);
 			Console.WriteLine("  name: {0}", clazz["name"]);
 			Console.WriteLine("  age: {0}", clazz["age"]);
