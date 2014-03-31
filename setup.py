@@ -3,14 +3,19 @@
 # Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 # Software license: "MIT software license". See http://opensource.org/licenses/MIT
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+    using_setuptools = True
+except ImportError:
+    from distutils.core import setup
+    using_setuptools = False
 
 import serpent
 
 setup(
     name='serpent',
     version=serpent.__version__,
-    py_modules = ["serpent"],
+    py_modules=["serpent"],
     license='MIT',
     author='Irmen de Jong',
     author_email='irmen@razorvine.net',
@@ -146,7 +151,7 @@ When you run this (with python 3.2+) it prints:
 
     keywords="serialization",
     platforms="any",
-    classifiers= [
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
