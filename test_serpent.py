@@ -138,14 +138,14 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"\"quotes2'\"", data)
 
     def test_unicode(self):
-        u = "euro"+unichr(0x20ac)
+        u = "euro" + unichr(0x20ac)
         self.assertTrue(type(u) is unicode)
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
 
     def test_unicode_with_escapes(self):
-        line = "euro"+unichr(0x20ac)+"\nlastline\ttab\\@slash"
+        line = "euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash"
         ser = serpent.dumps(line)
         d = strip_header(ser)
         self.assertEqual(b"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'", d)
@@ -594,6 +594,7 @@ class TestCustomClasses(unittest.TestCase):
             self.assertEqual("custom_uuid!", x)
         finally:
             serpent.unregister_class(uuid.UUID)
+
 
 class TestPyro4(unittest.TestCase):
     def testException(self):

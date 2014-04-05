@@ -8,6 +8,7 @@ from timeit import default_timer as perf_timer
 import sys
 import datetime
 
+
 class Person(object):
     def __init__(self, name, age):
         self.name = name
@@ -23,14 +24,14 @@ data = {
     "int": [123456789] * 1000,
     "double": [12345.987654321] * 1000,
     "long": [123456789123456789123456789123456789] * 1000,
-    "tuple": [(x*x, "tuple", (300, 400, (500, 600, (x*x, x*x, x*x, x*x)))) for x in range(200)],
-    "list": [[x*x, "tuple", [300, 400, [500, 600, [x*x, x*x, x*x, x*x]]]] for x in range(200)],
-    "set": set(x*x for x in range(1000)),
-    "dict": {i*i: {1000+j: chr(j+65) for j in range(5)} for i in range(100)},
-    "exception": [ZeroDivisionError("test exeception", x*x) for x in range(1000)],
-    "class": [Person("harry", x*x) for x in range(1000)],
+    "tuple": [(x * x, "tuple", (300, 400, (500, 600, (x * x, x * x, x * x, x * x)))) for x in range(200)],
+    "list": [[x * x, "tuple", [300, 400, [500, 600, [x * x, x * x, x * x, x * x]]]] for x in range(200)],
+    "set": set(x * x for x in range(1000)),
+    "dict": {i * i: {1000 + j: chr(j + 65) for j in range(5)} for i in range(100)},
+    "exception": [ZeroDivisionError("test exeception", x * x) for x in range(1000)],
+    "class": [Person("harry", x * x) for x in range(1000)],
     "datetime": [datetime.datetime.now() for x in range(1000)],
-    "complex": [complex(x+x, x*x) for x in range(1000)]
+    "complex": [complex(x + x, x * x) for x in range(1000)]
 }
 
 serializers = {}
@@ -60,15 +61,20 @@ try:
     import xmlrpclib as xmlrpc
 except ImportError:
     import xmlrpc.client as xmlrpc
+
+
 def xmldumps(data):
     return xmlrpc.dumps((data,)).encode("utf-8")
+
+
 def xmlloads(data):
     return xmlrpc.loads(data.decode("utf-8"))[0]
+
+
 serializers["xmlrpc"] = (xmldumps, xmlloads)
 
 
 no_result = 9999999999
-
 
 
 def run():
@@ -83,7 +89,7 @@ def run():
             sys.stdout.flush()
             try:
                 serialized = serializers[ser][0](data[key])
-            except (TypeError, ValueError, OverflowError) as x:
+            except (TypeError, ValueError, OverflowError):
                 print("error!")
                 results[ser]["sizes"][key] = no_result
                 results[ser]["ser-times"][key] = no_result
@@ -125,12 +131,13 @@ def tables_size(results):
     for dt in sorted(sizes_per_datatype):
         print(dt)
         for pos, (size, serializer) in enumerate(sizes_per_datatype[dt]):
-            if size==no_result:
+            if size == no_result:
                 size = "unsupported"
             else:
                 size = "%8d" % size
-            print(" %2d: %-8s  %s" % (pos+1, serializer, size))
+            print(" %2d: %-8s  %s" % (pos + 1, serializer, size))
     print()
+
 
 def tables_speed(results, what_times, header):
     print("\n%s\n" % header)
@@ -145,17 +152,16 @@ def tables_speed(results, what_times, header):
     for dt in sorted(durations_per_datatype):
         print(dt)
         for pos, (duration, serializer) in enumerate(durations_per_datatype[dt]):
-            if duration==no_result:
+            if duration == no_result:
                 duration = "unsupported"
             else:
                 duration = "%8d" % duration
-            print(" %2d: %-8s  %s" % (pos+1, serializer, duration))
+            print(" %2d: %-8s  %s" % (pos + 1, serializer, duration))
     print()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     results = run()
     tables_size(results)
     tables_speed(results, "ser-times", "SPEED RESULTS (SERIALIZATION)")
     tables_speed(results, "deser-times", "SPEED RESULTS (DESERIALIZATION)")
-
-

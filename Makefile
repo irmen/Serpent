@@ -1,4 +1,4 @@
-.PHONY: all sdist wheel install upload clean test
+.PHONY: all sdist wheel install upload clean test check
 
 all:
 	@echo "targets include sdist, wheel, upload, install, clean"
@@ -20,6 +20,9 @@ install:
 
 test:
 	python -E test_serpent.py
+
+check:
+	flake8 --ignore E501
 
 clean:
 	@echo "Removing tox dirs, logfiles, .pyo/.pyc files..."

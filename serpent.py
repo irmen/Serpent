@@ -159,7 +159,7 @@ class Serializer(object):
     It is not thread-safe: make sure you're not making changes to the
     object tree that is being serialized.
     """
-    #noinspection PySetFunctionToLiteral
+    # noinspection PySetFunctionToLiteral
     repr_types = set([
         str,
         int,
@@ -385,7 +385,7 @@ class Serializer(object):
 
     if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
-            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10**6 + timedelta_obj.microseconds) / 10**6
+            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10 ** 6 + timedelta_obj.microseconds) / 10 ** 6
             self._serialize(secs, out, level)
     else:
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
