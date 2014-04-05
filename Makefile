@@ -22,7 +22,7 @@ test:
 	python -E test_serpent.py
 
 check:
-	flake8 --ignore E501
+	flake8 --exclude .tox --ignore E501
 
 clean:
 	@echo "Removing tox dirs, logfiles, .pyo/.pyc files..."
