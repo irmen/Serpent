@@ -137,6 +137,21 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
+    @unittest.skipIf(sys.platform=="cli", "IronPython has problems with null bytes in strings")
+    def test_nullbytesstring(self):
+        ser = serpent.dumps("\0null")
+        data = serpent.loads(ser)
+        self.assertEqual("\0null", data)
+
+    @unittest.skipIf(sys.version_info<(3, 0), "needs python 3.x to correctly process null bytes in unicode strings")
+    def test_nullbytesunicode(self):
+        line = unichr(0) + "null"
+        ser = serpent.dumps(line)
+        data = strip_header(ser)
+        self.assertEqual(b"'\\x00null'", data)
+        data = serpent.loads(ser)
+        self.assertEqual(line, data)
+
     def test_unicode(self):
         u = "euro" + unichr(0x20ac)
         self.assertTrue(type(u) is unicode)
@@ -449,13 +464,13 @@ class TestIndent(unittest.TestCase):
   'gg': 1,
   'hh': 1
 }""", ser)
-        data = set("irmen de jong irmen de jong")
+        data = set("irmen de jong irmen de jong666")
         ser = serpent.dumps(data, False)
         ser = strip_header(ser)
-        self.assertNotEqual(b"' ','d','e','g','i','j','m','n','o','r'", ser[1:-1])
+        self.assertNotEqual(b"' ','6','d','e','g','i','j','m','n','o','r'", ser[1:-1])
         ser = serpent.dumps(data, True)
         ser = strip_header(ser)
-        self.assertEqual(b"\n  ' ',\n  'd',\n  'e',\n  'g',\n  'i',\n  'j',\n  'm',\n  'n',\n  'o',\n  'r'\n", ser[1:-1])
+        self.assertEqual(b"\n  ' ',\n  '6',\n  'd',\n  'e',\n  'g',\n  'i',\n  'j',\n  'm',\n  'n',\n  'o',\n  'r'\n", ser[1:-1])
 
     def test_indent_containers(self):
         data = [1, 2, 3]
