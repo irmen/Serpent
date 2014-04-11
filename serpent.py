@@ -53,18 +53,18 @@ import types
 import os
 import gc
 
-__version__ = "1.4"
+__version__ = "1.5"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 
-def dumps(obj, indent=False, set_literals=True):
+def dumps(obj, indent=False, set_literals=True, module_in_classname=False):
     """Serialize object tree to bytes"""
-    return Serializer(indent, set_literals).serialize(obj)
+    return Serializer(indent, set_literals, module_in_classname).serialize(obj)
 
 
-def dump(obj, file, indent=False, set_literals=True):
+def dump(obj, file, indent=False, set_literals=True, module_in_classname=False):
     """Serialize object tree to a file"""
-    file.write(dumps(obj, indent=indent, set_literals=set_literals))
+    file.write(dumps(obj, indent=indent, set_literals=set_literals, module_in_classname=module_in_classname))
 
 
 def loads(serialized_bytes):
@@ -188,14 +188,16 @@ class Serializer(object):
     if sys.version_info < (2, 7):
         repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
-    def __init__(self, indent=False, set_literals=True):
+    def __init__(self, indent=False, set_literals=True, module_in_classname=False):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
         setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2)
+        module_in_classname = include module prefix for class names or only use the class name itself
         """
         self.indent = indent
         self.set_literals = set_literals
+        self.module_in_classname = module_in_classname
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
@@ -399,8 +401,12 @@ class Serializer(object):
         self._serialize(str(uuid_obj), out, level)
 
     def ser_exception_class(self, exc_obj, out, level):
+        if self.module_in_classname:
+            class_name = "%s.%s" % (exc_obj.__class__.__module__, exc_obj.__class__.__name__)
+        else:
+            class_name = exc_obj.__class__.__name__
         value = {
-            "__class__": exc_obj.__class__.__name__,
+            "__class__": class_name,
             "__exception__": True,
             "args": exc_obj.args,
             "attributes": vars(exc_obj)  # add any custom attributes
@@ -422,16 +428,20 @@ class Serializer(object):
                 self.ser_builtins_dict(value, out, level)
                 return
         except AttributeError:
+            if self.module_in_classname:
+                class_name = "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
+            else:
+                class_name = obj.__class__.__name__
             try:
                 value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
-                value["__class__"] = obj.__class__.__name__
+                value["__class__"] = class_name
             except TypeError:
                 if hasattr(obj, "__slots__"):
                     # use the __slots__ instead of the vars dict
                     value = {}
                     for slot in obj.__slots__:
                         value[slot] = getattr(obj, slot)
-                    value["__class__"] = obj.__class__.__name__
+                    value["__class__"] = class_name
                 else:
                     raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
         self._serialize(value, out, level)

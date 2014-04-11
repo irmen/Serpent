@@ -332,6 +332,21 @@ class TestBasics(unittest.TestCase):
             'attributes': {'custom_attribute': 'custom_attr'}
         }, data)
 
+    def test_exception2(self):
+        x = ZeroDivisionError("wrong")
+        ser = serpent.dumps(x, module_in_classname=True)
+        data = serpent.loads(ser)
+        if sys.version_info < (3, 0):
+            expected_classname = "exceptions.ZeroDivisionError"
+        else:
+            expected_classname = "builtins.ZeroDivisionError"
+        self.assertEqual({
+            '__class__': expected_classname,
+            '__exception__': True,
+            'args': ('wrong',),
+            'attributes': {}
+        }, data)
+
     def test_class(self):
         class Class1(object):
             def __init__(self):
@@ -365,6 +380,13 @@ class TestBasics(unittest.TestCase):
         data = serpent.loads(ser)
         self.assertEqual("PrettyPrinter", data["__class__"])
         self.assertEqual(99, data["_width"])
+
+    def test_class2(self):
+        import pprint
+        pp = pprint.PrettyPrinter(stream="dummy", width=42)
+        ser = serpent.dumps(pp, module_in_classname=True)
+        data = serpent.loads(ser)
+        self.assertEqual('pprint.PrettyPrinter', data["__class__"])
 
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
@@ -619,7 +641,7 @@ class TestPyro4(unittest.TestCase):
             et, ev, etb = sys.exc_info()
             tb_lines = traceback.format_exception(et, ev, etb)
             ev._pyroTraceback = tb_lines
-        ser = serpent.dumps(ev)
+        ser = serpent.dumps(ev, module_in_classname=False)
         data = serpent.loads(ser)
         self.assertTrue(data["__exception__"])
         attrs = data["attributes"]
