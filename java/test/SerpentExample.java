@@ -49,7 +49,7 @@ public class SerpentExample {
 		data.put("class", new SampleClass("Sally", 26));
 		
 		// serialize data structure to bytes
-		Serializer serpent = new Serializer(true, true);
+		Serializer serpent = new Serializer(true, true, false);
 		byte[] ser = serpent.serialize(data);
 		// print it on the screen, but normally you'd store byte bytes in a file or transfer them across a network connection
 		System.out.println("Serialized:");

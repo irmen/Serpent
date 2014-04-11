@@ -29,16 +29,18 @@ public class Serializer
 {
 	public boolean indent = false;
 	public boolean setliterals = true;
+	public boolean packageInClassName = false;
 	private static Map<Class<?>, IClassSerializer> classToDictRegistry = new HashMap<Class<?>, IClassSerializer>();
 	
 	public Serializer()
 	{
 	}
 	
-	public Serializer(boolean indent, boolean setliterals)
+	public Serializer(boolean indent, boolean setliterals, boolean packageInClassName)
 	{
 		this.indent = indent;
 		this.setliterals = setliterals;
+		this.packageInClassName = packageInClassName;
 	}
 	
 	public static void registerClass(Class<?> clazz, IClassSerializer converter)
@@ -435,7 +437,10 @@ public class Serializer
 						map.put(name, value);
 					}
 				}
-				map.put("__class__", obj.getClass().getSimpleName());
+				if(this.packageInClassName)
+					map.put("__class__", obj.getClass().getName());
+				else
+					map.put("__class__", obj.getClass().getSimpleName());
 			} catch (IllegalAccessException e) {
 				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
 			} catch (InvocationTargetException e) {
@@ -489,7 +494,10 @@ public class Serializer
 		else
 		{
 			dict = new HashMap<String,Object>();
-			dict.put("__class__", ex.getClass().getSimpleName());
+			if(this.packageInClassName)
+				dict.put("__class__", ex.getClass().getName());
+			else
+				dict.put("__class__", ex.getClass().getSimpleName());
 			dict.put("__exception__", true);
 			dict.put("args", new String[]{ex.getMessage()});
 			dict.put("attributes", java.util.Collections.EMPTY_MAP);
