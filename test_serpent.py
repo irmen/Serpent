@@ -137,13 +137,13 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
-    @unittest.skipIf(sys.platform=="cli", "IronPython has problems with null bytes in strings")
+    @unittest.skipIf(sys.platform == "cli", "IronPython has problems with null bytes in strings")
     def test_nullbytesstring(self):
         ser = serpent.dumps("\0null")
         data = serpent.loads(ser)
         self.assertEqual("\0null", data)
 
-    @unittest.skipIf(sys.version_info<(3, 0), "needs python 3.x to correctly process null bytes in unicode strings")
+    @unittest.skipIf(sys.version_info < (3, 0), "needs python 3.x to correctly process null bytes in unicode strings")
     def test_nullbytesunicode(self):
         line = unichr(0) + "null"
         ser = serpent.dumps(line)
