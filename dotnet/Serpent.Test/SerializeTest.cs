@@ -2,7 +2,7 @@
 /// Serpent, a Python literal expression serializer/deserializer
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
-/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// Copyright 2014, Irmen de Jong (irmen@razorvine.net)
 /// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
@@ -415,36 +415,12 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  'a',\n  'b',\n  'c',\n  'x',\n  'y',\n  'z'\n}", S(ser));
 		}
 
-		[Serializable]
-		public class SerializeTestClass
-		{
-			public int x;
-			public string s {get; set;}
-			public int i {get; set;}
-		}
-		
-		[Serializable]
-		public struct SerializeTestStruct
-		{
-			public int x;
-			public string s {get; set;}
-			public int i {get; set;}
-		}
-
-		public class UnserializableClass
-		{
-		}
-		
-		public struct UnserializableStruct
-		{
-		}
-
 		[Test]
 		public void TestClass()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
 			Serializer serpent = new Serializer(indent: true);
-			Object obj = new UnserializableClass();
+			object obj = new UnserializableClass();
 			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
 			
 			obj = new SerializeTestClass() {
@@ -454,6 +430,20 @@ namespace Razorvine.Serpent.Test
 			};
 			byte[] ser = strip_header(serpent.Serialize(obj));
 			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+		}
+
+		[Test]
+		public void TestClass2()
+		{
+			Serializer.RegisterClass(typeof(SerializeTestClass), null);
+			Serializer serpent = new Serializer(indent: true, namespaceInClassName: true);
+			object obj = new SerializeTestClass() {
+				i = 99,
+				s = "hi",
+				x = 42
+			};
+			byte[] ser = strip_header(serpent.Serialize(obj));
+			Assert.AreEqual("{\n  '__class__': 'Razorvine.Serpent.Test.SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
 		}
 
 		protected IDictionary testclassConverter(object obj)
@@ -499,6 +489,22 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestStruct2()
+		{
+			Serializer serpent = new Serializer(indent: true, namespaceInClassName: true);
+			UnserializableStruct obj;
+			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
+			
+			var obj2 = new SerializeTestStruct() {
+				i = 99,
+				s = "hi",
+				x = 42
+			};
+			byte[] ser = strip_header(serpent.Serialize(obj2));
+			Assert.AreEqual("{\n  '__class__': 'Razorvine.Serpent.Test.SerializeTestStruct',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+		}
+
+		[Test]
 		public void TestAnonymousClass()
 		{
 			Serializer serpent = new Serializer(indent: true);
@@ -543,6 +549,15 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {\n    'custom_attribute': 999\n  }\n}", S(ser));
 		}
 		
+		[Test]
+		public void TestException2()
+		{
+			Exception x = new ApplicationException("errormessage");
+			Serializer serpent = new Serializer(indent:true, namespaceInClassName: true);
+			byte[] ser = strip_header(serpent.Serialize(x));
+			Assert.AreEqual("{\n  '__class__': 'System.ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
+		}
+
 		enum FooType {
 			Foobar,
 			Jarjar
@@ -556,5 +571,29 @@ namespace Razorvine.Serpent.Test
 			byte[] ser = strip_header(serpent.Serialize(e));
 			Assert.AreEqual("'Jarjar'", S(ser));
 		}
+	}
+
+	[Serializable]
+	public class SerializeTestClass
+	{
+		public int x;
+		public string s {get; set;}
+		public int i {get; set;}
+	}
+	
+	[Serializable]
+	public struct SerializeTestStruct
+	{
+		public int x;
+		public string s {get; set;}
+		public int i {get; set;}
+	}
+
+	public class UnserializableClass
+	{
+	}
+	
+	public struct UnserializableStruct
+	{
 	}
 }

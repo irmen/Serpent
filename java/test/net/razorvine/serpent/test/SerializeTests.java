@@ -9,7 +9,6 @@ package net.razorvine.serpent.test;
 
 import static org.junit.Assert.*;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -88,11 +87,20 @@ public class SerializeTests {
 	{
 		Serializer.registerClass(IllegalArgumentException.class, null);
 		Exception x = new IllegalArgumentException("errormessage");
-		Serializer serpent = new Serializer(true, true);
+		Serializer serpent = new Serializer(true, true, false);
 		byte[] ser = strip_header(serpent.serialize(x));
 		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 	}
 
+	@Test
+	public void testExceptionPackage()
+	{
+		Serializer.registerClass(IllegalArgumentException.class, null);
+		Exception x = new IllegalArgumentException("errormessage");
+		Serializer serpent = new Serializer(true, true, true);
+		byte[] ser = strip_header(serpent.serialize(x));
+		assertEquals("{\n  '__class__': 'java.lang.IllegalArgumentException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
+	}
 
 	@Test
 	public void testStuff()
@@ -175,7 +183,7 @@ public class SerializeTests {
 	@Test
 	public void testBytes()
 	{
-		Serializer serpent = new Serializer(true, true);
+		Serializer serpent = new Serializer(true, true, false);
 		byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
 		byte[] ser = serpent.serialize(bytes);
 		assertEquals("{\n  'data': 'YWJjZGVm',\n  'encoding': 'base64'\n}", S(strip_header(ser)));
@@ -268,21 +276,6 @@ public class SerializeTests {
 		assertEquals("[\n  42,\n  'Sally',\n  16.5\n]", S(ser));
 	}
 
-	
-	public class SerializeTestClass implements Serializable
-	{
-		private static final long serialVersionUID = 5151254868567404093L;
-		public int x;
-		public String s;
-		public int i;
-		
-		public String getTheString() { return s; }
-		public int getTheInteger() { return i; }
-		public boolean isThingy() { return true; }
-		public int getNUMBER() { return 42; }
-		public String getX() { return "X"; }
-	}
-	
 	public class UnserializableClass
 	{
 	}
@@ -290,7 +283,7 @@ public class SerializeTests {
 	@Test(expected = IllegalArgumentException.class)
 	public void testClassFail()
 	{
-		Serializer serpent = new Serializer(true, true);
+		Serializer serpent = new Serializer(true, true, false);
 		Object obj = new UnserializableClass();
 		serpent.serialize(obj);
 	}
@@ -298,21 +291,34 @@ public class SerializeTests {
 	@Test
 	public void testClassOk()
 	{
-		Serializer.registerClass(SerializeTestClass.class, null);
-		Serializer serpent = new Serializer(true, true);
-		SerializeTestClass obj = new SerializeTestClass();
+		Serializer.registerClass(SerializationHelperClass.class, null);
+		Serializer serpent = new Serializer(true, true, false);
+		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
 		obj.x=42;
 		byte[] ser = strip_header(serpent.serialize(obj));
-		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
+		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializationHelperClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
 	}
 	
+	@Test
+	public void testClassPackageOk()
+	{
+		Serializer.registerClass(SerializationHelperClass.class, null);
+		Serializer serpent = new Serializer(true, true, true);
+		SerializationHelperClass obj = new SerializationHelperClass();
+		obj.i=99;
+		obj.s="hi";
+		obj.x=42;
+		byte[] ser = strip_header(serpent.serialize(obj));
+		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'net.razorvine.serpent.test.SerializationHelperClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
+	}
+
 	class TestclassConverter implements IClassSerializer
 	{
 		@Override
 		public Map<String, Object> convert(Object obj) {
-		    SerializeTestClass o = (SerializeTestClass) obj;
+		    SerializationHelperClass o = (SerializationHelperClass) obj;
 		    Map<String, Object> result = new HashMap<String, Object>();
 		    result.put("__class@__", o.getClass().getSimpleName()+"@");
 		    result.put("i@", o.i);
@@ -337,23 +343,23 @@ public class SerializeTests {
 	@Test
 	public void testCustomClassDict()
 	{
-		Serializer.registerClass(SerializeTestClass.class, new TestclassConverter());
-	    Serializer serpent = new Serializer(true, true);
+		Serializer.registerClass(SerializationHelperClass.class, new TestclassConverter());
+	    Serializer serpent = new Serializer(true, true, false);
 	      
-		SerializeTestClass obj = new SerializeTestClass();
+		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
 		obj.x=42;
 
 		byte[] ser = strip_header(serpent.serialize(obj));
-	    assertEquals("{\n  '__class@__': 'SerializeTestClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
+	    assertEquals("{\n  '__class@__': 'SerializationHelperClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
 	} 
 	
 	@Test
 	public void testCustomExceptionDict()
 	{
 		Serializer.registerClass(IllegalArgumentException.class, new ExceptionConverter());
-	    Serializer serpent = new Serializer(true, true);
+	    Serializer serpent = new Serializer(true, true, false);
 	      
 		Exception x = new IllegalArgumentException("errormessage");
 		byte[] ser = strip_header(serpent.serialize(x));
