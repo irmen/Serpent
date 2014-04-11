@@ -2,7 +2,7 @@
 /// Serpent, a Python literal expression serializer/deserializer
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
-/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// Copyright 2014, Irmen de Jong (irmen@razorvine.net)
 /// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
@@ -25,6 +25,7 @@ namespace Razorvine.Serpent
 	{
 		public bool Indent;
 		public bool SetLiterals;
+		public bool NamespaceInClassName;
 		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
 		
 
@@ -32,10 +33,13 @@ namespace Razorvine.Serpent
 		/// Initialize the serializer.
 		/// </summary>
 		/// <param name="indent">indent the output over multiple lines (default=false)</param>
-		public Serializer(bool indent=false, bool setLiterals=true)
+		/// <param name="setLiterals">use set-literals or not (set to False if you need compatibility with Python < 3.2)</param>
+		/// <param name="namespaceInClassName">include namespace prefix for class names or only use the class name itself</param>
+		public Serializer(bool indent=false, bool setLiterals=true, bool namespaceInClassName=false)
 		{
 			this.Indent = indent;
 			this.SetLiterals = setLiterals;
+			this.NamespaceInClassName = namespaceInClassName;
 		}
 		
 		/// <summary>
@@ -361,8 +365,13 @@ namespace Razorvine.Serpent
 			}
 			else
 			{
+				string className;
+				if(this.NamespaceInClassName)
+					className = exc.GetType().FullName;
+				else
+					className = exc.GetType().Name;
 				dict = new Hashtable() {
-					{"__class__", exc.GetType().Name},
+					{"__class__", className},
 					{"__exception__", true},
 					{"args", new string[]{exc.Message} },
 					{"attributes", exc.Data}
@@ -421,8 +430,13 @@ namespace Razorvine.Serpent
 				}
 				
 				dict = new Hashtable();
-				if(!isAnonymousClass)
-					dict["__class__"] = obj_type.Name;		// only when it is not an anonymous class
+				if(!isAnonymousClass) {
+					// only provide the class name when it is not an anonymous class
+					if(this.NamespaceInClassName)
+						dict["__class__"] = obj_type.FullName;
+					else
+						dict["__class__"] = obj_type.Name;
+				}
 				PropertyInfo[] properties=obj_type.GetProperties();
 				foreach(var propinfo in properties) {
 					if(propinfo.CanRead) {

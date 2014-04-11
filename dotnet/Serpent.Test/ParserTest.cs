@@ -2,7 +2,7 @@
 /// Serpent, a Python literal expression serializer/deserializer
 /// (a.k.a. Python's ast.literal_eval in .NET)
 ///
-/// Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+/// Copyright 2014, Irmen de Jong (irmen@razorvine.net)
 /// Software license: "MIT software license". See http://opensource.org/licenses/MIT
 /// </summary>
 
@@ -593,13 +593,12 @@ namespace Razorvine.Serpent.Test
 			string walk2 = sb.ToString();
 			Assert.AreEqual(walk1, walk2);
 			
-			// TODO Assert.AreEqual(ast.Root, ast2.Root);
+			Assert.AreEqual(ast.Root, ast2.Root);
 			ast = p.Parse(expr2);
-			// TODO Assert.AreEqual(ast.Root, ast2.Root);
+			Assert.AreEqual(ast.Root, ast2.Root);
 		}
 
 		[Test]
-		[Ignore("can't yet get the two ASTs to compare equal :(")]
 		public void TestAstEquals()
 		{
 			Parser p = new Parser ();
