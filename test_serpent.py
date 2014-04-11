@@ -137,15 +137,30 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
+    @unittest.skipIf(sys.platform=="cli", "IronPython has problems with null bytes in strings")
+    def test_nullbytesstring(self):
+        ser = serpent.dumps("\0null")
+        data = serpent.loads(ser)
+        self.assertEqual("\0null", data)
+
+    @unittest.skipIf(sys.version_info<(3, 0), "needs python 3.x to correctly process null bytes in unicode strings")
+    def test_nullbytesunicode(self):
+        line = unichr(0) + "null"
+        ser = serpent.dumps(line)
+        data = strip_header(ser)
+        self.assertEqual(b"'\\x00null'", data)
+        data = serpent.loads(ser)
+        self.assertEqual(line, data)
+
     def test_unicode(self):
-        u = "euro"+unichr(0x20ac)
+        u = "euro" + unichr(0x20ac)
         self.assertTrue(type(u) is unicode)
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
 
     def test_unicode_with_escapes(self):
-        line = "euro"+unichr(0x20ac)+"\nlastline\ttab\\@slash"
+        line = "euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash"
         ser = serpent.dumps(line)
         d = strip_header(ser)
         self.assertEqual(b"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'", d)
@@ -317,6 +332,21 @@ class TestBasics(unittest.TestCase):
             'attributes': {'custom_attribute': 'custom_attr'}
         }, data)
 
+    def test_exception2(self):
+        x = ZeroDivisionError("wrong")
+        ser = serpent.dumps(x, module_in_classname=True)
+        data = serpent.loads(ser)
+        if sys.version_info < (3, 0):
+            expected_classname = "exceptions.ZeroDivisionError"
+        else:
+            expected_classname = "builtins.ZeroDivisionError"
+        self.assertEqual({
+            '__class__': expected_classname,
+            '__exception__': True,
+            'args': ('wrong',),
+            'attributes': {}
+        }, data)
+
     def test_class(self):
         class Class1(object):
             def __init__(self):
@@ -350,6 +380,13 @@ class TestBasics(unittest.TestCase):
         data = serpent.loads(ser)
         self.assertEqual("PrettyPrinter", data["__class__"])
         self.assertEqual(99, data["_width"])
+
+    def test_class2(self):
+        import pprint
+        pp = pprint.PrettyPrinter(stream="dummy", width=42)
+        ser = serpent.dumps(pp, module_in_classname=True)
+        data = serpent.loads(ser)
+        self.assertEqual('pprint.PrettyPrinter', data["__class__"])
 
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
@@ -449,13 +486,13 @@ class TestIndent(unittest.TestCase):
   'gg': 1,
   'hh': 1
 }""", ser)
-        data = set("irmen de jong irmen de jong")
+        data = set("irmen de jong irmen de jong666")
         ser = serpent.dumps(data, False)
         ser = strip_header(ser)
-        self.assertNotEqual(b"' ','d','e','g','i','j','m','n','o','r'", ser[1:-1])
+        self.assertNotEqual(b"' ','6','d','e','g','i','j','m','n','o','r'", ser[1:-1])
         ser = serpent.dumps(data, True)
         ser = strip_header(ser)
-        self.assertEqual(b"\n  ' ',\n  'd',\n  'e',\n  'g',\n  'i',\n  'j',\n  'm',\n  'n',\n  'o',\n  'r'\n", ser[1:-1])
+        self.assertEqual(b"\n  ' ',\n  '6',\n  'd',\n  'e',\n  'g',\n  'i',\n  'j',\n  'm',\n  'n',\n  'o',\n  'r'\n", ser[1:-1])
 
     def test_indent_containers(self):
         data = [1, 2, 3]
@@ -595,6 +632,7 @@ class TestCustomClasses(unittest.TestCase):
         finally:
             serpent.unregister_class(uuid.UUID)
 
+
 class TestPyro4(unittest.TestCase):
     def testException(self):
         try:
@@ -603,7 +641,7 @@ class TestPyro4(unittest.TestCase):
             et, ev, etb = sys.exc_info()
             tb_lines = traceback.format_exception(et, ev, etb)
             ev._pyroTraceback = tb_lines
-        ser = serpent.dumps(ev)
+        ser = serpent.dumps(ev, module_in_classname=False)
         data = serpent.loads(ser)
         self.assertTrue(data["__exception__"])
         attrs = data["attributes"]
