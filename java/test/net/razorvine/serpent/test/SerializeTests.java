@@ -291,34 +291,34 @@ public class SerializeTests {
 	@Test
 	public void testClassOk()
 	{
-		Serializer.registerClass(SerializeTestClass.class, null);
+		Serializer.registerClass(SerializationHelperClass.class, null);
 		Serializer serpent = new Serializer(true, true, false);
-		SerializeTestClass obj = new SerializeTestClass();
+		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
 		obj.x=42;
 		byte[] ser = strip_header(serpent.serialize(obj));
-		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
+		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializationHelperClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
 	}
 	
 	@Test
 	public void testClassPackageOk()
 	{
-		Serializer.registerClass(SerializeTestClass.class, null);
+		Serializer.registerClass(SerializationHelperClass.class, null);
 		Serializer serpent = new Serializer(true, true, true);
-		SerializeTestClass obj = new SerializeTestClass();
+		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
 		obj.x=42;
 		byte[] ser = strip_header(serpent.serialize(obj));
-		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'net.razorvine.serpent.test.SerializeTestClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
+		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'net.razorvine.serpent.test.SerializationHelperClass',\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
 	}
 
 	class TestclassConverter implements IClassSerializer
 	{
 		@Override
 		public Map<String, Object> convert(Object obj) {
-		    SerializeTestClass o = (SerializeTestClass) obj;
+		    SerializationHelperClass o = (SerializationHelperClass) obj;
 		    Map<String, Object> result = new HashMap<String, Object>();
 		    result.put("__class@__", o.getClass().getSimpleName()+"@");
 		    result.put("i@", o.i);
@@ -343,16 +343,16 @@ public class SerializeTests {
 	@Test
 	public void testCustomClassDict()
 	{
-		Serializer.registerClass(SerializeTestClass.class, new TestclassConverter());
+		Serializer.registerClass(SerializationHelperClass.class, new TestclassConverter());
 	    Serializer serpent = new Serializer(true, true, false);
 	      
-		SerializeTestClass obj = new SerializeTestClass();
+		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
 		obj.x=42;
 
 		byte[] ser = strip_header(serpent.serialize(obj));
-	    assertEquals("{\n  '__class@__': 'SerializeTestClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
+	    assertEquals("{\n  '__class@__': 'SerializationHelperClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
 	} 
 	
 	@Test

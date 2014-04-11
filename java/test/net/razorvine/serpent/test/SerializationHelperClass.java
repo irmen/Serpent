@@ -3,7 +3,7 @@ package net.razorvine.serpent.test;
 import java.io.Serializable;
 
 
-public class SerializeTestClass implements Serializable
+public class SerializationHelperClass implements Serializable
 {
 	private static final long serialVersionUID = 5151254868567404093L;
 	public int x;
