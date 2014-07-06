@@ -38,9 +38,10 @@ contain comments.
 
 Note: set literals are not supported on python <3.2 (ast.literal_eval
 limitation). If you need Python < 3.2 compatibility, you'll have to use
-set_literals=False when serializing.
+set_literals=False when serializing. Since version 1.6 serpent chooses
+this wisely for you by default, but you can still override it if needed.
 
-Copyright 2013, Irmen de Jong (irmen@razorvine.net)
+Copyright 2013, 2014 by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 
@@ -53,16 +54,18 @@ import types
 import os
 import gc
 
-__version__ = "1.5"
+__version__ = "1.6"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
+can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
-def dumps(obj, indent=False, set_literals=True, module_in_classname=False):
+
+def dumps(obj, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
     """Serialize object tree to bytes"""
     return Serializer(indent, set_literals, module_in_classname).serialize(obj)
 
 
-def dump(obj, file, indent=False, set_literals=True, module_in_classname=False):
+def dump(obj, file, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
     """Serialize object tree to a file"""
     file.write(dumps(obj, indent=indent, set_literals=set_literals, module_in_classname=module_in_classname))
 
@@ -188,11 +191,11 @@ class Serializer(object):
     if sys.version_info < (2, 7):
         repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
-    def __init__(self, indent=False, set_literals=True, module_in_classname=False):
+    def __init__(self, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
-        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2)
+        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2). Serpent chooses a sensible default for you.
         module_in_classname = include module prefix for class names or only use the class name itself
         """
         self.indent = indent

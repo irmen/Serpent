@@ -550,7 +550,7 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
-		public void TestException2()
+		public void TestExceptionWithNamespace()
 		{
 			Exception x = new ApplicationException("errormessage");
 			Serializer serpent = new Serializer(indent:true, namespaceInClassName: true);

@@ -62,8 +62,9 @@ Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 - Why not a binary format? Answer: because binary isn't readable.
 - But I don't care about readability. Answer: too bad, ``ast.literal_eval()`` wants a literal string.
 - But I want better performance. Answer: ok, maybe you shouldn't use serpent in this case. Find an efficient binary protocol (protobuf?)
-- Why only Python, Java and .NET, but no bindings for insert-favorite-language-here? Answer: I don't speak that language. Maybe you could port serpent yourself?
+- Why only Python, Java and C#/.NET, but no bindings for insert-favorite-language-here? Answer: I don't speak that language. Maybe you could port serpent yourself?
 - Where is the source?  It's on Github: https://github.com/irmen/Serpent
+- Can I use it everywhere?  Sure, as long as you keep the copyright and disclaimer somewhere. See http://opensource.org/licenses/MIT
 
 **Demo**
 

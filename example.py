@@ -1,7 +1,5 @@
 from __future__ import print_function
 import datetime
-import sys
-
 import serpent
 
 
@@ -12,17 +10,15 @@ class CustomClass(object):
 
 
 def example():
-    use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
-
     data = {
         "tuple": (1, 2, 3),
         "date": datetime.datetime.now(),
-        "set": {'a', 'b', 'c'},
+        "set": set(['a', 'b', 'c']),
         "class": CustomClass("Sally", 26)
     }
 
     # serialize the object
-    ser = serpent.dumps(data, indent=True, set_literals=use_set_literals)
+    ser = serpent.dumps(data, indent=True)
     # print it to the screen, but usually you'd save the bytes to a file or transfer them over a network connection
     print("Serialized data:")
     print(ser.decode("UTF-8"))

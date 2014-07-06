@@ -48,7 +48,7 @@ class TestDeserialize(unittest.TestCase):
 
 class TestBasics(unittest.TestCase):
     def test_header(self):
-        ser = serpent.dumps(None)
+        ser = serpent.dumps(None, set_literals=True)
         if sys.platform == "cli":
             header, _, rest = ser.partition("\n")
         else:
@@ -96,28 +96,28 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(obj)
         data = strip_header(ser)
         self.assertEqual(13, len(data))
-        ser = serpent.dumps(obj, indent=True)
+        ser = serpent.dumps(obj, indent=True, set_literals=True)
         data = strip_header(ser)
         self.assertEqual(b"{\n  1,\n  2,\n  3,\n  4,\n  5,\n  6\n}", data)      # sorted
 
         obj = set([3, "something"])
-        ser = serpent.dumps(obj, indent=False)
+        ser = serpent.dumps(obj, indent=False, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
-        ser = serpent.dumps(obj, indent=True)
+        ser = serpent.dumps(obj, indent=True, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
 
         obj = {3: "three", "something": 99}
-        ser = serpent.dumps(obj, indent=False)
+        ser = serpent.dumps(obj, indent=False, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{'something':99,3:'three'}" or data == b"{3:'three','something':99}")
-        ser = serpent.dumps(obj, indent=True)
+        ser = serpent.dumps(obj, indent=True, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  'something': 99,\n  3: 'three'\n}" or data == b"{\n  3: 'three',\n  'something': 99\n}")
 
         obj = {3: "three", 4: "four", 5: "five", 2: "two", 1: "one"}
-        ser = serpent.dumps(obj, indent=True)
+        ser = serpent.dumps(obj, indent=True, set_literals=True)
         data = strip_header(ser)
         self.assertEqual(b"{\n  1: 'one',\n  2: 'two',\n  3: 'three',\n  4: 'four',\n  5: 'five'\n}", data)   # sorted
 
@@ -277,11 +277,12 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"()", data)
 
+        # test set-literals
         myset = set([42, "Sally"])
-        ser = serpent.dumps(myset)
+        ser = serpent.dumps(myset, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
-        ser = serpent.dumps(myset, indent=True)
+        ser = serpent.dumps(myset, indent=True, set_literals=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
 
@@ -454,10 +455,9 @@ class TestSpeed(unittest.TestCase):
         print("serialize with indent:", timeit.timeit(lambda: serpent.dumps(self.data, True), number=1000))
 
     def test_deser_speed(self):
-        use_set_literals = sys.version_info >= (3, 2)
-        ser = serpent.dumps(self.data, False, set_literals=use_set_literals)
+        ser = serpent.dumps(self.data, False)
         print("deserialize without indent:", timeit.timeit(lambda: serpent.loads(ser), number=1000))
-        ser = serpent.dumps(self.data, True, set_literals=use_set_literals)
+        ser = serpent.dumps(self.data, True)
         print("deserialize with indent:", timeit.timeit(lambda: serpent.loads(ser), number=1000))
 
 
@@ -512,20 +512,20 @@ class TestIndent(unittest.TestCase):
   3
 )""", ser)
         data = set([1])
-        ser = serpent.dumps(data, indent=True).decode("utf-8")
+        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   1
 }""", ser)
         data = {"one": 1}
-        ser = serpent.dumps(data, indent=True).decode("utf-8")
+        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   'one': 1
 }""", ser)
 
         data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": set([1, 2])}
-        ser = serpent.dumps(data, indent=True).decode("utf-8")
+        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   'first': [
@@ -637,6 +637,7 @@ class TestPyro4(unittest.TestCase):
     def testException(self):
         try:
             hashlib.new("non-existing-hash-name")
+            ev = None
         except:
             et, ev, etb = sys.exc_info()
             tb_lines = traceback.format_exception(et, ev, etb)

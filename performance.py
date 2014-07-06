@@ -48,13 +48,7 @@ except ImportError:
 import json
 serializers["json"] = (lambda d: json.dumps(d).encode("utf-8"), lambda d: json.loads(d.decode("utf-8")))
 import serpent
-if sys.version_info < (3, 0):
-    # don't use set literals otherwise ast crashes on python < 3.0
-    def serpent_dumps(data):
-        return serpent.dumps(data, set_literals=False)
-    serializers["serpent"] = (serpent_dumps, serpent.loads)
-else:
-    serializers["serpent"] = (serpent.dumps, serpent.loads)
+serializers["serpent"] = (serpent.dumps, serpent.loads)
 import marshal
 serializers["marshal"] = (marshal.dumps, marshal.loads)
 try:
