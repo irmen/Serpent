@@ -658,19 +658,19 @@ class TestCyclic(unittest.TestCase):
         t = (1, 2, 3)
         d = (t, t, t)
         data = serpent.dumps(d)
-        d2 = serpent.loads(data)
+        serpent.loads(data)
 
     def testListOk(self):
         t = [1, 2, 3]
         d = [t, t, t]
         data = serpent.dumps(d)
-        d2 = serpent.loads(data)
+        serpent.loads(data)
 
     def testDictOk(self):
         t = {"a": 1}
         d = {"x": t, "y": t, "z": t}
         data = serpent.dumps(d)
-        d2 = serpent.loads(data)
+        serpent.loads(data)
 
     def testListCycle(self):
         d = [1, 2, 3]
