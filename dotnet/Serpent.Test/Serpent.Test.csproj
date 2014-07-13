@@ -56,6 +56,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CycleTest.cs" />
     <Compile Include="Example.cs" />
     <Compile Include="ParserTest.cs" />
     <Compile Include="SerializeTest.cs" />

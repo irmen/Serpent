@@ -653,5 +653,55 @@ class TestPyro4(unittest.TestCase):
         self.assertEqual("ValueError", data["__class__"])
 
 
+class TestCyclic(unittest.TestCase):
+    def testTupleOk(self):
+        t = (1, 2, 3)
+        d = (t, t, t)
+        data = serpent.dumps(d)
+        d2 = serpent.loads(data)
+
+    def testListOk(self):
+        t = [1, 2, 3]
+        d = [t, t, t]
+        data = serpent.dumps(d)
+        d2 = serpent.loads(data)
+
+    def testDictOk(self):
+        t = {"a": 1}
+        d = {"x": t, "y": t, "z": t}
+        data = serpent.dumps(d)
+        d2 = serpent.loads(data)
+
+    def testListCycle(self):
+        d = [1, 2, 3]
+        d.append(d)
+        with self.assertRaises(ValueError) as e:
+            serpent.dumps(d)
+        self.assertEqual("Circular reference detected (list)", str(e.exception))
+
+    def testDictCycle(self):
+        d = {"x": 1, "y": 2}
+        d["d"] = d
+        with self.assertRaises(ValueError) as e:
+            serpent.dumps(d)
+        self.assertEqual("Circular reference detected (dict)", str(e.exception))
+
+    def testClassCycle(self):
+        d = Cycle()
+        d.make_cycle(d)
+        with self.assertRaises(ValueError) as e:
+            serpent.dumps(d)
+        self.assertEqual("Circular reference detected (class)", str(e.exception))
+
+
+class Cycle(object):
+    def __init__(self):
+        self.name = "cycle"
+        self.ref = None
+
+    def make_cycle(self, ref):
+        self.ref = ref
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -429,7 +429,7 @@ namespace Razorvine.Serpent.Test
 				x = 42
 			};
 			byte[] ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  'obj': None,\n  's': 'hi'\n}", S(ser));
 		}
 
 		[Test]
@@ -443,7 +443,7 @@ namespace Razorvine.Serpent.Test
 				x = 42
 			};
 			byte[] ser = strip_header(serpent.Serialize(obj));
-			Assert.AreEqual("{\n  '__class__': 'Razorvine.Serpent.Test.SerializeTestClass',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
+			Assert.AreEqual("{\n  '__class__': 'Razorvine.Serpent.Test.SerializeTestClass',\n  'i': 99,\n  'obj': None,\n  's': 'hi'\n}", S(ser));
 		}
 
 		protected IDictionary testclassConverter(object obj)
@@ -579,6 +579,8 @@ namespace Razorvine.Serpent.Test
 		public int x;
 		public string s {get; set;}
 		public int i {get; set;}
+		public object obj {get; set;}
+		
 	}
 	
 	[Serializable]

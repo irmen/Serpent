@@ -33,7 +33,7 @@ You can get the full source distribution, a Java .jar file, and a .NET assembly 
 
 **API**
 
-- ``ser_bytes = serpent.dumps(obj, indent=False)``      # serialize obj tree to bytes
+- ``ser_bytes = serpent.dumps(obj, indent=False, set_literals=True, module_in_classname=False):``      # serialize obj tree to bytes
 - ``obj = serpent.loads(ser_bytes)``     # deserialize bytes back into object tree
 - You can use ``ast.literal_eval`` yourself to deserialize, but ``serpent.deserialize`` works around a few corner cases. See source for details.
 
@@ -49,7 +49,7 @@ Serpent is more sophisticated than a simple repr() + literal_eval():
 - it works around a few quirks of ast.literal_eval() on the various Python implementations
 
 Serpent allows comments in the serialized data (because it is just Python source code).
-Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a recursion error.
+Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a ValueError pointing out the problem.
 
 Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
@@ -59,8 +59,8 @@ Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 - Why not use JSON? Answer: because JSON is quite limited in the number of datatypes it supports, and you can't use comments in a JSON file.
 - Why not use pickle? Answer: because pickle has security problems.
 - Why not use ``repr()``/``ast.literal_eval()``? See above; serpent is a superset of this and provides more convenience. Serpent provides automatic serialization mappings for types other than the builtin primitive types. ``repr()`` can't serialize these to literals that ``ast.literal_eval()`` understands.
-- Why not a binary format? Answer: because binary isn't readable.
-- But I don't care about readability. Answer: too bad, ``ast.literal_eval()`` wants a literal string.
+- Why not a binary format? Answer: because binary isn't readable by humans.
+- But I don't care about readability. Answer: doesn't matter, ``ast.literal_eval()`` wants a literal string, so that is what we produce.
 - But I want better performance. Answer: ok, maybe you shouldn't use serpent in this case. Find an efficient binary protocol (protobuf?)
 - Why only Python, Java and C#/.NET, but no bindings for insert-favorite-language-here? Answer: I don't speak that language. Maybe you could port serpent yourself?
 - Where is the source?  It's on Github: https://github.com/irmen/Serpent

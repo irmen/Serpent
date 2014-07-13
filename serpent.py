@@ -21,22 +21,24 @@ Serpent handles several special Python types to make life easier:
  - Exception  --> dict with some fields of the exception (message, args)
  - all other types  --> dict with  __getstate__  or vars() of the object
 
-Note: all str will be promoted to unicode. This is done because it is the
+Notes:
+
+All str will be promoted to unicode. This is done because it is the
 default anyway for Python 3.x, and it solves the problem of the str/unicode
 difference between different Python versions. Also it means the serialized
 output doesn't have those problematic 'u' prefixes on strings.
 
-Note: the serializer is not thread-safe. Make sure you're not making changes
+The serializer is not thread-safe. Make sure you're not making changes
 to the object tree that is being serialized, and don't use the same
 serializer in different threads.
 
-Caveat: Python 2.6 cannot deserialize complex numbers (limitation of
+Python 2.6 cannot deserialize complex numbers (limitation of
 ast.literal_eval in 2.6)
 
-Note: because the serialized format is just valid Python source code, it can
+Because the serialized format is just valid Python source code, it can
 contain comments.
 
-Note: set literals are not supported on python <3.2 (ast.literal_eval
+Set literals are not supported on python <3.2 (ast.literal_eval
 limitation). If you need Python < 3.2 compatibility, you'll have to use
 set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
@@ -54,7 +56,7 @@ import types
 import os
 import gc
 
-__version__ = "1.6"
+__version__ = "1.7"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -108,7 +110,7 @@ def unregister_class(clazz):
 
 def register_class(clazz, serializer):
     """
-    Register a specialcase serializer function for objects of the given class.
+    Register a special serializer function for objects of the given class.
     The function will be called with (object, serpent_serializer, outputstream, indentlevel) arguments.
     The function must write the serialized data to outputstream. It doesn't return a value.
     """
@@ -160,7 +162,8 @@ class Serializer(object):
     """
     Serialize an object tree to a byte stream.
     It is not thread-safe: make sure you're not making changes to the
-    object tree that is being serialized.
+    object tree that is being serialized, and don't use the same serializer
+    across different threads.
     """
     # noinspection PySetFunctionToLiteral
     repr_types = set([
@@ -201,6 +204,7 @@ class Serializer(object):
         self.indent = indent
         self.set_literals = set_literals
         self.module_in_classname = module_in_classname
+        self.serialized_obj_ids = set()
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
@@ -213,9 +217,11 @@ class Serializer(object):
         try:
             if os.name != "java" and sys.platform != "cli":
                 gc.disable()
+            self.serialized_obj_ids = set()
             self._serialize(obj, out, 0)
         finally:
             gc.enable()
+        del self.serialized_obj_ids
         if sys.platform == "cli":
             return "".join(out)
         return b"".join(out)
@@ -299,6 +305,9 @@ class Serializer(object):
             out.append(b")")
 
     def ser_builtins_list(self, list_obj, out, level):
+        if id(list_obj) in self.serialized_obj_ids:
+            raise ValueError("Circular reference detected (list)")
+        self.serialized_obj_ids.add(id(list_obj))
         if self.indent and list_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
@@ -317,8 +326,12 @@ class Serializer(object):
             if list_obj:
                 del out[-1]  # remove the last ,
             out.append(b"]")
+        self.serialized_obj_ids.discard(id(list_obj))
 
     def ser_builtins_dict(self, dict_obj, out, level):
+        if id(dict_obj) in self.serialized_obj_ids:
+            raise ValueError("Circular reference detected (dict)")
+        self.serialized_obj_ids.add(id(dict_obj))
         if self.indent and dict_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
@@ -346,6 +359,7 @@ class Serializer(object):
             if dict_obj:
                 del out[-1]  # remove the last ,
             out.append(b"}")
+        self.serialized_obj_ids.discard(id(dict_obj))
 
     def ser_builtins_set(self, set_obj, out, level):
         if not self.set_literals:
@@ -425,26 +439,32 @@ class Serializer(object):
             self._serialize(array_obj.tolist(), out, level)
 
     def ser_default_class(self, obj, out, level):
+        if id(obj) in self.serialized_obj_ids:
+            raise ValueError("Circular reference detected (class)")
+        self.serialized_obj_ids.add(id(obj))
         try:
-            value = obj.__getstate__()
-            if isinstance(value, dict):
-                self.ser_builtins_dict(value, out, level)
-                return
-        except AttributeError:
-            if self.module_in_classname:
-                class_name = "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
-            else:
-                class_name = obj.__class__.__name__
             try:
-                value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
-                value["__class__"] = class_name
-            except TypeError:
-                if hasattr(obj, "__slots__"):
-                    # use the __slots__ instead of the vars dict
-                    value = {}
-                    for slot in obj.__slots__:
-                        value[slot] = getattr(obj, slot)
-                    value["__class__"] = class_name
+                value = obj.__getstate__()
+                if isinstance(value, dict):
+                    self.ser_builtins_dict(value, out, level)
+                    return
+            except AttributeError:
+                if self.module_in_classname:
+                    class_name = "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
                 else:
-                    raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
-        self._serialize(value, out, level)
+                    class_name = obj.__class__.__name__
+                try:
+                    value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
+                    value["__class__"] = class_name
+                except TypeError:
+                    if hasattr(obj, "__slots__"):
+                        # use the __slots__ instead of the vars dict
+                        value = {}
+                        for slot in obj.__slots__:
+                            value[slot] = getattr(obj, slot)
+                        value["__class__"] = class_name
+                    else:
+                        raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
+            self._serialize(value, out, level)
+        finally:
+            self.serialized_obj_ids.discard(id(obj))
