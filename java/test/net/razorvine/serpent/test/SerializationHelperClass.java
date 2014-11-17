@@ -9,10 +9,12 @@ public class SerializationHelperClass implements Serializable
 	public int x;
 	public String s;
 	public int i;
+	public Object obj;
 	
 	public String getTheString() { return s; }
 	public int getTheInteger() { return i; }
 	public boolean isThingy() { return true; }
 	public int getNUMBER() { return 42; }
 	public String getX() { return "X"; }
+	public Object getObject() { return obj; }
 }
