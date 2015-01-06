@@ -31,3 +31,40 @@ Full source code can be found in ./java/ directory.
 Example usage can be found in ./java/test/SerpentExample.java
 
 
+SOME MORE DETAILS
+-----------------
+Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+
+Serpent handles several special Python types to make life easier:
+
+ - str  --> promoted to unicode (see below why this is)
+ - bytes, bytearrays, memoryview, buffer  --> string, base-64
+   (you'll have to manually un-base64 them though)
+ - uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
+ - decimal.Decimal  --> string (to not lose precision)
+ - array.array typecode 'c'/'u' --> string/unicode
+ - array.array other typecode --> list
+ - Exception  --> dict with some fields of the exception (message, args)
+ - all other types  --> dict with  __getstate__  or vars() of the object
+
+Notes:
+
+All str will be promoted to unicode. This is done because it is the
+default anyway for Python 3.x, and it solves the problem of the str/unicode
+difference between different Python versions. Also it means the serialized
+output doesn't have those problematic 'u' prefixes on strings.
+
+The serializer is not thread-safe. Make sure you're not making changes
+to the object tree that is being serialized, and don't use the same
+serializer in different threads.
+
+Python 2.6 cannot deserialize complex numbers (limitation of
+ast.literal_eval in 2.6)
+
+Because the serialized format is just valid Python source code, it can
+contain comments.
+
+Set literals are not supported on python <3.2 (ast.literal_eval
+limitation). If you need Python < 3.2 compatibility, you'll have to use
+set_literals=False when serializing. Since version 1.6 serpent chooses
+this wisely for you by default, but you can still override it if needed.
