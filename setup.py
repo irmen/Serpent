@@ -153,7 +153,7 @@ When you run this (with python 3.2+) it prints:
     keywords="serialization",
     platforms="any",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
