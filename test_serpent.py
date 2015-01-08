@@ -15,6 +15,9 @@ import tempfile
 import os
 import hashlib
 import traceback
+import threading
+import time
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -701,6 +704,47 @@ class Cycle(object):
 
     def make_cycle(self, ref):
         self.ref = ref
+
+
+class RegisterThread(threading.Thread):
+    def __init__(self):
+        super(RegisterThread, self).__init__()
+        self.stop_running=False
+
+    def run(self):
+        i = 0
+        while not self.stop_running:
+            serpent.register_class(type("clazz %d" % i, (), {}), None)   # just register dummy serializer
+            i += 1
+
+
+class SerializationThread(threading.Thread):
+    def __init__(self):
+        super(SerializationThread, self).__init__()
+        self.stop_running = False
+        self.error = None
+
+    def run(self):
+        big_list = [Cycle() for _ in range(1000)]
+        while not self.stop_running:
+            try:
+                _ = serpent.dumps(big_list)
+            except RuntimeError as x:
+                self.error = x
+                print(x)
+                break
+
+@unittest.skip
+class TestThreading(unittest.TestCase):
+    def testThreadsafeTypeRegistrations(self):
+        reg = RegisterThread()
+        ser = SerializationThread()
+        reg.daemon = ser.daemon = True
+        reg.start()
+        ser.start()
+        time.sleep(1)
+        reg.stop_running = ser.stop_running = True
+        self.assertIsNone(ser.error)
 
 
 if __name__ == '__main__':

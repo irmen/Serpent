@@ -56,7 +56,7 @@ import types
 import os
 import gc
 
-__version__ = "1.7"
+__version__ = "1.8"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -205,9 +205,11 @@ class Serializer(object):
         self.set_literals = set_literals
         self.module_in_classname = module_in_classname
         self.serialized_obj_ids = set()
+        self.special_classes_registry_copy = None
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
+        self.special_classes_registry_copy = _special_classes_registry.copy()   # make it thread safe
         header = "# serpent utf-8 "
         if self.set_literals:
             header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
@@ -221,6 +223,7 @@ class Serializer(object):
             self._serialize(obj, out, 0)
         finally:
             gc.enable()
+        self.special_classes_registry_copy = None
         del self.serialized_obj_ids
         if sys.platform == "cli":
             return "".join(out)
@@ -235,9 +238,9 @@ class Serializer(object):
             out.append(_repr(obj))    # just a simple repr() is enough for these objects
             return
         # check special registered types:
-        for clazz in _special_classes_registry:
+        for clazz, class_serializer in self.special_classes_registry_copy.items():
             if isinstance(obj, clazz):
-                _special_classes_registry[clazz](obj, self, out, level)
+                class_serializer(obj, self, out, level)
                 return
         # exception?
         if isinstance(obj, BaseException):
