@@ -17,6 +17,7 @@ import hashlib
 import traceback
 import threading
 import time
+import collections
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -745,6 +746,87 @@ class TestThreading(unittest.TestCase):
         time.sleep(1)
         reg.stop_running = ser.stop_running = True
         self.assertIsNone(ser.error)
+
+
+class TestCollections(unittest.TestCase):
+    @unittest.skipIf(sys.version_info < (2, 7), "collections.OrderedDict is python 2.7+")
+    def testOrderedDict(self):
+        o = collections.OrderedDict()
+        o['apple'] = 1
+        o['banana'] = 2
+        o['orange'] = 3
+        d = serpent.dumps(o)
+        o2 = serpent.loads(d)
+        self.assertEqual({"__class__": "OrderedDict", "items": [('apple', 1), ('banana', 2), ('orange', 3)]}, o2)
+
+    def testNamedTuple(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        p = Point(11, 22)
+        d = serpent.dumps(p)
+        p2 = serpent.loads(d)
+        if sys.version_info < (2, 7) or sys.platform == "cli":
+            # named tuple serialization is unfortunately broken on python <2.7 or ironpython; it leaves out the actual values
+            self.assertEqual({"__class__": "Point"}, p2)
+        elif os.name == "java":
+            # named tuple serialization is unfortunately broken on jython; it forgets about the order
+            self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
+        elif sys.version_info >= (3, 3) or ((2, 7) <= sys.version_info < (3, 0)):
+            # only these versions got it 100% right!
+            self.assertEqual({"__class__": "Point", "items": [('x', 11), ('y', 22)]}, p2)
+        else:
+            # other versions forget about the order....
+            self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
+
+    @unittest.skipIf(sys.version_info < (2, 7), "collections.Counter is python 2.7+")
+    def testCounter(self):
+        c = collections.Counter("even")
+        d = serpent.dumps(c)
+        c2 = serpent.loads(d)
+        self.assertEqual({'e': 2, 'v': 1, 'n': 1}, c2)
+
+    def testDeque(self):
+        obj = collections.deque([1, 2, 3])
+        d = serpent.dumps(obj)
+        obj2 = serpent.loads(d)
+        self.assertEqual([1, 2, 3], obj2)
+
+    @unittest.skipIf(sys.version_info < (3, 3), "ChainMap is python 3.3+")
+    def testChainMap(self):
+        c = collections.ChainMap({"a": 1}, {"b": 2}, {"c": 3})
+        d = serpent.dumps(c)
+        c2 = serpent.loads(d)
+        self.assertEqual({'__class__': 'ChainMap', 'maps': [{'a': 1}, {'b': 2}, {'c': 3}]}, c2)
+
+    def testDefaultDict(self):
+        dd = collections.defaultdict(list)
+        dd['a'] = 1
+        dd['b'] = 2
+        d = serpent.dumps(dd)
+        dd2 = serpent.loads(d)
+        self.assertEqual({'a': 1, 'b': 2}, dd2)
+
+    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserDict is python 3.0+")
+    def testUserDict(self):
+        obj = collections.UserDict()
+        obj['a'] = 1
+        obj['b'] = 2
+        d = serpent.dumps(obj)
+        obj2 = serpent.loads(d)
+        self.assertEqual({'a': 1, 'b': 2}, obj2)
+
+    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserList is python 3.0+")
+    def testUserList(self):
+        obj = collections.UserList([1, 2, 3])
+        d = serpent.dumps(obj)
+        obj2 = serpent.loads(d)
+        self.assertEqual([1, 2, 3], obj2)
+
+    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserString is python 3.0+")
+    def testUserString(self):
+        obj = collections.UserString("test")
+        d = serpent.dumps(obj)
+        obj2 = serpent.loads(d)
+        self.assertEqual("test", obj2)
 
 
 if __name__ == '__main__':

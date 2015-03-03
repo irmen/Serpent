@@ -55,8 +55,9 @@ import sys
 import types
 import os
 import gc
+import collections
 
-__version__ = "1.8"
+__version__ = "1.9"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -99,7 +100,17 @@ def load(file):
     return loads(data)
 
 
+def _ser_OrderedDict(obj, serializer, outputstream, indentlevel):
+    obj = {
+        "__class__": "collections.OrderedDict" if serializer.module_in_classname else "OrderedDict",
+        "items": list(obj.items())
+    }
+    serializer._serialize(obj, outputstream, indentlevel)
+
+
 _special_classes_registry = {}
+if sys.version_info >= (2, 7):
+    _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
 
 
 def unregister_class(clazz):
@@ -177,8 +188,20 @@ class Serializer(object):
 
     translate_types = {
         bytes: BytesWrapper.from_bytes,
-        bytearray: BytesWrapper.from_bytearray
+        bytearray: BytesWrapper.from_bytearray,
+        collections.deque: list,
+        collections.defaultdict: dict,
     }
+
+    if sys.version_info >= (2, 7):
+        translate_types[collections.Counter] = dict
+
+    if sys.version_info >= (3, 0):
+        translate_types.update({
+            collections.UserDict: dict,
+            collections.UserList: list,
+            collections.UserString: str
+        })
 
     # do some dynamic changes to the types configuration if needed
     if bytes is str:
@@ -421,12 +444,8 @@ class Serializer(object):
         self._serialize(str(uuid_obj), out, level)
 
     def ser_exception_class(self, exc_obj, out, level):
-        if self.module_in_classname:
-            class_name = "%s.%s" % (exc_obj.__class__.__module__, exc_obj.__class__.__name__)
-        else:
-            class_name = exc_obj.__class__.__name__
         value = {
-            "__class__": class_name,
+            "__class__": self.get_class_name(exc_obj),
             "__exception__": True,
             "args": exc_obj.args,
             "attributes": vars(exc_obj)  # add any custom attributes
@@ -448,26 +467,34 @@ class Serializer(object):
         try:
             try:
                 value = obj.__getstate__()
+                if value is None and isinstance(obj, tuple):
+                    # collections.namedtuple specialcase
+                    value = {
+                        "__class__": self.get_class_name(obj),
+                        "items": list(obj._asdict().items())
+                    }
                 if isinstance(value, dict):
                     self.ser_builtins_dict(value, out, level)
                     return
             except AttributeError:
-                if self.module_in_classname:
-                    class_name = "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
-                else:
-                    class_name = obj.__class__.__name__
                 try:
                     value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
-                    value["__class__"] = class_name
+                    value["__class__"] = self.get_class_name(obj)
                 except TypeError:
                     if hasattr(obj, "__slots__"):
                         # use the __slots__ instead of the vars dict
                         value = {}
                         for slot in obj.__slots__:
                             value[slot] = getattr(obj, slot)
-                        value["__class__"] = class_name
+                        value["__class__"] = self.get_class_name(obj)
                     else:
                         raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
             self._serialize(value, out, level)
         finally:
             self.serialized_obj_ids.discard(id(obj))
+
+    def get_class_name(self, obj):
+        if self.module_in_classname:
+            return "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
+        else:
+            return obj.__class__.__name__
