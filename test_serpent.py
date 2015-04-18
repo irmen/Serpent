@@ -830,18 +830,20 @@ class TestCollections(unittest.TestCase):
         p = Point(11, 22)
         d = serpent.dumps(p)
         p2 = serpent.loads(d)
-        if sys.version_info < (2, 7) or sys.platform == "cli":
-            # named tuple serialization is unfortunately broken on python <2.7 or ironpython; it leaves out the actual values
-            self.assertEqual({"__class__": "Point"}, p2)
-        elif os.name == "java":
-            # named tuple serialization is unfortunately broken on jython; it forgets about the order
-            self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
-        elif sys.version_info >= (3, 3) or ((2, 7) <= sys.version_info < (3, 0)):
-            # only these versions got it 100% right!
-            self.assertEqual({"__class__": "Point", "items": [('x', 11), ('y', 22)]}, p2)
-        else:
-            # other versions forget about the order....
-            self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
+        self.assertEqual((11, 22), p2)
+        # the checks below are valid if named tuples are not serialized by the normal tuple serializer:
+        # if sys.version_info < (2, 7) or sys.platform == "cli":
+        #     # named tuple serialization is unfortunately broken on python <2.7 or ironpython; it leaves out the actual values
+        #     self.assertEqual({"__class__": "Point"}, p2)
+        # elif os.name == "java":
+        #     # named tuple serialization is unfortunately broken on jython; it forgets about the order
+        #     self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
+        # elif sys.version_info >= (3, 3) or ((2, 7) <= sys.version_info < (3, 0)):
+        #     # only these versions got it 100% right!
+        #     self.assertEqual({"__class__": "Point", "items": [('x', 11), ('y', 22)]}, p2)
+        # else:
+        #     # other versions forget about the order....
+        #     self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
 
     @unittest.skipIf(sys.version_info < (2, 7), "collections.Counter is python 2.7+")
     def testCounter(self):

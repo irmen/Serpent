@@ -182,23 +182,18 @@ _repr_types = set([
     type(None)
 ])
 
-# @todo:  perhaps the type converters can be removed if the dispatch lookup is going to walk the MRO of the type itself
 _translate_types = {
     bytes: BytesWrapper.from_bytes,
     bytearray: BytesWrapper.from_bytearray,
     collections.deque: list,
-    collections.defaultdict: dict,
 }
 
-if sys.version_info >= (2, 7):
-    _translate_types[collections.Counter] = dict
-
 if sys.version_info >= (3, 0):
-    _translate_types.update({
-        collections.UserDict: dict,
-        collections.UserList: list,
-        collections.UserString: str
-    })
+   _translate_types.update({
+       collections.UserDict: dict,
+       collections.UserList: list,
+       collections.UserString: str
+   })
 
 # do some dynamic changes to the types configuration if needed
 if bytes is str:
@@ -273,12 +268,20 @@ class Serializer(object):
             if isinstance(obj, clazz):
                 special_classes[clazz](obj, self, out, level)
                 return
-        # exception?     @todo perhaps this check can go away if the dispatch below is going to walk the MRO itself
-        if isinstance(obj, BaseException):
-            self.ser_exception_class(obj, out, level)
         else:
             # serialize dispatch
-            self.dispatch.get(t, Serializer.ser_default_class)(self, obj, out, level)
+            try:
+                f = self.dispatch[t]
+            except KeyError:
+                # walk the MRO until we find a base class we recognise
+                for type_ in t.__mro__:
+                    if type_ in self.dispatch:
+                        f = self.dispatch[type_]
+                        break
+                else:
+                    # fall back to the default class serializer
+                    f = Serializer.ser_default_class
+            f(self, obj, out, level)
 
     def ser_builtins_str(self, str_obj, out, level):
         # special case str, for IronPython where str==unicode and repr() yields undesired result
@@ -500,7 +503,7 @@ class Serializer(object):
             try:
                 value = obj.__getstate__()
                 if value is None and isinstance(obj, tuple):
-                    # collections.namedtuple specialcase
+                    # collections.namedtuple specialcase (if it is not handled by the tuple serializer)
                     value = {
                         "__class__": self.get_class_name(obj),
                         "items": list(obj._asdict().items())

@@ -70,8 +70,3 @@ Set literals are not supported on python <3.2 (ast.literal_eval
 limitation). If you need Python < 3.2 compatibility, you'll have to use
 set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
-
-Various python implementations and versions have various degrees of issues with
-serializing a collections.namedtuple instance. Some lose the values altogether,
-some forget about the order. There's no workaround for this in Serpent itself.
-CPython 2.7 and CPython 3.3+ work fine in this regard.
