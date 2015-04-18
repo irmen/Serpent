@@ -523,10 +523,18 @@ namespace Razorvine.Serpent.Test
 		{
 			Serializer serpent = new Serializer();
 			
-			DateTime date = new DateTime(2013, 1, 20, 23, 59, 45, 999);
+			DateTime date = new DateTime(2013, 1, 20, 23, 59, 45, 999, DateTimeKind.Local);
 			byte[] ser = strip_header(serpent.Serialize(date));
-			Assert.AreEqual("'2013-01-20T23:59:45.999000'", S(ser));
+			Assert.AreEqual("'2013-01-20T23:59:45.999'", S(ser));
 			
+			date = new DateTime(2013, 1, 20, 23, 59, 45, 999, DateTimeKind.Utc);
+			ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-01-20T23:59:45.999'", S(ser));
+
+			date = new DateTime(2013, 1, 20, 23, 59, 45, 999, DateTimeKind.Unspecified);
+			ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-01-20T23:59:45.999'", S(ser));
+
 			date = new DateTime(2013, 1, 20, 23, 59, 45);
 			ser = strip_header(serpent.Serialize(date));
 			Assert.AreEqual("'2013-01-20T23:59:45'", S(ser));
@@ -536,6 +544,20 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("123630.999", S(ser));
 		}
 		
+		[Test]
+		public void TestDateTimeOffset()
+		{
+			Serializer serpent = new Serializer();
+
+			DateTimeOffset date = new DateTimeOffset(2013, 1, 20, 23, 59, 45, 999, TimeSpan.FromHours(+2));
+			byte[] ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-01-20T23:59:45.999+02:00'", S(ser));
+			
+			date = new DateTimeOffset(2013, 5, 10, 13, 59, 45, TimeSpan.FromHours(+2));
+			ser = strip_header(serpent.Serialize(date));
+			Assert.AreEqual("'2013-05-10T13:59:45+02:00'", S(ser));
+		}
+
 		[Test]
 		public void TestException()
 		{

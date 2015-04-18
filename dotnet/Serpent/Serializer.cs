@@ -14,6 +14,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Xml;
 
 namespace Razorvine.Serpent
 {
@@ -128,6 +129,10 @@ namespace Razorvine.Serpent
 			else if(obj is ICollection)
 			{
 				Serialize_list((ICollection) obj, tw, level);
+			}
+			else if(obj is DateTimeOffset)
+			{
+				Serialize_datetimeoffset((DateTimeOffset)obj, tw, level);
 			}
 			else if(obj is DateTime)
 			{
@@ -341,10 +346,14 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_datetime(DateTime dt, TextWriter tw, int level)
 		{
-			if(dt.Millisecond>0)
-				Serialize_string(dt.ToString("yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture), tw, level);
-			else
-				Serialize_string(dt.ToString("s"), tw, level);
+			string s = XmlConvert.ToString(dt, XmlDateTimeSerializationMode.Unspecified);
+			Serialize_string(s, tw, level);
+		}
+
+		protected void Serialize_datetimeoffset(DateTimeOffset dto, TextWriter tw, int level)
+		{
+			string s = XmlConvert.ToString(dto);
+			Serialize_string(s, tw, level);
 		}
 
 		protected void Serialize_timespan(TimeSpan span, TextWriter tw, int level)
