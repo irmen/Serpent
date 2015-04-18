@@ -213,7 +213,7 @@ class Serializer(object):
     except NameError:
         pass
     if sys.platform == "cli":
-        repr_types.remove(str)  # IronPython needs special str treatment
+        repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
     if sys.version_info < (2, 7):
         repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
@@ -273,6 +273,7 @@ class Serializer(object):
             module = t.__module__
             if module == "__builtin__":
                 module = "builtins"  # python 2.x compatibility
+            # @todo the getattr can perhaps be optimized using a pre-filled dictionary
             getattr(self, "ser_"+module+"_"+t.__name__, self.ser_default_class)(obj, out, level)  # dispatch
 
     def ser_builtins_str(self, str_obj, out, level):
@@ -284,6 +285,7 @@ class Serializer(object):
         out.append(str(float_obj))
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
+        # this method is used for python 2.x unicode (python 3.x doesn't use this)
         z = unicode_obj.encode("utf-8")
         # double-escape existing backslashes:
         z = z.replace("\\", "\\\\")

@@ -141,6 +141,26 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
+    def test_string_with_escapes(self):
+        ser = serpent.dumps("\n")
+        d = strip_header(ser)
+        self.assertEqual(b"'\\n'", d)
+        ser = serpent.dumps("\a")
+        d = strip_header(ser)
+        if sys.platform == "cli":
+            self.assertEqual(b"'\\a'", d)     # ironpython doesn't use repr()
+        else:
+            self.assertEqual(b"'\\x07'", d)     # repr() does this hex escape
+        line = "'hello\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
+        ser = serpent.dumps(line)
+        d = strip_header(ser)
+        if sys.platform == "cli":
+            self.assertEqual(b"\"'hello\\nlastline\\ttab\\\\@slash\\a\\b\\f\\n\\r\\t\\v'\"", d)    # ironpython doesn't use repr()
+        else:
+            self.assertEqual(b"\"'hello\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)    # the hex escapes are done by repr()
+        data = serpent.loads(ser)
+        self.assertEqual(line, data)
+
     @unittest.skipIf(sys.platform == "cli", "IronPython has problems with null bytes in strings")
     def test_nullbytesstring(self):
         ser = serpent.dumps("\0null")
@@ -162,12 +182,46 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
+        ser = serpent.dumps(unicode("quotes'\""))
+        data = strip_header(ser)
+        self.assertEqual(b"'quotes\\'\"'", data)
+        ser = serpent.dumps(unicode("quotes2'"))
+        data = strip_header(ser)
+        self.assertEqual(b"\"quotes2'\"", data)
 
-    def test_unicode_with_escapes(self):
-        line = "euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash"
+    @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
+    def test_unicode_with_escapes_py2(self):
+        ser = serpent.dumps(unicode("\n"))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\n'", d)
+        ser = serpent.dumps(unicode("\a"))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\a'", d)
+        ser = serpent.dumps("\a"+unichr(0x20ac))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\a\xe2\x82\xac'", d)
+        line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
         ser = serpent.dumps(line)
         d = strip_header(ser)
-        self.assertEqual(b"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'", d)
+        self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\a\\b\\f\\n\\r\\t\\v'\"", d)
+        data = serpent.loads(ser)
+        self.assertEqual(line, data)
+
+    @unittest.skipIf(sys.version_info < (3, 0), "py3 escaping tested")
+    def test_unicode_with_escapes_py3(self):
+        ser = serpent.dumps(unicode("\n"))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\n'", d)
+        ser = serpent.dumps(unicode("\a"))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\x07'", d)
+        ser = serpent.dumps("\a"+unichr(0x20ac))
+        d = strip_header(ser)
+        self.assertEqual(b"'\\x07\xe2\x82\xac'", d)
+        line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
+        ser = serpent.dumps(line)
+        d = strip_header(ser)
+        self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 
