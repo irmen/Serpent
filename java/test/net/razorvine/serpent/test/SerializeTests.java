@@ -200,19 +200,42 @@ public class SerializeTests {
 		Serializer serpent = new Serializer();
 		Calendar cal = new GregorianCalendar(2013, 0, 20, 23, 59, 45);
 		cal.set(Calendar.MILLISECOND, 999);
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+0"));
 		
 		byte[] ser = strip_header(serpent.serialize(cal));
-		assertEquals("'2013-01-20T23:59:45.999'", S(ser));
+		assertEquals("'2013-01-20T23:59:45.999Z'", S(ser));
 
 		Date date = cal.getTime();
 		ser = strip_header(serpent.serialize(date));
-		assertEquals("'2013-01-20T23:59:45.999'", S(ser));
+		assertEquals("'2013-01-20T23:59:45.999Z'", S(ser));
 		
 		cal.set(Calendar.MILLISECOND, 0);
 		ser = strip_header(serpent.serialize(cal));
-		assertEquals("'2013-01-20T23:59:45'", S(ser));
+		assertEquals("'2013-01-20T23:59:45Z'", S(ser));
 	}	
 
+	@Test
+	public void testDateTimeWithTimezone()
+	{
+		Serializer serpent = new Serializer();
+		Calendar cal = new GregorianCalendar(2013, 0, 20, 23, 59, 45);
+		cal.set(Calendar.MILLISECOND, 999);
+		cal.setTimeZone(TimeZone.getTimeZone("Europe/Amsterdam"));
+		
+		byte[] ser = strip_header(serpent.serialize(cal));
+		assertEquals("'2013-01-20T23:59:45.999+01:00'", S(ser));		// normal time
+		
+		cal = new GregorianCalendar(2013, 4, 10, 13, 59, 45);
+		cal.set(Calendar.MILLISECOND, 999);
+		cal.setTimeZone(TimeZone.getTimeZone("Europe/Amsterdam"));
+		
+		ser = strip_header(serpent.serialize(cal));
+		assertEquals("'2013-05-10T13:59:45.999+02:00'", S(ser));		// daylight saving time
+
+		Date date=cal.getTime();
+		ser = strip_header(serpent.serialize(date));
+		assertEquals("'2013-05-10T11:59:45.999Z'", S(ser));		  // the date and time in UTC
+	}
 
 	@Test
 	public void testNumbers()

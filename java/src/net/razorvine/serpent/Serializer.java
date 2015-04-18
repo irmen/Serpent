@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -129,12 +130,7 @@ public class Serializer
 		}
 		else if(obj instanceof Date)
 		{
-			// a java Date contains a date+time so map this on Calendar
-			// which will be pickled as a datetime.
-			java.util.Date date=(java.util.Date)obj;
-			Calendar cal=GregorianCalendar.getInstance();
-			cal.setTime(date);
-			serialize_calendar(cal, p, level);
+			serialize_date((Date)obj, p, level);
 		}
 		else if(obj instanceof Calendar)
 		{
@@ -355,14 +351,15 @@ public class Serializer
 
 	protected void serialize_calendar(Calendar cal, PrintWriter p, int level)
 	{
-		// note: this doesn't output any Timezone information.
-		SimpleDateFormat fmt;
-		if(cal.get(Calendar.MILLISECOND)==0)
-			fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		else
-			fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-		fmt.setCalendar(cal);
-		serialize_string(fmt.format(cal.getTime()), p, level);
+		// use JAXB datetime serializer to output as ISO-8601
+		serialize_string(javax.xml.bind.DatatypeConverter.printDateTime(cal), p, level);
+	}
+
+	protected void serialize_date(Date date, PrintWriter p, int level)
+	{
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
+		serialize_string(df.format(date), p, level);
 	}
 
 	protected void serialize_complex(ComplexNumber cplx, PrintWriter p, int level)

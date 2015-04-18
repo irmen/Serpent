@@ -6,14 +6,11 @@
  */
 package net.razorvine.serpent.test;
 
-import static org.junit.Assert.*;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
-import net.razorvine.serpent.ast.Ast;
 
 import org.junit.Test;
 
@@ -28,7 +25,7 @@ public class CycleTest
 		Object[] d = new Object[] {t,t,t};
 		byte[] data = ser.serialize(d);
 		Parser parser = new Parser();
-        Ast ast = parser.parse(data);
+        parser.parse(data);
 	}
 
 	@Test
@@ -45,7 +42,7 @@ public class CycleTest
 		d.add(t);
 		byte[] data = ser.serialize(d);
 		Parser parser = new Parser();
-        Ast ast = parser.parse(data);
+        parser.parse(data);
 	}
 
 	@Test
@@ -60,7 +57,7 @@ public class CycleTest
 		d.put("z", t);
 		byte[] data = ser.serialize(d);
 		Parser parser = new Parser();
-        Ast ast = parser.parse(data);
+        parser.parse(data);
 	}
 
 	@Test(expected=StackOverflowError.class)
@@ -71,7 +68,7 @@ public class CycleTest
 		d.add(1);
 		d.add(2);
 		d.add(d);
-		byte[] data = ser.serialize(d);
+		ser.serialize(d);
 	}
 	
 	@Test(expected=StackOverflowError.class)
@@ -82,7 +79,7 @@ public class CycleTest
 		d.put("x", 1);
 		d.put("y", 2);
 		d.put("z", d);
-		byte[] data = ser.serialize(d);
+		ser.serialize(d);
 	}
 
 	@Test(expected=StackOverflowError.class)
@@ -94,6 +91,6 @@ public class CycleTest
 		thing.s = "hello";
 		thing.x = 99;
 		thing.obj = thing;
-		byte[] data = ser.serialize(thing);
+		ser.serialize(thing);
 	}
 }
