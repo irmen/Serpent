@@ -56,6 +56,10 @@ import types
 import os
 import gc
 import collections
+import decimal
+import datetime
+import uuid
+import array
 
 __version__ = "1.10"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
@@ -178,6 +182,7 @@ _repr_types = set([
     type(None)
 ])
 
+# @todo:  perhaps the type converters can be removed if the dispatch lookup is going to walk the MRO of the type itself
 _translate_types = {
     bytes: BytesWrapper.from_bytes,
     bytearray: BytesWrapper.from_bytearray,
@@ -217,6 +222,8 @@ class Serializer(object):
     object tree that is being serialized, and don't use the same serializer
     across different threads.
     """
+    dispatch = {}
+
     def __init__(self, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
         """
         Initialize the serializer.
@@ -266,50 +273,52 @@ class Serializer(object):
             if isinstance(obj, clazz):
                 special_classes[clazz](obj, self, out, level)
                 return
-        # exception?
+        # exception?     @todo perhaps this check can go away if the dispatch below is going to walk the MRO itself
         if isinstance(obj, BaseException):
             self.ser_exception_class(obj, out, level)
         else:
             # serialize dispatch
-            module = t.__module__
-            if module == "__builtin__":
-                module = "builtins"  # python 2.x compatibility
-            # @todo the getattr can perhaps be optimized using a pre-filled dictionary
-            getattr(self, "ser_"+module+"_"+t.__name__, self.ser_default_class)(obj, out, level)  # dispatch
+            self.dispatch.get(t, Serializer.ser_default_class)(self, obj, out, level)
 
     def ser_builtins_str(self, str_obj, out, level):
         # special case str, for IronPython where str==unicode and repr() yields undesired result
         self.ser_builtins_unicode(str_obj, out, level)
+    dispatch[str] = ser_builtins_str
 
     def ser_builtins_float(self, float_obj, out, level):
         # special case float, for Python < 2.7, to not print the float roundoff errors
         out.append(str(float_obj))
+    dispatch[float] = ser_builtins_float
 
-    def ser_builtins_unicode(self, unicode_obj, out, level):
-        # this method is used for python 2.x unicode (python 3.x doesn't use this)
-        z = unicode_obj.encode("utf-8")
-        # double-escape existing backslashes:
-        z = z.replace("\\", "\\\\")
-        # backslash-escape control characters:
-        z = z.replace("\a", "\\a")
-        z = z.replace("\b", "\\b")
-        z = z.replace("\f", "\\f")
-        z = z.replace("\n", "\\n")
-        z = z.replace("\r", "\\r")
-        z = z.replace("\t", "\\t")
-        z = z.replace("\v", "\\v")
-        if "'" not in z:
-            z = "'" + z + "'"
-        elif '"' not in z:
-            z = '"' + z + '"'
-        else:
-            z = z.replace("'", "\\'")
-            z = "'" + z + "'"
-        out.append(z)
+    if sys.version_info < (3, 0):
+        def ser_builtins_unicode(self, unicode_obj, out, level):
+            # this method is used for python 2.x unicode (python 3.x doesn't use this)
+            z = unicode_obj.encode("utf-8")
+            # double-escape existing backslashes:
+            z = z.replace("\\", "\\\\")
+            # backslash-escape control characters:
+            z = z.replace("\a", "\\a")
+            z = z.replace("\b", "\\b")
+            z = z.replace("\f", "\\f")
+            z = z.replace("\n", "\\n")
+            z = z.replace("\r", "\\r")
+            z = z.replace("\t", "\\t")
+            z = z.replace("\v", "\\v")
+            if "'" not in z:
+                z = "'" + z + "'"
+            elif '"' not in z:
+                z = '"' + z + '"'
+            else:
+                z = z.replace("'", "\\'")
+                z = "'" + z + "'"
+            out.append(z)
+        dispatch[unicode] = ser_builtins_unicode
 
-    def ser_builtins_long(self, long_obj, out, level):
-        # used with python 2.x
-        out.append(str(long_obj))
+    if sys.version_info < (3, 0):
+        def ser_builtins_long(self, long_obj, out, level):
+            # used with python 2.x
+            out.append(str(long_obj))
+        dispatch[long] = ser_builtins_long
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
         append = out.append
@@ -334,6 +343,7 @@ class Serializer(object):
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
             append(b")")
+    dispatch[tuple] = ser_builtins_tuple
 
     def ser_builtins_list(self, list_obj, out, level):
         if id(list_obj) in self.serialized_obj_ids:
@@ -360,6 +370,7 @@ class Serializer(object):
                 del out[-1]  # remove the last ,
             append(b"]")
         self.serialized_obj_ids.discard(id(list_obj))
+    dispatch[list] = ser_builtins_list
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:
@@ -395,6 +406,7 @@ class Serializer(object):
                 del out[-1]  # remove the last ,
             append(b"}")
         self.serialized_obj_ids.discard(id(dict_obj))
+    dispatch[dict] = ser_builtins_dict
 
     def ser_builtins_set(self, set_obj, out, level):
         if not self.set_literals:
@@ -428,16 +440,20 @@ class Serializer(object):
         else:
             # empty set literal doesn't exist unfortunately, replace with empty tuple
             self.ser_builtins_tuple((), out, level)
+    dispatch[set] = ser_builtins_set
 
     def ser_builtins_frozenset(self, set_obj, out, level):
         self.ser_builtins_set(set_obj, out, level)
+    dispatch[frozenset] = ser_builtins_set
 
     def ser_decimal_Decimal(self, decimal_obj, out, level):
         # decimal is serialized as a string to avoid losing precision
         self._serialize(str(decimal_obj), out, level)
+    dispatch[decimal.Decimal] = ser_decimal_Decimal
 
     def ser_datetime_datetime(self, datetime_obj, out, level):
         self._serialize(datetime_obj.isoformat(), out, level)
+    dispatch[datetime.datetime] = ser_datetime_datetime
 
     if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
@@ -447,12 +463,15 @@ class Serializer(object):
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = timedelta_obj.total_seconds()
             self._serialize(secs, out, level)
+    dispatch[datetime.timedelta] = ser_datetime_timedelta
 
     def ser_datetime_time(self, time_obj, out, level):
         self._serialize(str(time_obj), out, level)
+    dispatch[datetime.time] = ser_datetime_time
 
     def ser_uuid_UUID(self, uuid_obj, out, level):
         self._serialize(str(uuid_obj), out, level)
+    dispatch[uuid.UUID] = ser_uuid_UUID
 
     def ser_exception_class(self, exc_obj, out, level):
         value = {
@@ -462,6 +481,7 @@ class Serializer(object):
             "attributes": vars(exc_obj)  # add any custom attributes
         }
         self._serialize(value, out, level)
+    dispatch[BaseException] = ser_exception_class
 
     def ser_array_array(self, array_obj, out, level):
         if array_obj.typecode == 'c':
@@ -470,6 +490,7 @@ class Serializer(object):
             self._serialize(array_obj.tounicode(), out, level)
         else:
             self._serialize(array_obj.tolist(), out, level)
+    dispatch[array.array] = ser_array_array
 
     def ser_default_class(self, obj, out, level):
         if id(obj) in self.serialized_obj_ids:
