@@ -422,6 +422,18 @@ class TestBasics(unittest.TestCase):
         data = strip_header(ser)
         self.assertEqual(b"12345.0", data)
 
+    def test_timezone(self):
+        import pytz    # requires pytz library
+        tz_nl = pytz.timezone("Europe/Amsterdam")
+        dt_tz = tz_nl.localize(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
+        ser = serpent.dumps(dt_tz)
+        data = strip_header(ser)
+        self.assertEqual(b"'2013-01-20T23:59:45.999888+01:00'", data)   # normal time
+        dt_tz = tz_nl.localize(datetime.datetime(2013, 5, 10, 13, 59, 45, 999888))
+        ser = serpent.dumps(dt_tz)
+        data = strip_header(ser)
+        self.assertEqual(b"'2013-05-10T13:59:45.999888+02:00'", data)   # daylight saving time
+
     def test_pickle_api(self):
         ser = serpent.dumps([1, 2, 3])
         serpent.loads(ser)
