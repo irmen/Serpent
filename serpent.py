@@ -169,6 +169,47 @@ else:
         return repr(obj).encode("utf-8")
 
 
+_repr_types = set([
+    str,
+    int,
+    float,
+    complex,
+    bool,
+    type(None)
+])
+
+_translate_types = {
+    bytes: BytesWrapper.from_bytes,
+    bytearray: BytesWrapper.from_bytearray,
+    collections.deque: list,
+    collections.defaultdict: dict,
+}
+
+if sys.version_info >= (2, 7):
+    _translate_types[collections.Counter] = dict
+
+if sys.version_info >= (3, 0):
+    _translate_types.update({
+        collections.UserDict: dict,
+        collections.UserList: list,
+        collections.UserString: str
+    })
+
+# do some dynamic changes to the types configuration if needed
+if bytes is str:
+    del _translate_types[bytes]
+if hasattr(types, "BufferType"):
+    _translate_types[types.BufferType] = BytesWrapper.from_buffer
+try:
+    _translate_types[memoryview] = BytesWrapper.from_memoryview
+except NameError:
+    pass
+if sys.platform == "cli":
+    _repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
+if sys.version_info < (2, 7):
+    _repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
+
+
 class Serializer(object):
     """
     Serialize an object tree to a byte stream.
@@ -176,47 +217,6 @@ class Serializer(object):
     object tree that is being serialized, and don't use the same serializer
     across different threads.
     """
-    # noinspection PySetFunctionToLiteral
-    repr_types = set([
-        str,
-        int,
-        float,
-        complex,
-        bool,
-        type(None)
-    ])
-
-    translate_types = {
-        bytes: BytesWrapper.from_bytes,
-        bytearray: BytesWrapper.from_bytearray,
-        collections.deque: list,
-        collections.defaultdict: dict,
-    }
-
-    if sys.version_info >= (2, 7):
-        translate_types[collections.Counter] = dict
-
-    if sys.version_info >= (3, 0):
-        translate_types.update({
-            collections.UserDict: dict,
-            collections.UserList: list,
-            collections.UserString: str
-        })
-
-    # do some dynamic changes to the types configuration if needed
-    if bytes is str:
-        del translate_types[bytes]
-    if hasattr(types, "BufferType"):
-        translate_types[types.BufferType] = BytesWrapper.from_buffer
-    try:
-        translate_types[memoryview] = BytesWrapper.from_memoryview
-    except NameError:
-        pass
-    if sys.platform == "cli":
-        repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
-    if sys.version_info < (2, 7):
-        repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
-
     def __init__(self, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
         """
         Initialize the serializer.
@@ -254,16 +254,17 @@ class Serializer(object):
 
     def _serialize(self, obj, out, level):
         t = type(obj)
-        if t in self.translate_types:
-            obj = self.translate_types[t](obj)
+        if t in _translate_types:
+            obj = _translate_types[t](obj)
             t = type(obj)
-        if t in self.repr_types:
+        if t in _repr_types:
             out.append(_repr(obj))    # just a simple repr() is enough for these objects
             return
         # check special registered types:
-        for clazz in self.special_classes_registry_copy:
+        special_classes = self.special_classes_registry_copy
+        for clazz in special_classes:
             if isinstance(obj, clazz):
-                self.special_classes_registry_copy[clazz](obj, self, out, level)
+                special_classes[clazz](obj, self, out, level)
                 return
         # exception?
         if isinstance(obj, BaseException):
