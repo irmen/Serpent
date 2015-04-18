@@ -57,7 +57,7 @@ import os
 import gc
 import collections
 
-__version__ = "1.9"
+__version__ = "1.10"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -261,9 +261,9 @@ class Serializer(object):
             out.append(_repr(obj))    # just a simple repr() is enough for these objects
             return
         # check special registered types:
-        for clazz, class_serializer in self.special_classes_registry_copy.items():
+        for clazz in self.special_classes_registry_copy:
             if isinstance(obj, clazz):
-                class_serializer(obj, self, out, level)
+                self.special_classes_registry_copy[clazz](obj, self, out, level)
                 return
         # exception?
         if isinstance(obj, BaseException):
@@ -273,8 +273,7 @@ class Serializer(object):
             module = t.__module__
             if module == "__builtin__":
                 module = "builtins"  # python 2.x compatibility
-            method_name = "ser_{0}_{1}".format(module, t.__name__)
-            getattr(self, method_name, self.ser_default_class)(obj, out, level)  # dispatch
+            getattr(self, "ser_"+module+"_"+t.__name__, self.ser_default_class)(obj, out, level)  # dispatch
 
     def ser_builtins_str(self, str_obj, out, level):
         # special case str, for IronPython where str==unicode and repr() yields undesired result
@@ -285,9 +284,10 @@ class Serializer(object):
         out.append(str(float_obj))
 
     def ser_builtins_unicode(self, unicode_obj, out, level):
-        # for python 2.x
         z = unicode_obj.encode("utf-8")
-        z = z.replace("\\", "\\\\")  # double-escape the backslashes
+        # double-escape existing backslashes:
+        z = z.replace("\\", "\\\\")
+        # backslash-escape control characters:
         z = z.replace("\a", "\\a")
         z = z.replace("\b", "\\b")
         z = z.replace("\f", "\\f")
@@ -309,82 +309,88 @@ class Serializer(object):
         out.append(str(long_obj))
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
+        append = out.append
+        serialize = self._serialize
         if self.indent and tuple_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
-            out.append(b"(\n")
+            append(b"(\n")
             for elt in tuple_obj:
-                out.append(indent_chars_inside)
-                self._serialize(elt, out, level + 1)
-                out.append(b",\n")
+                append(indent_chars_inside)
+                serialize(elt, out, level + 1)
+                append(b",\n")
             out[-1] = out[-1].rstrip()  # remove the last \n
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
-            out.append(b"\n" + indent_chars + b")")
+            append(b"\n" + indent_chars + b")")
         else:
-            out.append(b"(")
+            append(b"(")
             for elt in tuple_obj:
-                self._serialize(elt, out, level + 1)
-                out.append(b",")
+                serialize(elt, out, level + 1)
+                append(b",")
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
-            out.append(b")")
+            append(b")")
 
     def ser_builtins_list(self, list_obj, out, level):
         if id(list_obj) in self.serialized_obj_ids:
             raise ValueError("Circular reference detected (list)")
         self.serialized_obj_ids.add(id(list_obj))
+        append = out.append
+        serialize = self._serialize
         if self.indent and list_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
-            out.append(b"[\n")
+            append(b"[\n")
             for elt in list_obj:
-                out.append(indent_chars_inside)
-                self._serialize(elt, out, level + 1)
-                out.append(b",\n")
+                append(indent_chars_inside)
+                serialize(elt, out, level + 1)
+                append(b",\n")
             del out[-1]  # remove the last ,\n
-            out.append(b"\n" + indent_chars + b"]")
+            append(b"\n" + indent_chars + b"]")
         else:
-            out.append(b"[")
+            append(b"[")
             for elt in list_obj:
-                self._serialize(elt, out, level + 1)
-                out.append(b",")
+                serialize(elt, out, level + 1)
+                append(b",")
             if list_obj:
                 del out[-1]  # remove the last ,
-            out.append(b"]")
+            append(b"]")
         self.serialized_obj_ids.discard(id(list_obj))
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:
             raise ValueError("Circular reference detected (dict)")
         self.serialized_obj_ids.add(id(dict_obj))
+        append = out.append
+        serialize = self._serialize
         if self.indent and dict_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
-            out.append(b"{\n")
+            append(b"{\n")
             dict_items = dict_obj.items()
             try:
                 sorted_items = sorted(dict_items)
             except TypeError:  # can occur when elements can't be ordered (Python 3.x)
                 sorted_items = dict_items
             for k, v in sorted_items:
-                out.append(indent_chars_inside)
-                self._serialize(k, out, level + 1)
-                out.append(b": ")
-                self._serialize(v, out, level + 1)
-                out.append(b",\n")
+                append(indent_chars_inside)
+                serialize(k, out, level + 1)
+                append(b": ")
+                serialize(v, out, level + 1)
+                append(b",\n")
             del out[-1]  # remove last ,\n
-            out.append(b"\n" + indent_chars + b"}")
+            append(b"\n" + indent_chars + b"}")
         else:
-            out.append(b"{")
+            append(b"{")
             for k, v in dict_obj.items():
-                self._serialize(k, out, level + 1)
-                out.append(b":")
-                self._serialize(v, out, level + 1)
-                out.append(b",")
+                serialize(k, out, level + 1)
+                append(b":")
+                serialize(v, out, level + 1)
+                append(b",")
             if dict_obj:
                 del out[-1]  # remove the last ,
-            out.append(b"}")
+            append(b"}")
         self.serialized_obj_ids.discard(id(dict_obj))
 
     def ser_builtins_set(self, set_obj, out, level):
@@ -393,27 +399,29 @@ class Serializer(object):
                 set_obj = sorted(set_obj)
             self._serialize(tuple(set_obj), out, level)     # use a tuple instead of a set literal
             return
+        append = out.append
+        serialize = self._serialize
         if self.indent and set_obj:
             indent_chars = b"  " * level
             indent_chars_inside = indent_chars + b"  "
-            out.append(b"{\n")
+            append(b"{\n")
             try:
                 sorted_elts = sorted(set_obj)
             except TypeError:   # can occur when elements can't be ordered (Python 3.x)
                 sorted_elts = set_obj
             for elt in sorted_elts:
-                out.append(indent_chars_inside)
-                self._serialize(elt, out, level + 1)
-                out.append(b",\n")
+                append(indent_chars_inside)
+                serialize(elt, out, level + 1)
+                append(b",\n")
             del out[-1]  # remove the last ,\n
-            out.append(b"\n" + indent_chars + b"}")
+            append(b"\n" + indent_chars + b"}")
         elif set_obj:
-            out.append(b"{")
+            append(b"{")
             for elt in set_obj:
-                self._serialize(elt, out, level + 1)
-                out.append(b",")
+                serialize(elt, out, level + 1)
+                append(b",")
             del out[-1]  # remove the last ,
-            out.append(b"}")
+            append(b"}")
         else:
             # empty set literal doesn't exist unfortunately, replace with empty tuple
             self.ser_builtins_tuple((), out, level)
