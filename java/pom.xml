@@ -1,39 +1,92 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  <groupId>net.razorvine</groupId>
-  <artifactId>serpent</artifactId>
-  <version>1.10</version>
-  <packaging>jar</packaging>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>9</version>
+	</parent>
 
-  <name>serpent</name>
-  <url>https://github.com/irmen/Serpent</url>
+	<groupId>net.razorvine</groupId>
+	<artifactId>serpent</artifactId>
+	<version>1.10</version>
+	<packaging>jar</packaging>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+	<name>serpent</name>
+	<url>https://github.com/irmen/Serpent</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-  <description>Serpent serializes an object tree into a Python ast.literal_eval() compatible literal expression. It is safe to send serpent data to other machines over the network for instance
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-gpg-plugin</artifactId>
+					<version>1.5</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>2.4.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<configuration>
+						<additionalparam>-Xdoclint:none</additionalparam>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<description>Serpent serializes an object tree into a Python ast.literal_eval() compatible literal expression. It is safe to send serpent data to other machines over the network for instance
 (because only 'safe' literals are encoded).
 There is also a deserializer or parse provided that turns such a literal expression back into the appropriate Java object tree.
 
 It is an alternative to JSON to provide easy data integration between Java and Python.  Serpent is more expressive as JSON (it supports more data types).</description>
-  <scm>
-  	<developerConnection>Irmen de Jong</developerConnection>
-  	<url>https://github.com/irmen/Serpent.git</url>
-  	<connection>https</connection>
-  </scm>
-  <issueManagement>
-  	<system>Github</system>
-  	<url>https://github.com/irmen/Serpent/issues</url>
-  </issueManagement>
+	<scm>
+		<url>https://github.com/irmen/Serpent.git</url>
+		<connection>scm:git:https://github.com/irmen/Serpent.git</connection>
+		<developerConnection>scm:git:https://github.com/irmen/Serpent.git</developerConnection>
+		<tag>serpent-1.10</tag>
+	</scm>
+	<issueManagement>
+		<system>Github</system>
+		<url>https://github.com/irmen/Serpent/issues</url>
+	</issueManagement>
+
+	<developers>
+		<developer>
+			<id>irmen</id>
+			<name>Irmen de Jong</name>
+			<email>irmen@razorvine.net</email>
+			<url>https://github.com/irmen</url>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
 </project>
