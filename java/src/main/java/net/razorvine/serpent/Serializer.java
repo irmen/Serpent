@@ -453,6 +453,24 @@ public class Serializer
 		{
 			p.print(obj.equals(Boolean.TRUE)? "True": "False");
 		}
+		else if (obj instanceof Double || obj.getClass()==Double.TYPE)
+		{
+			Double d = (Double) obj;
+			if(d.isInfinite()) {
+				// output a literal expression that overflows the float and results in +/-INF
+				if(d>0.0) {
+					p.print("1e30000");
+				} else {
+					p.print("-1e30000");
+				}
+			}
+			else if(d.isNaN()) {
+				// there's no literal expression for a float NaN...
+				p.print("{'float':'NaN'}");
+			} else {
+				p.print(d);
+			}
+		}
 		else
 		{
 			p.print(obj);

@@ -275,6 +275,17 @@ public class SerializeTests {
 	}
 	
 	@Test
+	public void testDoubleNanInf()
+	{
+		Serializer serpent = new Serializer();
+		Object[] doubles = new Object[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN,
+		        new ComplexNumber(Double.POSITIVE_INFINITY, 3.3)};
+		byte[] ser = serpent.serialize(doubles);
+		byte[] data = strip_header(ser);
+		assertEquals("(1e30000,-1e30000,{'float':'NaN'},(1e30000+3.3j))", S(data));
+	}
+	
+	@Test
 	public void testList()
 	{
 		Serializer serpent = new Serializer();

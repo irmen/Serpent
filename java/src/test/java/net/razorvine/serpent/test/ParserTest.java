@@ -99,6 +99,24 @@ public class ParserTest
 	}
 	
 	@Test
+	public void TestWeirdFloats()
+	{
+		Parser p = new Parser();
+		TupleNode tuple = (TupleNode) p.parse("(1e30000,-1e30000,(1e30000+3.4j),{'float':'NaN'})").root;
+		assertEquals(4, tuple.elements.size());
+		DoubleNode d = (DoubleNode) tuple.elements.get(0);
+		assertTrue(Double.isInfinite(d.value));
+		d = (DoubleNode) tuple.elements.get(1);
+		assertTrue(Double.isInfinite(d.value));
+		assertTrue(d.value < 0.0);
+		ComplexNumberNode c = (ComplexNumberNode) tuple.elements.get(2);
+		assertTrue(Double.isInfinite(c.real));
+		assertEquals(3.4,  c.imaginary, 0);
+		DictNode dn = (DictNode) tuple.elements.get(3);
+		assertEquals(1,  dn.elements.size());
+	}
+	
+	@Test
 	public void TestEquality()
 	{
 		INode n1, n2;
