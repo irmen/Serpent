@@ -49,6 +49,23 @@ class TestDeserialize(unittest.TestCase):
         data = serpent.loads(encoded)
         self.assertEqual(unicodestring, data)
 
+    def test_weird_doubles(self):
+        values = [float('inf'), float('-inf'), float('nan')]
+        ser = serpent.dumps(values)
+        values2 = serpent.loads(ser)
+        self.assertEqual([float('inf'), float('-inf'), 'NaN'], values2)
+        values2 = serpent.loads(b"[1e30000,-1e30000]")
+        self.assertEqual([float('inf'), float('-inf')], values2)
+
+    @unittest.skipIf(sys.version_info < (3, 0), "Python 2.x ast can't parse complex")
+    def test_weird_complex(self):
+        c1 = complex(float('inf'), 4)
+        ser = serpent.dumps(c1)
+        c2 = serpent.loads(ser)
+        self.assertEqual(c1, c2)
+        c3 = serpent.loads(b"(1e30000+4.0j)")
+        self.assertEqual(c1, c3)
+
 
 class TestBasics(unittest.TestCase):
     def test_header(self):
@@ -240,7 +257,10 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"'1234.9999999999'", data)
         ser = serpent.dumps(2 + 3j)
         data = strip_header(ser)
-        self.assertEqual(b"(2+3j)", data)
+        self.assertEqual(b"(2.0+3.0j)", data)
+        ser = serpent.dumps(2 - 3j)
+        data = strip_header(ser)
+        self.assertEqual(b"(2.0-3.0j)", data)
 
     def test_bool(self):
         ser = serpent.dumps(True)
@@ -499,6 +519,11 @@ class TestBasics(unittest.TestCase):
             self.assertEqual([1, 2, 3], data)
         os.remove(tmpfn)
 
+    def test_weird_floats(self):
+        values = [float('inf'), float('-inf'), float('nan'), complex(float('inf'), 4)]
+        ser = strip_header(serpent.dumps(values))
+        self.assertEqual(b"[1e30000,-1e30000,'NaN',(1e30000+4.0j)]", ser)
+
 
 class TestSpeed(unittest.TestCase):
     def setUp(self):
@@ -507,7 +532,7 @@ class TestSpeed(unittest.TestCase):
             "unicode": unichr(0x20ac),  # euro-character
             "numbers": [123456789012345678901234567890, 999.1234, decimal.Decimal("1.99999999999999999991")],
             "bytes": bytearray(100),
-            "list": [1, 2, 3, 4, 5, 6, 7, 8],
+            "list": [1, 2, 3, 4, 5, 6, 7, 8, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9],
             "tuple": (1, 2, 3, 4, 5, 6, 7, 8),
             "set": set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
             "dict": dict((i, str(i) * 4) for i in range(10)),
@@ -519,9 +544,11 @@ class TestSpeed(unittest.TestCase):
             ],
             "uuid": uuid.uuid4()
         }
+        self.floatlist = [12345.6789] * 1000
 
     def test_ser_speed(self):
         print("serialize without indent:", timeit.timeit(lambda: serpent.dumps(self.data, False), number=1000))
+        print("serialize long list of floats:", timeit.timeit(lambda: serpent.dumps(self.floatlist, False), number=100))
         print("serialize with indent:", timeit.timeit(lambda: serpent.dumps(self.data, True), number=1000))
 
     def test_deser_speed(self):

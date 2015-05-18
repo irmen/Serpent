@@ -70,3 +70,6 @@ Set literals are not supported on python <3.2 (ast.literal_eval
 limitation). If you need Python < 3.2 compatibility, you'll have to use
 set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
+
+Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
+and is represented simply by the string "NaN".

@@ -43,6 +43,9 @@ limitation). If you need Python < 3.2 compatibility, you'll have to use
 set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
 
+Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
+and is represented simply by the string "NaN".
+
 Copyright 2013, 2014 by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
@@ -60,9 +63,10 @@ import decimal
 import datetime
 import uuid
 import array
+import math
 
-__version__ = "1.10"
-__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
+__version__ = "1.11"
+__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "fix_nan"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
@@ -176,8 +180,6 @@ else:
 _repr_types = set([
     str,
     int,
-    float,
-    complex,
     bool,
     type(None)
 ])
@@ -206,8 +208,6 @@ except NameError:
     pass
 if sys.platform == "cli":
     _repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
-if sys.version_info < (2, 7):
-    _repr_types.remove(float)   # repr(float) prints floating point roundoffs in Python < 2.7
 
 
 class Serializer(object):
@@ -254,6 +254,8 @@ class Serializer(object):
             return "".join(out)
         return b"".join(out)
 
+    _shortcut_dispatch_types = frozenset([float, complex, tuple, list, dict, set, frozenset])
+
     def _serialize(self, obj, out, level):
         t = type(obj)
         if t in _translate_types:
@@ -262,6 +264,9 @@ class Serializer(object):
         if t in _repr_types:
             out.append(_repr(obj))    # just a simple repr() is enough for these objects
             return
+        if t in self._shortcut_dispatch_types:
+            # we shortcut these builtins directly to the dispatch function to avoid type lookup overhead below
+            return self.dispatch[t](self, obj, out, level)
         # check special registered types:
         special_classes = self.special_classes_registry_copy
         for clazz in special_classes:
@@ -289,9 +294,27 @@ class Serializer(object):
     dispatch[str] = ser_builtins_str
 
     def ser_builtins_float(self, float_obj, out, level):
-        # special case float, for Python < 2.7, to not print the float roundoff errors
-        out.append(str(float_obj))
+        if math.isnan(float_obj):
+            # there's no literal expression for a float NaN...
+            out.append(b"'NaN'")
+        elif math.isinf(float_obj):
+            # output a literal expression that overflows the float and results in +/-INF
+            if float_obj > 0:
+                out.append(b"1e30000")
+            else:
+                out.append(b"-1e30000")
+        else:
+            out.append(str(float_obj).encode("ascii"))
     dispatch[float] = ser_builtins_float
+
+    def ser_builtins_complex(self, complex_obj, out, level):
+        out.append(b"(")
+        self.ser_builtins_float(complex_obj.real, out, level)
+        if complex_obj.imag >= 0:
+            out.append(b"+")
+        self.ser_builtins_float(complex_obj.imag, out, level)
+        out.append(b"j)")
+    dispatch[complex] = ser_builtins_complex
 
     if sys.version_info < (3, 0):
         def ser_builtins_unicode(self, unicode_obj, out, level):
