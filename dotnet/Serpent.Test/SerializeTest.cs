@@ -166,6 +166,18 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void testDoubleNanInf()
+		{
+			Serializer serpent = new Serializer();
+			var doubles = new object[] {double.PositiveInfinity, double.NegativeInfinity, double.NaN,
+			        float.PositiveInfinity, float.NegativeInfinity, float.NaN,
+			        new ComplexNumber(double.PositiveInfinity, 3.4)};
+			byte[] ser = serpent.Serialize(doubles);
+			byte[] data = strip_header(ser);
+			Assert.AreEqual("(1e30000,-1e30000,{'float':'NaN'},1e30000,-1e30000,{'float':'NaN'},(1e30000+3.4j))", S(data));
+		}
+
+		[Test]
 		public void TestBool()
 		{
 			Serializer serpent = new Serializer();

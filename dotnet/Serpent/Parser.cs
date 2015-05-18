@@ -342,7 +342,7 @@ namespace Razorvine.Serpent
 				throw new ParseException("number is not a valid float");
 
 			try {
-				return new Ast.DoubleNode(double.Parse(numberstr, CultureInfo.InvariantCulture));
+				return new Ast.DoubleNode(this.ParseDouble(numberstr));
 			} catch (FormatException x) {
 				throw new ParseException("invalid float format", x);
 			}
@@ -367,7 +367,7 @@ namespace Razorvine.Serpent
 					numberstr = sr.ReadUntil(new char[] {'+', '-'});
 				double realpart;
 				try {
-					realpart = double.Parse(numberstr, CultureInfo.InvariantCulture);
+					realpart = this.ParseDouble(numberstr);
 				} catch (FormatException x) {
 					throw new ParseException("invalid float format", x);
 				}
@@ -398,7 +398,7 @@ namespace Razorvine.Serpent
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
 			string numberstr = sr.ReadUntil('j');
 			try {
-				return double.Parse(numberstr, CultureInfo.InvariantCulture);
+				return this.ParseDouble(numberstr);
 			} catch(FormatException x) {
 				throw new ParseException("invalid float format", x);
 			}
@@ -483,6 +483,14 @@ namespace Razorvine.Serpent
 			if(n=="Non")
 				return Ast.NoneNode.Instance;
 			throw new ParseException("expected None");
+		}
+		
+		double ParseDouble(string numberstr)
+		{
+			// the number is possibly +Inf/-Inf, these are encoded as "1e30000" and "-1e30000"
+			if(numberstr=="1e30000") return double.PositiveInfinity;
+			if(numberstr=="-1e30000") return double.NegativeInfinity;
+			return double.Parse(numberstr, CultureInfo.InvariantCulture);
 		}
 	}
 }

@@ -402,7 +402,33 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_primitive(object obj, TextWriter tw, int level)
 		{
-			tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
+			if(obj is float)
+			{
+				float f = (float)obj;
+				double d = (double)f;
+				Serialize_primitive(d, tw, level);
+			}
+			else if(obj is double)
+			{
+				double d = (double) obj;
+				if(double.IsPositiveInfinity(d)) {
+					// output a literal expression that overflows the float and results in +/-INF
+					tw.Write("1e30000");
+				}
+				else if(double.IsNegativeInfinity(d)) {
+					tw.Write("-1e30000");
+				}
+				else if(double.IsNaN(d)) {
+					// there's no literal expression for a float NaN...
+					tw.Write("{'float':'NaN'}");
+				} else {
+					tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
+				}
+			}
+			else
+			{
+				tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
+			}
 		}
 
 		protected void Serialize_complex(ComplexNumber cplx, TextWriter tw, int level)
