@@ -453,6 +453,11 @@ public class Serializer
 		{
 			p.print(obj.equals(Boolean.TRUE)? "True": "False");
 		}
+		else if (obj instanceof Float || obj.getClass()==Float.TYPE)
+		{
+			Float f = (Float)obj;
+			serialize_primitive(f.doubleValue(), p, level);
+		}
 		else if (obj instanceof Double || obj.getClass()==Double.TYPE)
 		{
 			Double d = (Double) obj;

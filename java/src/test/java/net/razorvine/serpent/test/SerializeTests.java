@@ -279,10 +279,11 @@ public class SerializeTests {
 	{
 		Serializer serpent = new Serializer();
 		Object[] doubles = new Object[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN,
+				Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NaN,
 		        new ComplexNumber(Double.POSITIVE_INFINITY, 3.3)};
 		byte[] ser = serpent.serialize(doubles);
 		byte[] data = strip_header(ser);
-		assertEquals("(1e30000,-1e30000,{'float':'NaN'},(1e30000+3.3j))", S(data));
+		assertEquals("(1e30000,-1e30000,{'float':'NaN'},1e30000,-1e30000,{'float':'NaN'},(1e30000+3.3j))", S(data));
 	}
 	
 	@Test
