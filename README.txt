@@ -72,4 +72,5 @@ set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
 
 Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
-and is represented simply by the string "NaN".
+and is represented by the special value {'float':'NaN'}. We chose not to
+encode it as a str because that could cause memory issues when used in multiplications.

@@ -53,7 +53,7 @@ class TestDeserialize(unittest.TestCase):
         values = [float('inf'), float('-inf'), float('nan')]
         ser = serpent.dumps(values)
         values2 = serpent.loads(ser)
-        self.assertEqual([float('inf'), float('-inf'), 'NaN'], values2)
+        self.assertEqual([float('inf'), float('-inf'), {'float': 'NaN'}], values2)
         values2 = serpent.loads(b"[1e30000,-1e30000]")
         self.assertEqual([float('inf'), float('-inf')], values2)
 
@@ -65,6 +65,19 @@ class TestDeserialize(unittest.TestCase):
         self.assertEqual(c1, c2)
         c3 = serpent.loads(b"(1e30000+4.0j)")
         self.assertEqual(c1, c3)
+
+    def test_trailing_commas(self):
+        v = serpent.loads(b"[1,2,3,]")
+        self.assertEqual([1, 2, 3], v)
+        v = serpent.loads(b"(1,2,3,)")
+        self.assertEqual((1, 2, 3), v)
+        v = serpent.loads(b"{'a':1, 'b':2, 'c':3,}")
+        self.assertEqual({'a': 1, 'b': 2, 'c': 3}, v)
+
+    @unittest.skipIf(sys.version_info < (3, 2), "needs python 3.3+ to parse set literals")
+    def test_trailing_comma_set(self):
+        v = serpent.loads(b"{1,2,3,}")
+        self.assertEqual(set([1, 2, 3]), v)
 
 
 class TestBasics(unittest.TestCase):
@@ -522,7 +535,7 @@ class TestBasics(unittest.TestCase):
     def test_weird_floats(self):
         values = [float('inf'), float('-inf'), float('nan'), complex(float('inf'), 4)]
         ser = strip_header(serpent.dumps(values))
-        self.assertEqual(b"[1e30000,-1e30000,'NaN',(1e30000+4.0j)]", ser)
+        self.assertEqual(b"[1e30000,-1e30000,{'float':'NaN'},(1e30000+4.0j)]", ser)
 
 
 class TestSpeed(unittest.TestCase):

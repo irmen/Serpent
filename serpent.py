@@ -44,7 +44,8 @@ set_literals=False when serializing. Since version 1.6 serpent chooses
 this wisely for you by default, but you can still override it if needed.
 
 Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
-and is represented simply by the string "NaN".
+and is represented by the special value {'float':'NaN'}. We chose not to
+encode it as a str because that could cause memory issues when used in multiplications.
 
 Copyright 2013, 2014 by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
@@ -296,7 +297,7 @@ class Serializer(object):
     def ser_builtins_float(self, float_obj, out, level):
         if math.isnan(float_obj):
             # there's no literal expression for a float NaN...
-            out.append(b"'NaN'")
+            out.append(b"{'float':'NaN'}")
         elif math.isinf(float_obj):
             # output a literal expression that overflows the float and results in +/-INF
             if float_obj > 0:
