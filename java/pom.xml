@@ -67,7 +67,8 @@ It is an alternative to JSON to provide easy data integration between Java and P
 		<url>https://github.com/irmen/Serpent.git</url>
 		<connection>scm:git:https://github.com/irmen/Serpent.git</connection>
 		<developerConnection>scm:git:https://github.com/irmen/Serpent.git</developerConnection>
-	</scm>
+	  <tag>HEAD</tag>
+  </scm>
 	<issueManagement>
 		<system>Github</system>
 		<url>https://github.com/irmen/Serpent/issues</url>
