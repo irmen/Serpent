@@ -471,7 +471,7 @@ public class Serializer
 			}
 			else if(d.isNaN()) {
 				// there's no literal expression for a float NaN...
-				p.print("{'float':'NaN'}");
+				p.print("{'__class__':'float','value':'nan'}");
 			} else {
 				p.print(d);
 			}

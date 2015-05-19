@@ -53,7 +53,7 @@ class TestDeserialize(unittest.TestCase):
         values = [float('inf'), float('-inf'), float('nan')]
         ser = serpent.dumps(values)
         values2 = serpent.loads(ser)
-        self.assertEqual([float('inf'), float('-inf'), {'float': 'NaN'}], values2)
+        self.assertEqual([float('inf'), float('-inf'), {'__class__':'float','value':'nan'}], values2)
         values2 = serpent.loads(b"[1e30000,-1e30000]")
         self.assertEqual([float('inf'), float('-inf')], values2)
 
@@ -535,7 +535,7 @@ class TestBasics(unittest.TestCase):
     def test_weird_floats(self):
         values = [float('inf'), float('-inf'), float('nan'), complex(float('inf'), 4)]
         ser = strip_header(serpent.dumps(values))
-        self.assertEqual(b"[1e30000,-1e30000,{'float':'NaN'},(1e30000+4.0j)]", ser)
+        self.assertEqual(b"[1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+4.0j)]", ser)
 
 
 class TestSpeed(unittest.TestCase):

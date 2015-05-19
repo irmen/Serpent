@@ -78,7 +78,7 @@ namespace Razorvine.Serpent.Test
 		public void TestWeirdFloats()
 		{
 			Parser p = new Parser();
-			var tuple = (Ast.TupleNode) p.Parse("(1e30000,-1e30000,(1e30000+3.4j),{'float':'NaN'})").Root;
+			var tuple = (Ast.TupleNode) p.Parse("(1e30000,-1e30000,(1e30000+3.4j),{'__class__':'float','value':'nan'})").Root;
 			Assert.AreEqual(4, tuple.Elements.Count);
 			var d = (Ast.DoubleNode) tuple.Elements[0];
 			Assert.IsTrue(double.IsPositiveInfinity(d.Value));
@@ -87,8 +87,8 @@ namespace Razorvine.Serpent.Test
 			var c = (Ast.ComplexNumberNode) tuple.Elements[2];
 			Assert.IsTrue(double.IsInfinity(c.Real));
 			Assert.AreEqual(3.4,  c.Imaginary, 0);
-			var dn = (Ast.DictNode) tuple.Elements[3];
-			Assert.AreEqual(1,  dn.Elements.Count);
+			d = (Ast.DoubleNode) tuple.Elements[3];
+			Assert.IsTrue(Double.IsNaN(d.Value));
 		}
 
 		[Test]

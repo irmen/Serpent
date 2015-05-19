@@ -275,7 +275,7 @@ namespace Razorvine.Serpent
 			return list;
 		}
 		
-		Ast.DictNode ParseDict(SeekableStringReader sr)
+		Ast.INode ParseDict(SeekableStringReader sr)
 		{
 			//dict            = '{' keyvalue_list trailing_comma '}' .
 			//keyvalue_list   = keyvalue { ',' keyvalue } .
@@ -318,6 +318,16 @@ namespace Razorvine.Serpent
 				                  	Value=kv.Value
 				                  });
 			}
+			
+			// SPECIAL CASE: {'__class__':'float','value':'nan'}  ---> Double.NaN
+			if(dict.Elements.Count==2) {
+				if(dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("__class__"), new Ast.StringNode("float")))) {
+					if(dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("value"), new Ast.StringNode("nan")))) {
+						return new Ast.DoubleNode(Double.NaN);
+					}	
+				}
+			}
+
 			return dict;
 		}		
 		

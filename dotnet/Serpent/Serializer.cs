@@ -420,7 +420,7 @@ namespace Razorvine.Serpent
 				}
 				else if(double.IsNaN(d)) {
 					// there's no literal expression for a float NaN...
-					tw.Write("{'float':'NaN'}");
+					tw.Write("{'__class__':'float','value':'nan'}");
 				} else {
 					tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
 				}

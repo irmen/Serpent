@@ -282,7 +282,7 @@ public class Parser
 		return list;
 	}
 	
-	DictNode parseDict(SeekableStringReader sr)
+	INode parseDict(SeekableStringReader sr)
 	{
 		//dict            = '{' keyvalue_list trailing_comma '}' .
 		//keyvalue_list   = keyvalue { ',' keyvalue } .
@@ -326,6 +326,15 @@ public class Parser
 			kvnode.key = e.getKey();
 			kvnode.value = e.getValue();
 			dict.elements.add(kvnode);
+		}
+		
+		// SPECIAL CASE: {'__class__':'float','value':'nan'}  ---> Double.NaN
+		if(dict.elements.size()==2) {
+			if(dict.elements.contains(new KeyValueNode(new StringNode("__class__"), new StringNode("float")))) {
+				if(dict.elements.contains(new KeyValueNode(new StringNode("value"), new StringNode("nan")))) {
+					return new DoubleNode(Double.NaN);
+				}	
+			}
 		}
 		return dict;
 	}		

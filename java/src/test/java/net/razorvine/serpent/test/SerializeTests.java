@@ -283,7 +283,7 @@ public class SerializeTests {
 		        new ComplexNumber(Double.POSITIVE_INFINITY, 3.3)};
 		byte[] ser = serpent.serialize(doubles);
 		byte[] data = strip_header(ser);
-		assertEquals("(1e30000,-1e30000,{'float':'NaN'},1e30000,-1e30000,{'float':'NaN'},(1e30000+3.3j))", S(data));
+		assertEquals("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.3j))", S(data));
 	}
 	
 	@Test

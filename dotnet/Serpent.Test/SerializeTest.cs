@@ -174,7 +174,7 @@ namespace Razorvine.Serpent.Test
 			        new ComplexNumber(double.PositiveInfinity, 3.4)};
 			byte[] ser = serpent.Serialize(doubles);
 			byte[] data = strip_header(ser);
-			Assert.AreEqual("(1e30000,-1e30000,{'float':'NaN'},1e30000,-1e30000,{'float':'NaN'},(1e30000+3.4j))", S(data));
+			Assert.AreEqual("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.4j))", S(data));
 		}
 
 		[Test]
