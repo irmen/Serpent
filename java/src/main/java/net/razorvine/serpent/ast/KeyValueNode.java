@@ -5,6 +5,15 @@ public class KeyValueNode implements INode
 	public INode key;
 	public INode value;
 	
+	public KeyValueNode()
+	{}
+	
+	public KeyValueNode(INode key, INode value)
+	{
+		this.key = key;
+		this.value = value;
+	}
+
 	@Override
 	public String toString()
 	{

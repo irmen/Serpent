@@ -650,14 +650,27 @@ namespace Razorvine.Serpent.Test
 	        result = p.Parse("(1,2,3  ,  )").Root;
 	        result = p.Parse("(1,2,3,)").Root;
 	        Assert.AreEqual("(1,2,3)", result.ToString());
+	        
+	        // for dict and set the asserts are a bit more complex
+            // we cannot simply convert to string because the order of elts is undefined.
+	        
 	        result = p.Parse("{'a':1, 'b':2, 'c':3,  }").Root;
 	        result = p.Parse("{'a':1, 'b':2, 'c':3  ,  }").Root;
 	        result = p.Parse("{'a':1, 'b':2, 'c':3,}").Root;
-	        Assert.AreEqual("{'a':1,'b':2,'c':3}", result.ToString());
+	        Ast.DictNode dict = (Ast.DictNode) result;
+	        var items = dict.ElementsAsSet();
+	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("a"), new Ast.IntegerNode(1))));
+	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("b"), new Ast.IntegerNode(2))));
+	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("c"), new Ast.IntegerNode(3))));
 	        result = p.Parse("{1,2,3,  }").Root;
 	        result = p.Parse("{1,2,3  ,  }").Root;
 	        result = p.Parse("{1,2,3,}").Root;
-	        Assert.AreEqual("{1,2,3}", result.ToString());
+	        Ast.SetNode set = (Ast.SetNode) result;
+	        items = set.ElementsAsSet();
+	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(1)));
+	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(2)));
+	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(3)));
+	        Assert.IsFalse(items.Contains(new Ast.IntegerNode(4)));
 		}		
 	}
 

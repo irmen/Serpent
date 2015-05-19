@@ -369,7 +369,7 @@ namespace Razorvine.Serpent
 				return ElementsAsSet().GetHashCode();
 			}
 			
-			private HashSet<INode> ElementsAsSet()
+			public HashSet<INode> ElementsAsSet()
 			{
 				var set = new HashSet<INode>();
 				foreach(INode kv in Elements)
@@ -402,6 +402,12 @@ namespace Razorvine.Serpent
 		{
 			public INode Key;
 			public INode Value;
+			
+			public KeyValueNode(INode key, INode value)
+			{
+				this.Key = key;
+				this.Value = value;
+			}
 			
 			public override string ToString()
 			{

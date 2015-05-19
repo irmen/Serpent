@@ -18,6 +18,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import net.razorvine.serpent.ObjectifyVisitor;
 import net.razorvine.serpent.ParseException;
@@ -779,14 +780,28 @@ public class ParserTest
         result = p.parse("(1,2,3  ,    )").root;
         result = p.parse("(1,2,3,)").root;
         assertEquals("(1,2,3)", result.toString());
+        
+        // for dict and set the asserts are a bit more complex
+        // we cannot simply convert to string because the order of elts is undefined.
+        
         result = p.parse("{'a':1, 'b':2, 'c':3,  }").root;
         result = p.parse("{'a':1, 'b':2, 'c':3    ,    }").root;
         result = p.parse("{'a':1, 'b':2, 'c':3,}").root;
-        assertEquals("{'a':1,'b':2,'c':3}", result.toString());
+        DictNode dict = (DictNode) result;
+        assertEquals(3, dict.elements.size());
+        Set<INode> elts = dict.elementsAsSet();
+        assertTrue(elts.contains(new KeyValueNode(new StringNode("a"), new IntegerNode(1))));
+        assertTrue(elts.contains(new KeyValueNode(new StringNode("b"), new IntegerNode(2))));
+        assertTrue(elts.contains(new KeyValueNode(new StringNode("c"), new IntegerNode(3))));
         result = p.parse("{1,2,3,  }").root;
         result = p.parse("{1,2,3   ,    }").root;
         result = p.parse("{1,2,3,}").root;
-        assertEquals("{1,2,3}", result.toString());
+        SetNode set = (SetNode) result;
+        assertEquals(3, set.elements.size());
+        elts = set.elementsAsSet();
+        assertTrue(elts.contains(new IntegerNode(1)));
+        assertTrue(elts.contains(new IntegerNode(2)));
+        assertTrue(elts.contains(new IntegerNode(3)));
 	}
  
 	
