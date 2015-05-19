@@ -9,7 +9,7 @@
 
 	<groupId>net.razorvine</groupId>
 	<artifactId>serpent</artifactId>
-	<version>1.11-SNAPSHOT</version>
+	<version>1.11</version>
 	<packaging>jar</packaging>
 
 	<name>serpent</name>
@@ -67,8 +67,8 @@ It is an alternative to JSON to provide easy data integration between Java and P
 		<url>https://github.com/irmen/Serpent.git</url>
 		<connection>scm:git:https://github.com/irmen/Serpent.git</connection>
 		<developerConnection>scm:git:https://github.com/irmen/Serpent.git</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>v1.11</tag>
+	</scm>
 	<issueManagement>
 		<system>Github</system>
 		<url>https://github.com/irmen/Serpent/issues</url>
