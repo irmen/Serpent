@@ -364,7 +364,7 @@ namespace Razorvine.Serpent.Test
 			Serializer serpent = new Serializer();
 			serpent.Indent=true;
 			byte[] ser = strip_header(serpent.Serialize(dict));
-			Assert.AreEqual(@"{
+			string txt=@"{
   'first': [
     1,
     2,
@@ -380,8 +380,14 @@ namespace Razorvine.Serpent.Test
     3,
     4
   }
-}", S(ser).Replace("\n", "\r\n"));
-
+}";
+			// bit of trickery to deal with Windows/Unix line ending differences
+			txt = txt.Replace("\n","\r\n");
+			txt = txt.Replace("\r\r\n", "\r\n");
+			string ser_txt = S(ser);
+			ser_txt = ser_txt.Replace("\n", "\r\n");
+			ser_txt = ser_txt.Replace("\r\r\n", "\r\n");
+			Assert.AreEqual(txt, ser_txt);
 		}
 		
 		[Test]
