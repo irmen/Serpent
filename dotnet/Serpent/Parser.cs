@@ -63,6 +63,8 @@ namespace Razorvine.Serpent
 		{
 			// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
 			sr.SkipWhitespace();
+			if(!sr.HasMore())
+				throw new ParseException("unexpected end of line, missing expression or close/open character");
 			char c = sr.Peek();
 			Ast.INode node;
 			if(c=='{' || c=='[' || c=='(')
@@ -113,8 +115,9 @@ namespace Razorvine.Serpent
 			//tuple           = tuple_empty | tuple_one | tuple_more
 			//tuple_empty     = '()' .
 			//tuple_one       = '(' expr ',' <whitespace> ')' .
-			//tuple_more      = '(' expr_list ')' .
-			
+			//tuple_more      = '(' expr_list trailing_comma ')' .
+			// trailing_comma  = '' | ',' .			
+
 			sr.Read();	// (
 			sr.SkipWhitespace();
 			Ast.TupleNode tuple = new Ast.TupleNode();
@@ -140,6 +143,14 @@ namespace Razorvine.Serpent
 			
 			tuple.Elements = ParseExprList(sr);
 			tuple.Elements.Insert(0, firstelement);
+
+			// handle trailing comma if present
+			sr.SkipWhitespace();
+			if(!sr.HasMore())
+				throw new ParseException("missing ')'");
+			if(sr.Peek() == ',')
+				sr.Read();
+
 			if(!sr.HasMore())
 				throw new ParseException("missing ')'");
 			char closechar = sr.Read();
@@ -158,7 +169,13 @@ namespace Razorvine.Serpent
 			while(sr.HasMore() && sr.Peek() == ',')
 			{
 				sr.Read();
-				exprList.Add(ParseExpr(sr));
+				try {
+					exprList.Add(ParseExpr(sr));
+				} catch (ParseException) {
+					sr.Rewind(1);
+					break;
+				}
+					
 			}
 			return exprList;
 		}
@@ -171,7 +188,12 @@ namespace Razorvine.Serpent
 			while(sr.HasMore() && sr.Peek()==',')
 			{
 				sr.Read();
-				kvs.Add(ParseKeyValue(sr));
+				try {
+					kvs.Add(ParseKeyValue(sr));
+				} catch (ParseException) {
+					sr.Rewind(1);
+					break;
+				}
 			}
 			return kvs;
 		}		
@@ -195,11 +217,20 @@ namespace Razorvine.Serpent
 		
 		Ast.SetNode ParseSet(SeekableStringReader sr)
 		{
-			// set = '{' expr_list '}' .
+			// set = '{' expr_list trailing_comma '}' .
+			// trailing_comma  = '' | ',' .			
 			sr.Read();	// {
 			sr.SkipWhitespace();
 			Ast.SetNode setnode = new Ast.SetNode();
 			List<Ast.INode> elts = ParseExprList(sr);
+
+			// handle trailing comma if present
+			sr.SkipWhitespace();
+			if(!sr.HasMore())
+				throw new ParseException("missing '}'");
+			if(sr.Peek() == ',')
+				sr.Read();
+
 			if(!sr.HasMore())
 				throw new ParseException("missing '}'");
 			char closechar = sr.Read();
@@ -216,7 +247,8 @@ namespace Razorvine.Serpent
 		{
 			// list            = list_empty | list_nonempty .
 			// list_empty      = '[]' .
-			// list_nonempty   = '[' expr_list ']' .
+			// list_nonempty   = '[' expr_list trailing_comma ']' .
+			// trailing_comma  = '' | ',' .
 			sr.Read();	// [
 			sr.SkipWhitespace();
 			Ast.ListNode list = new Ast.ListNode();
@@ -227,6 +259,14 @@ namespace Razorvine.Serpent
 			}
 			
 			list.Elements = ParseExprList(sr);
+
+			// handle trailing comma if present
+			sr.SkipWhitespace();
+			if(!sr.HasMore())
+				throw new ParseException("missing ']'");
+			if(sr.Peek() == ',')
+				sr.Read();
+
 			if(!sr.HasMore())
 				throw new ParseException("missing ']'");
 			char closechar = sr.Read();
@@ -237,9 +277,10 @@ namespace Razorvine.Serpent
 		
 		Ast.DictNode ParseDict(SeekableStringReader sr)
 		{
-			//dict            = '{' keyvalue_list '}' .
+			//dict            = '{' keyvalue_list trailing_comma '}' .
 			//keyvalue_list   = keyvalue { ',' keyvalue } .
 			//keyvalue        = expr ':' expr .
+			// trailing_comma  = '' | ',' .			
 			
 			sr.Read();	// {
 			sr.SkipWhitespace();
@@ -251,6 +292,14 @@ namespace Razorvine.Serpent
 			}
 			
 			List<Ast.INode> elts = ParseKeyValueList(sr);
+
+			// handle trailing comma if present
+			sr.SkipWhitespace();
+			if(!sr.HasMore())
+				throw new ParseException("missing '}'");
+			if(sr.Peek() == ',')
+				sr.Read();
+
 			if(!sr.HasMore())
 				throw new ParseException("missing '}'");
 			char closechar = sr.Read();

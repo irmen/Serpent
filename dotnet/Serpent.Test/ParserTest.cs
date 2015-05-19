@@ -506,7 +506,6 @@ namespace Razorvine.Serpent.Test
 			
 			Assert.AreEqual(new Ast.ListNode(), p.Parse("[]").Root);
 			Assert.AreEqual(list, p.Parse("[42]").Root);
-			Assert.Throws<ParseException>(()=>p.Parse("[42,]"));
 			Assert.AreEqual(list2, p.Parse("[ 42,43, 44 ]").Root);
 
 			Assert.Throws<ParseException>(()=>p.Parse("[42,43}"));
@@ -534,7 +533,6 @@ namespace Razorvine.Serpent.Test
 			Assert.AreNotEqual(set1, set2);
 			
 			Assert.AreEqual(set1, p.Parse("{42}").Root);
-			Assert.Throws<ParseException>(()=>p.Parse("{42,}"));
 			Assert.AreEqual(set2, p.Parse("{ 42,43, 44 }").Root);
 
 			Assert.Throws<ParseException>(()=>p.Parse("{42,43]"));
@@ -576,7 +574,6 @@ namespace Razorvine.Serpent.Test
 			
 			Assert.AreEqual(new Ast.DictNode(), p.Parse("{}").Root);
 			Assert.AreEqual(dict1, p.Parse("{'key1': 42}").Root);
-			Assert.Throws<ParseException>(()=>p.Parse("{'key1': 42,}"));
 			Assert.AreEqual(dict2, p.Parse("{'key1': 42, 'key2': 43, 'key3':44}").Root);
 
 			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42]"));
@@ -639,6 +636,29 @@ namespace Razorvine.Serpent.Test
 			else
 				sb.AppendLine(string.Format("{0} = {1}", node.GetType(), node.ToString()));
 		}
+
+		[Test]
+		public void TestTrailingCommas()
+		{
+			Parser p = new Parser();
+			Ast.INode result;
+	        result = p.Parse("[1,2,3,  ]").Root;
+	        result = p.Parse("[1,2,3  ,  ]").Root;
+	        result = p.Parse("[1,2,3,]").Root;
+	        Assert.AreEqual("[1,2,3]", result.ToString());
+	        result = p.Parse("(1,2,3,  )").Root;
+	        result = p.Parse("(1,2,3  ,  )").Root;
+	        result = p.Parse("(1,2,3,)").Root;
+	        Assert.AreEqual("(1,2,3)", result.ToString());
+	        result = p.Parse("{'a':1, 'b':2, 'c':3,  }").Root;
+	        result = p.Parse("{'a':1, 'b':2, 'c':3  ,  }").Root;
+	        result = p.Parse("{'a':1, 'b':2, 'c':3,}").Root;
+	        Assert.AreEqual("{'a':1,'b':2,'c':3}", result.ToString());
+	        result = p.Parse("{1,2,3,  }").Root;
+	        result = p.Parse("{1,2,3  ,  }").Root;
+	        result = p.Parse("{1,2,3,}").Root;
+	        Assert.AreEqual("{1,2,3}", result.ToString());
+		}		
 	}
 
 	[TestFixture]

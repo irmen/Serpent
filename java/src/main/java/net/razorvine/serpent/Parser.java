@@ -71,6 +71,8 @@ public class Parser
 	{
 		// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
 		sr.skipWhitespace();
+		if(!sr.hasMore())
+			throw new ParseException("unexpected end of line, missing expression or close/open character");
 		char c = sr.peek();
 		INode node;
 		if(c=='{' || c=='[' || c=='(')
@@ -121,8 +123,9 @@ public class Parser
 		//tuple           = tuple_empty | tuple_one | tuple_more
 		//tuple_empty     = '()' .
 		//tuple_one       = '(' expr ',' <whitespace> ')' .
-		//tuple_more      = '(' expr_list ')' .
-		
+		//tuple_more      = '(' expr_list trailing_comma ')' .
+		// trailing_comma  = '' | ',' .
+
 		sr.read();	// (
 		sr.skipWhitespace();
 		TupleNode tuple = new TupleNode();
@@ -148,6 +151,14 @@ public class Parser
 		
 		tuple.elements = parseExprList(sr);
 		tuple.elements.add(0, firstelement);
+
+		// handle trailing comma if present
+		sr.skipWhitespace();
+		if(!sr.hasMore())
+			throw new ParseException("missing ')'");
+		if(sr.peek() == ',')
+			sr.read();
+
 		if(!sr.hasMore())
 			throw new ParseException("missing ')'");
 		char closechar = sr.read();
@@ -166,7 +177,12 @@ public class Parser
 		while(sr.hasMore() && sr.peek() == ',')
 		{
 			sr.read();
-			exprList.add(parseExpr(sr));
+			try {
+				exprList.add(parseExpr(sr));
+			} catch (ParseException x) {
+				sr.rewind(1);
+				break;
+			}
 		}
 		return exprList;
 	}
@@ -179,7 +195,12 @@ public class Parser
 		while(sr.hasMore() && sr.peek()==',')
 		{
 			sr.read();
-			kvs.add(parseKeyValue(sr));
+			try {
+				kvs.add(parseKeyValue(sr));
+			} catch (ParseException x) {
+				sr.rewind(1);
+				break;
+			}
 		}
 		return kvs;
 	}		
@@ -203,11 +224,20 @@ public class Parser
 	
 	SetNode parseSet(SeekableStringReader sr)
 	{
-		// set = '{' expr_list '}' .
+		// set = '{' expr_list trailing_comma '}' .
+		// trailing_comma  = '' | ',' .
 		sr.read();	// {
 		sr.skipWhitespace();
 		SetNode setnode = new SetNode();
 		List<INode> elts = parseExprList(sr);
+
+		// handle trailing comma if present
+		sr.skipWhitespace();
+		if(!sr.hasMore())
+			throw new ParseException("missing '}'");
+		if(sr.peek() == ',')
+			sr.read();
+
 		if(!sr.hasMore())
 			throw new ParseException("missing '}'");
 		char closechar = sr.read();
@@ -224,7 +254,8 @@ public class Parser
 	{
 		// list            = list_empty | list_nonempty .
 		// list_empty      = '[]' .
-		// list_nonempty   = '[' expr_list ']' .
+		// list_nonempty   = '[' expr_list trailing_comma ']' .
+		// trailing_comma  = '' | ',' .
 		sr.read();	// [
 		sr.skipWhitespace();
 		ListNode list = new ListNode();
@@ -235,6 +266,14 @@ public class Parser
 		}
 		
 		list.elements = parseExprList(sr);
+
+		// handle trailing comma if present
+		sr.skipWhitespace();
+		if(!sr.hasMore())
+			throw new ParseException("missing ']'");
+		if(sr.peek() == ',')
+			sr.read();
+
 		if(!sr.hasMore())
 			throw new ParseException("missing ']'");
 		char closechar = sr.read();
@@ -245,9 +284,10 @@ public class Parser
 	
 	DictNode parseDict(SeekableStringReader sr)
 	{
-		//dict            = '{' keyvalue_list '}' .
+		//dict            = '{' keyvalue_list trailing_comma '}' .
 		//keyvalue_list   = keyvalue { ',' keyvalue } .
 		//keyvalue        = expr ':' expr .
+		// trailing_comma  = '' | ',' .
 		
 		sr.read();	// {
 		sr.skipWhitespace();
@@ -259,6 +299,14 @@ public class Parser
 		}
 		
 		List<INode> elts = parseKeyValueList(sr);
+
+		// handle trailing comma if present
+		sr.skipWhitespace();
+		if(!sr.hasMore())
+			throw new ParseException("missing '}'");
+		if(sr.peek() == ',')
+			sr.read();
+
 		if(!sr.hasMore())
 			throw new ParseException("missing '}'");
 		char closechar = sr.read();

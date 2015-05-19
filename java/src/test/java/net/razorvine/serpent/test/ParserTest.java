@@ -348,12 +348,6 @@ public class ParserTest
 	}
 
 	@Test(expected=ParseException.class)
-	public void TestInvalidList1()
-	{
-		new Parser().parse("[42,]");
-	}
-			
-	@Test(expected=ParseException.class)
 	public void TestInvalidList2()
 	{
 		new Parser().parse("[42,43}");
@@ -372,12 +366,6 @@ public class ParserTest
 	}
 
 	@Test(expected=ParseException.class)
-	public void TestInvalidSet1()
-	{
-		new Parser().parse("{42,}");
-	}
-
-	@Test(expected=ParseException.class)
 	public void TestInvalidSet2()
 	{
 		new Parser().parse("{42,43]");
@@ -387,12 +375,6 @@ public class ParserTest
 	public void TestInvalidSet3()
 	{
 		new Parser().parse("{42,43}@");
-	}
-
-	@Test(expected=ParseException.class)
-	public void TestInvalidDict1()
-	{
-		new Parser().parse("{'key1': 42,}");
 	}
 
 	@Test(expected=ParseException.class)
@@ -491,7 +473,28 @@ public class ParserTest
 		assertEquals(new IntegerNode(42), p.parse(" \t 42 \r \n ").root);
 		assertEquals(new StringNode("   string value    "), p.parse("  '   string value    '   ").root);
 		try {
-			p.parse("     (  42  ,  ( 'x',   'y'  )   ");  // missing tuple close )
+			p.parse("     (  42  ,  43 ,     ");  // missing tuple close )
+			fail("expected parse error");
+		} catch (ParseException x) {
+			//ok
+		}
+
+		try {
+			p.parse("     [  42  ,  43 ,    ");  // missing list close )
+			fail("expected parse error");
+		} catch (ParseException x) {
+			//ok
+		}
+
+		try {
+			p.parse("     {  42  ,  43 ,    ");  // missing set close )
+			fail("expected parse error");
+		} catch (ParseException x) {
+			//ok
+		}
+
+		try {
+			p.parse("     {  'a'  :   4 2 ,     ");  // missing dict close )
 			fail("expected parse error");
 		} catch (ParseException x) {
 			//ok
@@ -762,6 +765,30 @@ public class ParserTest
 		ast = p.parse(expr2);
 		// TODO assertEquals(ast.root, ast2.root);
 	}
+	
+	@Test
+	public void TestTrailingCommas() throws IOException
+	{
+		Parser p = new Parser();
+		INode result;
+        result = p.parse("[1,2,3,  ]").root;
+        result = p.parse("[1,2,3   ,    ]").root;
+        result = p.parse("[1,2,3,]").root;
+        assertEquals("[1,2,3]", result.toString());
+        result = p.parse("(1,2,3,  )").root;
+        result = p.parse("(1,2,3  ,    )").root;
+        result = p.parse("(1,2,3,)").root;
+        assertEquals("(1,2,3)", result.toString());
+        result = p.parse("{'a':1, 'b':2, 'c':3,  }").root;
+        result = p.parse("{'a':1, 'b':2, 'c':3    ,    }").root;
+        result = p.parse("{'a':1, 'b':2, 'c':3,}").root;
+        assertEquals("{'a':1,'b':2,'c':3}", result.toString());
+        result = p.parse("{1,2,3,  }").root;
+        result = p.parse("{1,2,3   ,    }").root;
+        result = p.parse("{1,2,3,}").root;
+        assertEquals("{1,2,3}", result.toString());
+	}
+ 
 	
 	@Test
 	@Ignore("can't get the ast compare to succeed :(")
