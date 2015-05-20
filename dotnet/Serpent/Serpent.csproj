@@ -67,5 +67,8 @@
     <Compile Include="Serializer.cs" />
     <Compile Include="Version.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Serpent.nuspec" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
