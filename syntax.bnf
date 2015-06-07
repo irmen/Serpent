@@ -27,11 +27,12 @@ bool            = 'True' | 'False' .
 none            = 'None' .
 
 
-expr_list       = expr { ',' expr } .
+expr_list       = expr { ',' expr } trailingcomma .
 tuple           = tuple_empty | tuple_one | tuple_more
 tuple_empty     = '()' .
 tuple_one       = '(' expr ',' <whitespace> ')' .
 tuple_more      = '(' expr_list ')' .
+trailingcomma   = '' | ','
 
 
 list            = list_empty | list_nonempty .
@@ -42,6 +43,6 @@ list_nonempty   = '[' expr_list ']' .
 set             = '{' expr_list '}' .
 
 dict            = '{' keyvalue_list '}' .
-keyvalue_list   = keyvalue { ',' keyvalue } .
+keyvalue_list   = keyvalue { ',' keyvalue } trailingcomma .
 keyvalue        = expr ':' expr .
  
