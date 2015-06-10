@@ -22,7 +22,7 @@ More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpen
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Irmen de Jong")]
 [assembly: AssemblyProduct("Serpent Python literal expression serialization")]
-[assembly: AssemblyCopyright("Copyright 2015 Irmen de Jong")]
+[assembly: AssemblyCopyright("Copyright Irmen de Jong")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

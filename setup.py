@@ -28,7 +28,9 @@ the serialized data is safe to transport to other machines (over the network for
 and de-serialize it there.
 
 *There is also a Java and a .NET (C#) implementation available. This allows for easy data transfer between the various ecosystems.
-You can get the full source distribution, a Java .jar file, and a .NET assembly dll.*  `Download location here <http://irmen.home.xs4all.nl/serpent/>`_
+You can get the full source distribution, a Java .jar file, and a .NET assembly dll.*
+The java library can be obtained from Maven central (groupid ``net.razorvine`` artifactid ``serpent``),
+and the .NET assembly can be obtained from Nuget.org (package ``Razorvine.Serpent``).
 
 
 **API**
