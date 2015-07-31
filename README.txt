@@ -10,7 +10,8 @@ More info on Pypi: https://pypi.python.org/pypi/serpent
 Source code is on Github: https://github.com/irmen/Serpent
 
 Copyright 2013, 2014 by Irmen de Jong (irmen@razorvine.net)
-Software license: "MIT software license". See http://opensource.org/licenses/MIT
+This software is released under the MIT software license.
+This license, including disclaimer, is available in the 'LICENSE' file.
 
 
 PYTHON
