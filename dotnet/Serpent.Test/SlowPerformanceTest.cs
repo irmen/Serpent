@@ -5,13 +5,13 @@ namespace Razorvine.Serpent.Test
 {
 
 [TestFixture]
-public class SlowPerformance {
+public class SlowPerformanceTest {
 
 	// tests the currently very slow performance of the SeekableStringReader.ReadUntil method
 	// TODO fix this issue (#12) and then this can be removed
 
 	[Test]
-	public static void testManyFloats()
+	public static void TestManyFloats()
 	{
 		int amount = 20000;
 		double[] array = new double[amount];
@@ -31,7 +31,7 @@ public class SlowPerformance {
 	}
 
 	[Test]
-	public static void testManyInts()
+	public static void TestManyInts()
 	{
 		int amount=20000;
 		int[] array = new int[amount];
