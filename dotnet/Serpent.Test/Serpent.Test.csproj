@@ -60,6 +60,7 @@
     <Compile Include="Example.cs" />
     <Compile Include="ParserTest.cs" />
     <Compile Include="SerializeTest.cs" />
+    <Compile Include="SlowPerformance.cs" />
     <Compile Include="StringreaderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
