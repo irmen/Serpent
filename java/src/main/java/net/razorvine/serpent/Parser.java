@@ -465,12 +465,9 @@ public class Parser
 	double parseImaginaryPart(SeekableStringReader sr)
 	{
 		//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-		char sign_or_digit;
-		try {
-			sign_or_digit = sr.peek();
-		} catch (IndexOutOfBoundsException x) {
+		if(!sr.hasMore())
 			throw new ParseException("unexpected end of input string");
-		}
+		char sign_or_digit = sr.peek();
 		
 		if(sign_or_digit=='+')
 			sr.read();   // skip the '+'
@@ -484,13 +481,16 @@ public class Parser
 		} catch (ParseException x1) {
 			sr.flipBack(bookmark);
 			INode integer_part = parseInt(sr);
-			ObjectifyVisitor v = new ObjectifyVisitor();
-			integer_part.accept(v);
-			Object integer_object = v.getObject();
-			try {
-				Number int_num = (Number) integer_object;
-				double_value = int_num.doubleValue();
-			} catch (ClassCastException x) {
+			if(integer_part instanceof IntegerNode) {
+				double_value = ((IntegerNode)integer_part).value;
+			}
+			else if(integer_part instanceof LongNode) {
+				double_value = ((LongNode)integer_part).value;
+			}
+			else if(integer_part instanceof BigIntNode) {
+				double_value = ((BigIntNode)integer_part).value.doubleValue();
+			}
+			else {
 				throw new ParseException("not an integer for the imaginary part");
 			}
 		}
