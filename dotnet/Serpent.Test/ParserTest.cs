@@ -390,6 +390,14 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(cplx, p.Parse("-3.2j").Root);
 			cplx.Real = -9.9;
 			Assert.AreEqual(cplx, p.Parse("(-9.9-3.2j)").Root);
+
+			cplx.Real = 2;
+			cplx.Imaginary = 3;
+			Assert.AreEqual(cplx, p.Parse("(2+3j)").Root);
+			cplx.Imaginary = -3;
+			Assert.AreEqual(cplx, p.Parse("(2-3j)").Root);
+			cplx.Real = 0;
+			Assert.AreEqual(cplx, p.Parse("-3j").Root);
 		}
 		
 		[Test]

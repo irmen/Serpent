@@ -85,9 +85,9 @@ namespace Razorvine.Serpent.Test
 		public void TestReadWhile()
 		{
 			SeekableStringReader s = new SeekableStringReader("123.456 foo");
-			Assert.AreEqual("123.456", s.ReadWhile('0','1','2','3','4','5','6','7','8','9','.'));
-			Assert.AreEqual("", s.ReadWhile('@'));
-			Assert.AreEqual(" ", s.ReadWhile(' '));
+			Assert.AreEqual("123.456", s.ReadWhile("0123456789."));
+			Assert.AreEqual("", s.ReadWhile("@"));
+			Assert.AreEqual(" ", s.ReadWhile(" "));
 			Assert.AreEqual("foo", s.Rest());
 		}
 		

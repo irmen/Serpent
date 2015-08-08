@@ -361,10 +361,15 @@ namespace Razorvine.Serpent
 			}
 		}
 		
+		
+		const string IntegerChars = "-0123456789";
+		const string FloatChars = "-+.eE0123456789";
+		
+		
 		Ast.INode ParseInt(SeekableStringReader sr)
 		{
 			// int =  ['-'] digitnonzero {digit} .
-			string numberstr = sr.ReadWhile('-','0','1','2','3','4','5','6','7','8','9');
+			string numberstr = sr.ReadWhile(IntegerChars);
 			if(numberstr.Length==0)
 				throw new ParseException("invalid int character");
 			try {
@@ -390,7 +395,7 @@ namespace Razorvine.Serpent
 
 		Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
 		{
-			string numberstr = sr.ReadWhile('-','+','.','e','E','0','1','2','3','4','5','6','7','8','9');
+			string numberstr = sr.ReadWhile(FloatChars);
 			if(numberstr.Length==0)
 				throw new ParseException("invalid float character");
 			
@@ -398,7 +403,7 @@ namespace Razorvine.Serpent
 			// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
 			// in that case, we need to reject it as a float.
 			if(numberstr.IndexOfAny(new char[] {'.','e','E'}) < 0)
-				throw new ParseException("number is not a valid float");
+				throw new ParseException("number is not a float (might be an integer though)");
 
 			try {
 				return new Ast.DoubleNode(this.ParseDouble(numberstr));
@@ -455,12 +460,57 @@ namespace Razorvine.Serpent
 		double ParseImaginaryPart(SeekableStringReader sr)
 		{
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-			string numberstr = sr.ReadUntil('j');
+//			string numberstr = sr.ReadUntil('j');
+//			try {
+//				return this.ParseDouble(numberstr);
+//			} catch(FormatException x) {
+//				throw new ParseException("invalid float format", x);
+//			}
+
+			if(!sr.HasMore())
+				throw new ParseException("unexpected end of input string");
+				
+			char sign_or_digit = sr.Peek();
+			if(sign_or_digit=='+')
+				sr.Read();   // skip the '+'
+			
+			// now an int or float follows.
+			double double_value;
+			int bookmark = sr.Bookmark();
 			try {
-				return this.ParseDouble(numberstr);
-			} catch(FormatException x) {
-				throw new ParseException("invalid float format", x);
+				var float_part = ParseFloat(sr);
+				double_value = float_part.Value;
+			} catch (ParseException) {
+				sr.FlipBack(bookmark);
+				var integer_part = ParseInt(sr);
+				var integerNode = integer_part as Ast.IntegerNode;
+				if (integerNode != null)
+					double_value = integerNode.Value;
+				else {
+					var longNode = integer_part as Ast.LongNode;
+					if (longNode != null)
+						double_value = longNode.Value;
+					else {
+						var decimalNode = integer_part as Ast.DecimalNode;
+						if (decimalNode != null)
+							double_value = Convert.ToDouble(decimalNode.Value);
+						else
+							throw new ParseException("not an integer for the imaginary part");
+					}
+				}
 			}
+			
+			// now a 'j' must follow!
+			sr.SkipWhitespace();
+			try {
+				char j_char = sr.Read();
+				if(j_char!='j')
+					throw new ParseException("not an imaginary part");
+			} catch (IndexOutOfRangeException x) {
+				throw new ParseException("not an imaginary part");
+			}
+			return double_value;
+
 		}
 		
 		Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)

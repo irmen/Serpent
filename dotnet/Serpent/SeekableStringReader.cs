@@ -108,14 +108,12 @@ namespace Razorvine.Serpent
 		/// <summary>
 		/// Read everything as long as the char occurs in the accepted characters.
 		/// </summary>
-		/// <param name="characters"></param>
-		/// <returns></returns>
-		public string ReadWhile(params char[] accepted)
+		public string ReadWhile(string accepted)
 		{
 			int start = cursor;
 			while(cursor < str.Length)
 			{
-				if(Array.IndexOf<char>(accepted, str[cursor])>=0)
+				if(accepted.IndexOf(str[cursor])>=0)
 					++cursor;
 				else
 					break;

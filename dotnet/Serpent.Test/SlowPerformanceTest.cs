@@ -7,13 +7,13 @@ namespace Razorvine.Serpent.Test
 [TestFixture]
 public class SlowPerformanceTest {
 
-	// tests the currently very slow performance of the SeekableStringReader.ReadUntil method
-	// TODO fix this issue (#12) and then this can be removed
+	// tests some performance regressions when they occur
 
 	[Test]
-	public static void TestManyFloats()
+	[Ignore("number parse performance in long lists has been resolved")]
+	public void TestManyFloats()
 	{
-		int amount = 20000;
+		const int amount = 200000;
 		double[] array = new double[amount];
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345.987654;
@@ -31,9 +31,10 @@ public class SlowPerformanceTest {
 	}
 
 	[Test]
-	public static void TestManyInts()
+	[Ignore("number parse performance in long lists has been resolved")]
+	public void TestManyInts()
 	{
-		int amount=20000;
+		const int amount=200000;
 		int[] array = new int[amount];
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345;

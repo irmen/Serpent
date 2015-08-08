@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Razorvine.Serpent</id>
-    <version>1.11.2.29131</version>  <!-- from assembly info -->
+    <version>1.12.0.0</version>  <!-- from assembly info -->
     <title>Razorvine.Serpent</title>
     <authors>Irmen de Jong</authors>
     <owners>Irmen de Jong</owners>
@@ -18,7 +18,7 @@ such a Python expression itself, back into the equivalent .NET datatypes.
 
 More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</description>
   	<summary>Serpent Python literal expression serialization</summary>
-    <releaseNotes>fixed build configuration settings</releaseNotes>
+    <releaseNotes>number parsing performance on large arrays greatly improved</releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>serialization python pyro</tags>
   </metadata>
