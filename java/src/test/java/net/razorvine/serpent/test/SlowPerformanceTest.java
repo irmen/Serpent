@@ -4,18 +4,23 @@ import java.io.IOException;
 
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 
 public class SlowPerformanceTest {
 
-	// tests the currently very slow performance of the SeekableStringReader.ReadUntil method
-	// TODO fix this issue (#12) and then this can be removed
+	// tests some performance regressions when they occur
 
 	@Test
+	@Ignore
 	public void TestManyFloats() throws IOException
 	{
-		int amount = 20000;
+//		System.out.println("enter to start manyfloats");
+//		System.in.read();
+		
+		int amount = 500000;
 		double[] array = new double[amount];
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345.987654;
@@ -33,9 +38,13 @@ public class SlowPerformanceTest {
 	}
 
 	@Test
+	@Ignore
 	public void TestManyInts() throws IOException
 	{
-		int amount=20000;
+//		System.out.println("enter to start manyints");
+//		System.in.read();
+
+		int amount=500000;
 		int[] array = new int[amount];
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345;

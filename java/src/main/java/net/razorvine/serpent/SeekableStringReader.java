@@ -7,9 +7,6 @@
 
 package net.razorvine.serpent;
 
-import java.util.HashSet;
-import java.util.Set;
-
 	
 /**
  * A special string reader that is suitable for the parser to read through
@@ -88,13 +85,28 @@ public class SeekableStringReader
 	}
 	
 	/**
+	 * Read everything until one the sentinel, which must exist in the string.
+	 * Sentinel char is read but not returned in the result.
+	 */
+	public String readUntil(char sentinel)
+	{
+		int i = str.indexOf(sentinel, cursor);
+		if(i>=0) {
+			int from = cursor;
+			cursor = i+1;
+			return str.substring(from, i);
+		}
+		throw new ParseException("terminator not found");
+	}
+
+	/**
 	 * Read everything until one of the sentinel(s), which must exist in the string.
 	 * Sentinel char is read but not returned in the result.
 	 */
-	public String readUntil(char ... sentinels)
+	public String readUntil(String sentinels)
 	{
 		int index=Integer.MAX_VALUE;
-		for(char s: sentinels)
+		for(char s: sentinels.toCharArray())
 		{
 			int i = str.indexOf(s, cursor);
 			if(i>=0)
@@ -113,15 +125,12 @@ public class SeekableStringReader
 	/**
 	 * Read everything as long as the char occurs in the accepted characters.
 	 */
-	public String readWhile(char ... accepted)
+	public String readWhile(String accepted)
 	{
 		int start = cursor;
-		Set<Character> acceptedChars = new HashSet<Character>();
-		for(char c: accepted)
-			acceptedChars.add(c);
 		while(cursor < str.length())
 		{
-			if(acceptedChars.contains(str.charAt(cursor)))
+			if(accepted.indexOf(str.charAt(cursor))>=0)
 				++cursor;
 			else
 				break;

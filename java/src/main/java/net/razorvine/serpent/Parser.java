@@ -369,10 +369,13 @@ public class Parser
 		}
 	}
 	
+	final String FloatCharacters = "-+.eE0123456789";
+	final String IntCharacters = "-0123456789";
+
 	INode parseInt(SeekableStringReader sr)
 	{
 		// int =  ['-'] digitnonzero {digit} .
-		String numberstr = sr.readWhile('-','0','1','2','3','4','5','6','7','8','9');
+		String numberstr = sr.readWhile(IntCharacters);
 		if(numberstr.length()==0)
 			throw new ParseException("invalid int character");
 		try {
@@ -398,7 +401,7 @@ public class Parser
 
 	PrimitiveNode<Double> parseFloat(SeekableStringReader sr)
 	{
-		String numberstr = sr.readWhile('-','+','.','e','E','0','1','2','3','4','5','6','7','8','9');
+		String numberstr = sr.readWhile(FloatCharacters);
 		if(numberstr.length()==0)
 			throw new ParseException("invalid float character");
 		
@@ -406,7 +409,7 @@ public class Parser
 		// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
 		// in that case, we need to reject it as a float.
 		if(numberstr.indexOf('.')<0 && numberstr.indexOf('e')<0 && numberstr.indexOf('E')<0)
-			throw new ParseException("number is not a valid float");
+			throw new ParseException("number is not a float (might be an integer though)");
 
 		try {
 			return new DoubleNode(Double.parseDouble(numberstr));
@@ -428,10 +431,10 @@ public class Parser
 			if(sr.peek()=='-' || sr.peek()=='+')
 			{
 				// starts with a sign, read that first otherwise the readuntil will return immediately
-				numberstr = sr.read(1) + sr.readUntil(new char[] {'+', '-'});
+				numberstr = sr.read(1) + sr.readUntil("+-");
 			}
 			else
-				numberstr = sr.readUntil(new char[] {'+', '-'});
+				numberstr = sr.readUntil("+-");
 			double real;
 			try {
 				real = Double.parseDouble(numberstr);
@@ -462,12 +465,46 @@ public class Parser
 	double parseImaginaryPart(SeekableStringReader sr)
 	{
 		//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
-		String numberstr = sr.readUntil('j');
+		char sign_or_digit;
 		try {
-			return Double.parseDouble(numberstr);
-		} catch(NumberFormatException x) {
-			throw new ParseException("invalid float format", x);
+			sign_or_digit = sr.peek();
+		} catch (IndexOutOfBoundsException x) {
+			throw new ParseException("unexpected end of input string");
 		}
+		
+		if(sign_or_digit=='+')
+			sr.read();   // skip the '+'
+		
+		// now an int or float follows.
+		double double_value;
+		int bookmark = sr.bookmark();
+		try {
+			PrimitiveNode<Double> float_part = parseFloat(sr);
+			double_value = float_part.value;
+		} catch (ParseException x1) {
+			sr.flipBack(bookmark);
+			INode integer_part = parseInt(sr);
+			ObjectifyVisitor v = new ObjectifyVisitor();
+			integer_part.accept(v);
+			Object integer_object = v.getObject();
+			try {
+				Number int_num = (Number) integer_object;
+				double_value = int_num.doubleValue();
+			} catch (ClassCastException x) {
+				throw new ParseException("not an integer for the imaginary part");
+			}
+		}
+		
+		// now a 'j' must follow!
+		sr.skipWhitespace();
+		try {
+			char j_char = sr.read();
+			if(j_char!='j')
+				throw new ParseException("not an imaginary part");
+		} catch (IndexOutOfBoundsException x) {
+			throw new ParseException("not an imaginary part");
+		}
+		return double_value;
 	}
 	
 	PrimitiveNode<String> parseString(SeekableStringReader sr)

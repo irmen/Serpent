@@ -20,7 +20,7 @@ import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 import org.junit.Test;
 
-public class SerializeTests {
+public class SerializeTest {
 
 	public byte[] strip_header(byte[] data)
 	{

@@ -419,6 +419,14 @@ public class ParserTest
 		assertEquals(cplx, p.parse("-3.2j").root);
 		cplx.real = -9.9;
 		assertEquals(cplx, p.parse("(-9.9-3.2j)").root);
+
+		cplx.real = 2;
+		cplx.imaginary = 3;
+		assertEquals(cplx, p.parse("(2+3j)").root);
+		cplx.imaginary = -3;
+		assertEquals(cplx, p.parse("(2-3j)").root);
+		cplx.real = 0;
+		assertEquals(cplx, p.parse("-3j").root);
 	}
 	
 	@Test
