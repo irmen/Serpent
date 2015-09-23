@@ -11,6 +11,8 @@ python:
 sudo: false
 
 # Installation installs dependencies
-install: python setup.py install
+install:
+  - pip install pytz
+  - pip install .
 
-script: python -bb -E test_serpent.py
+script: python -bb test_serpent.py
