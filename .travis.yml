@@ -1,0 +1,16 @@
+language: python
+python:
+  - "pypy"
+  - "2.7"
+  - "pypy3"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+# Use fast travis build infrastructure explicitly
+sudo: false
+
+# Installation installs dependencies
+install: python setup.py install
+
+script: python -bb -E test_serpent.py
