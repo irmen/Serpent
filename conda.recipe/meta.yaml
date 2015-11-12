@@ -3,8 +3,7 @@ package:
   version: 1.12
 
 source:
-  git_rev: "v1.12"
-  path: "git@github.com:ijstokes/Serpent.git"
+  path: ..
 
 build:
   number: 2
