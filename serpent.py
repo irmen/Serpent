@@ -67,7 +67,7 @@ import uuid
 import array
 import math
 
-__version__ = "1.11"
+__version__ = "1.12"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "fix_nan"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
