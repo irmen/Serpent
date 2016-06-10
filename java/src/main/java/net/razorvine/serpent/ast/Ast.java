@@ -10,9 +10,9 @@ package net.razorvine.serpent.ast;
 import net.razorvine.serpent.IDictToInstance;
 import net.razorvine.serpent.ObjectifyVisitor;
 
-/// <summary>
-/// Abstract syntax tree for the literal expression. This is what the parser returns.
-/// </summary>
+/**
+ * Abstract syntax tree for the literal expression. This is what the parser returns.
+ */
 public class Ast
 {
 	public INode root;

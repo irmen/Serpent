@@ -67,8 +67,8 @@ import uuid
 import array
 import math
 
-__version__ = "1.12"
-__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "fix_nan"]
+__version__ = "1.13"
+__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
@@ -193,11 +193,11 @@ _translate_types = {
 }
 
 if sys.version_info >= (3, 0):
-   _translate_types.update({
-       collections.UserDict: dict,
-       collections.UserList: list,
-       collections.UserString: str
-   })
+    _translate_types.update({
+        collections.UserDict: dict,
+        collections.UserList: list,
+        collections.UserString: str
+    })
 
 # do some dynamic changes to the types configuration if needed
 if bytes is str:
@@ -275,20 +275,19 @@ class Serializer(object):
             if isinstance(obj, clazz):
                 special_classes[clazz](obj, self, out, level)
                 return
-        else:
-            # serialize dispatch
-            try:
-                f = self.dispatch[t]
-            except KeyError:
-                # walk the MRO until we find a base class we recognise
-                for type_ in t.__mro__:
-                    if type_ in self.dispatch:
-                        f = self.dispatch[type_]
-                        break
-                else:
-                    # fall back to the default class serializer
-                    f = Serializer.ser_default_class
-            f(self, obj, out, level)
+        # serialize dispatch
+        try:
+            func = self.dispatch[t]
+        except KeyError:
+            # walk the MRO until we find a base class we recognise
+            for type_ in t.__mro__:
+                if type_ in self.dispatch:
+                    func = self.dispatch[type_]
+                    break
+            else:
+                # fall back to the default class serializer
+                func = Serializer.ser_default_class
+        func(self, obj, out, level)
 
     def ser_builtins_str(self, str_obj, out, level):
         # special case str, for IronPython where str==unicode and repr() yields undesired result
@@ -415,20 +414,20 @@ class Serializer(object):
                 sorted_items = sorted(dict_items)
             except TypeError:  # can occur when elements can't be ordered (Python 3.x)
                 sorted_items = dict_items
-            for k, v in sorted_items:
+            for key, value in sorted_items:
                 append(indent_chars_inside)
-                serialize(k, out, level + 1)
+                serialize(key, out, level + 1)
                 append(b": ")
-                serialize(v, out, level + 1)
+                serialize(value, out, level + 1)
                 append(b",\n")
             del out[-1]  # remove last ,\n
             append(b"\n" + indent_chars + b"}")
         else:
             append(b"{")
-            for k, v in dict_obj.items():
-                serialize(k, out, level + 1)
+            for key, value in dict_obj.items():
+                serialize(key, out, level + 1)
                 append(b":")
-                serialize(v, out, level + 1)
+                serialize(value, out, level + 1)
                 append(b",")
             if dict_obj:
                 del out[-1]  # remove the last ,
