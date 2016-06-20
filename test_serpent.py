@@ -313,6 +313,18 @@ class TestBasics(unittest.TestCase):
             self.assertEqual(ord("{"), data[0])
             self.assertEqual(ord("}"), data[-1])
 
+    def test_dict_iters(self):
+        data = {"john": 22, "sophie": 34, "bob": 26}
+        ser = serpent.loads(serpent.dumps(data.keys()))
+        self.assertIsInstance(ser, list)
+        self.assertEqual(["bob", "john", "sophie"], sorted(ser))
+        ser = serpent.loads(serpent.dumps(data.values()))
+        self.assertIsInstance(ser, list)
+        self.assertEqual([22, 26, 34], sorted(ser))
+        ser = serpent.loads(serpent.dumps(data.items()))
+        self.assertIsInstance(ser, list)
+        self.assertEqual([("bob", 26), ("john", 22), ("sophie", 34)], sorted(ser))
+
     def test_list(self):
         ser = serpent.dumps([])
         data = strip_header(ser)

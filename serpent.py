@@ -118,7 +118,15 @@ def _ser_OrderedDict(obj, serializer, outputstream, indentlevel):
     serializer._serialize(obj, outputstream, indentlevel)
 
 
-_special_classes_registry = {}
+def _ser_DictView(obj, serializer, outputstream, indentlevel):
+    serializer.ser_builtins_list(obj, outputstream, indentlevel)
+
+
+_special_classes_registry = {
+    collections.KeysView: _ser_DictView,
+    collections.ValuesView: _ser_DictView,
+    collections.ItemsView: _ser_DictView
+}
 if sys.version_info >= (2, 7):
     _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
 
