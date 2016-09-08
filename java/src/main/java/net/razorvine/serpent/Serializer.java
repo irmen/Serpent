@@ -19,8 +19,10 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.xml.bind.DatatypeConverter;
+
 
 /**
  * Serialize an object tree to a byte stream.
@@ -403,7 +405,7 @@ public class Serializer
 	protected void serialize_class(Object obj, PrintWriter p, int level) 
 	{
 		Map<String,Object> map;
-		IClassSerializer converter=classToDictRegistry.get(obj.getClass());
+		IClassSerializer converter=getCustomConverter(obj.getClass());
 		if(null!=converter)
 		{
 			map = converter.convert(obj);
@@ -445,6 +447,23 @@ public class Serializer
 			}
 		}
 		serialize_dict(map, p, level);
+	}
+
+	protected IClassSerializer getCustomConverter(Class<?> type) {
+		IClassSerializer converter = classToDictRegistry.get(type.getClass());
+		if(converter!=null) {
+			return converter; // exact match
+		}
+		
+		// check if there's a custom pickler registered for an interface or abstract base class
+		// that this object implements or inherits from.
+		for(Entry<Class<?>, IClassSerializer> x: classToDictRegistry.entrySet()) {
+			if(x.getKey().isAssignableFrom(type)) {
+				return x.getValue();
+			}
+		}
+		
+		return null;
 	}
 
 	protected void serialize_primitive(Object obj, PrintWriter p, int level) 

@@ -611,6 +611,65 @@ namespace Razorvine.Serpent.Test
 			byte[] ser = strip_header(serpent.Serialize(e));
 			Assert.AreEqual("'Jarjar'", S(ser));
 		}
+
+		
+		interface IBaseInterface {};
+		interface ISubInterface : IBaseInterface {};
+		class BaseClassWithInterface : IBaseInterface {};
+		class SubClassWithInterface : BaseClassWithInterface, ISubInterface {};
+		class BaseClass {};
+		class SubClass : BaseClass {};
+		abstract class AbstractBaseClass {};
+		class ConcreteSubClass : AbstractBaseClass {};
+
+		protected IDictionary AnyClassSerializer(object arg)
+		{
+			IDictionary result = new Hashtable();
+			result["(SUB)CLASS"] = arg.GetType().Name;
+			return result;
+		}
+
+		[Test]
+		public void testAbstractBaseClassHierarchyPickler()
+		{
+			ConcreteSubClass c = new ConcreteSubClass();
+			Serializer serpent = new Serializer();
+			try {
+				serpent.Serialize(c);
+				Assert.Fail("should crash");
+			} catch (SerializationException x) {
+				Assert.IsTrue(x.Message.Contains("not serializable"));
+			}
+			
+			Serializer.RegisterClass(typeof(AbstractBaseClass), AnyClassSerializer);
+			byte[] data = serpent.Serialize(c);
+			Assert.AreEqual("{'(SUB)CLASS':'ConcreteSubClass'}", S(strip_header(data)));
+		}
+		
+		[Test]
+		public void testInterfaceHierarchyPickler()
+		{
+			BaseClassWithInterface b = new BaseClassWithInterface();
+			SubClassWithInterface sub = new SubClassWithInterface();
+			Serializer serpent = new Serializer();
+			try {
+				serpent.Serialize(b);
+				Assert.Fail("should crash");
+			} catch (SerializationException x) {
+				Assert.IsTrue(x.Message.Contains("not serializable"));
+			}
+			try {
+				serpent.Serialize(sub);
+				Assert.Fail("should crash");
+			} catch (SerializationException x) {
+				Assert.IsTrue(x.Message.Contains("not serializable"));
+			}
+			Serializer.RegisterClass(typeof(IBaseInterface), AnyClassSerializer);
+			byte[] data = serpent.Serialize(b);
+			Assert.AreEqual("{'(SUB)CLASS':'BaseClassWithInterface'}", S(strip_header(data)));
+			data = serpent.Serialize(sub);
+			Assert.AreEqual("{'(SUB)CLASS':'SubClassWithInterface'}", S(strip_header(data)));
+		}			
 	}
 
 	[Serializable]

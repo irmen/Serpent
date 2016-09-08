@@ -446,8 +446,7 @@ namespace Razorvine.Serpent
 			Type obj_type = obj.GetType();
 			
 			IDictionary dict;
-			Func<object, IDictionary> converter = null;
-			classToDictRegistry.TryGetValue(obj_type, out converter);
+			Func<object, IDictionary> converter = GetCustomConverter(obj_type);
 			
 			if(converter!=null)
 			{
@@ -486,6 +485,23 @@ namespace Razorvine.Serpent
 			}
 			
 			Serialize_dict(dict, tw, level);
+		}
+
+		protected Func<object, IDictionary> GetCustomConverter(Type obj_type)
+		{
+			Func<object, IDictionary> converter;
+			if(classToDictRegistry.TryGetValue(obj_type, out converter))
+				return converter;  // exact match
+			
+			// check if there's a custom converter registered for an interface or abstract base class
+			// that this object implements or inherits from.
+			foreach(var x in classToDictRegistry) {
+				if(x.Key.IsAssignableFrom(obj_type)) {
+					return x.Value;
+				}
+			}
+			
+			return null;
 		}
 	}
 }

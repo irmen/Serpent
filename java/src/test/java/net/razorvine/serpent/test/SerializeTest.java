@@ -9,6 +9,7 @@ package net.razorvine.serpent.test;
 
 import static org.junit.Assert.*;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,6 +19,7 @@ import net.razorvine.serpent.ComplexNumber;
 import net.razorvine.serpent.IClassSerializer;
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
+
 import org.junit.Test;
 
 public class SerializeTest {
@@ -612,5 +614,55 @@ public class SerializeTest {
 		serpent.indent=true;
 		ser = strip_header(serpent.serialize(data5));
 		assertEquals("{\n  'a',\n  'b',\n  'c',\n  'x',\n  'y',\n  'z'\n}", S(ser));
+	}
+	
+	interface IBaseInterface {};
+	interface ISubInterface extends IBaseInterface {};
+	class BaseClassWithInterface implements IBaseInterface, Serializable {};
+	class SubClassWithInterface extends BaseClassWithInterface implements ISubInterface, Serializable {};
+	class BaseClass implements Serializable {};
+	class SubClass extends BaseClass implements Serializable {};
+	abstract class AbstractBaseClass {};
+	class ConcreteSubClass extends AbstractBaseClass implements Serializable {};
+
+	class AnyClassConverter implements IClassSerializer
+	{
+		@Override
+		public Map<String, Object> convert(Object obj) {
+		    Map<String, Object> result = new HashMap<String, Object>();
+		    result.put("(SUB)CLASS", obj.getClass().getSimpleName());
+		    return result; 
+		}
+	}
+
+	@Test
+	public void testAbstractBaseClassHierarchyPickler() 
+	{
+		ConcreteSubClass c = new ConcreteSubClass();
+		Serializer serpent=new Serializer();
+		byte[] data = serpent.serialize(c);
+		assertEquals("{'__class__':'ConcreteSubClass'}", S(strip_header(data)));  // the default serializer
+		
+		Serializer.registerClass(AbstractBaseClass.class, new AnyClassConverter());
+		data = serpent.serialize(c);
+		assertEquals("{'(SUB)CLASS':'ConcreteSubClass'}", S(strip_header(data)));  // custom serializer
+	}
+	
+	@Test
+	public void testInterfaceHierarchyPickler()
+	{
+		BaseClassWithInterface b = new BaseClassWithInterface();
+		SubClassWithInterface sub = new SubClassWithInterface();
+		Serializer serpent=new Serializer();
+		byte[] data = serpent.serialize(b);
+		assertEquals("{'__class__':'BaseClassWithInterface'}", S(strip_header(data)));  // the default serializer
+		data = serpent.serialize(sub);
+		assertEquals("{'__class__':'SubClassWithInterface'}", S(strip_header(data)));  // the default serializer
+
+		Serializer.registerClass(IBaseInterface.class, new AnyClassConverter());
+		data = serpent.serialize(b);
+		assertEquals("{'(SUB)CLASS':'BaseClassWithInterface'}", S(strip_header(data)));  // custom serializer
+		data = serpent.serialize(sub);
+		assertEquals("{'(SUB)CLASS':'SubClassWithInterface'}", S(strip_header(data)));  // custom serializer
 	}
 }
