@@ -714,6 +714,11 @@ class Something(object):
     def __getstate__(self):
         return ("bogus", "state")
 
+class BaseClass(object):
+    pass
+class SubClass(BaseClass):
+    pass
+
 
 class TestCustomClasses(unittest.TestCase):
     def testCustomClass(self):
@@ -735,6 +740,15 @@ class TestCustomClasses(unittest.TestCase):
         d = serpent.dumps(s)
         x = serpent.loads(d)
         self.assertEqual(("bogus", "state"), x)
+
+    def testSubclass(self):
+        def custom_serializer(obj, serializer, stream, level):
+            serializer._serialize("[(sub)class=%s]" % type(obj), stream, level)
+        serpent.register_class(BaseClass, custom_serializer)
+        s = SubClass()
+        d = serpent.dumps(s)
+        x = serpent.loads(d)
+        self.assertEqual("[(sub)class=<class '__main__.SubClass'>]", x)
 
     def testUUID(self):
         uid = uuid.uuid4()
