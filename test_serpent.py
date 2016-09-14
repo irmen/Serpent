@@ -508,6 +508,9 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
         data = strip_header(ser)
         self.assertEqual(b"'2013-01-20T23:59:45.999888'", data)
+        ser = serpent.dumps(datetime.date(2013, 1, 20))
+        data = strip_header(ser)
+        self.assertEqual(b"'2013-01-20'", data)
         ser = serpent.dumps(datetime.time(23, 59, 45, 999888))
         data = strip_header(ser)
         self.assertEqual(b"'23:59:45.999888'", data)
@@ -564,6 +567,7 @@ class TestSpeed(unittest.TestCase):
             "exc": ZeroDivisionError("fault"),
             "dates": [
                 datetime.datetime.now(),
+                datetime.date.today(),
                 datetime.time(23, 59, 45, 999888),
                 datetime.timedelta(seconds=500)
             ],
