@@ -489,7 +489,11 @@ class Serializer(object):
     def ser_datetime_datetime(self, datetime_obj, out, level):
         self._serialize(datetime_obj.isoformat(), out, level)
     dispatch[datetime.datetime] = ser_datetime_datetime
-
+    
+    def ser_datetime_date(self, date_obj, out, level):
+        self._serialize(date_obj.isoformat(), out, level)
+    dispatch[datetime.date] = ser_datetime_date
+    
     if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10 ** 6 + timedelta_obj.microseconds) / 10 ** 6
