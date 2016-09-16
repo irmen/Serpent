@@ -46,7 +46,7 @@ Serpent handles several special Python types to make life easier:
  - str  --> promoted to unicode (see below why this is)
  - bytes, bytearrays, memoryview, buffer  --> string, base-64
    (you'll have to manually un-base64 them though)
- - uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
+ - uuid.UUID, datetime.{datetime, date, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
  - array.array typecode 'c'/'u' --> string/unicode
  - array.array other typecode --> list

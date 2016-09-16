@@ -14,7 +14,7 @@ Serpent handles several special Python types to make life easier:
  - str  --> promoted to unicode (see below why this is)
  - bytes, bytearrays, memoryview, buffer  --> string, base-64
    (you'll have to manually un-base64 them though)
- - uuid.UUID, datetime.{datetime, time, timespan}  --> appropriate string/number
+ - uuid.UUID, datetime.{datetime, date, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
  - array.array typecode 'c'/'u' --> string/unicode
  - array.array other typecode --> list
@@ -48,7 +48,7 @@ and is represented by the special value:  {'__class__':'float','value':'nan'}
 We chose not to encode it as just the string 'NaN' because that could cause
 memory issues when used in multiplications.
 
-Copyright 2013, 2014 by Irmen de Jong (irmen@razorvine.net)
+Copyright by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 
@@ -67,7 +67,7 @@ import uuid
 import array
 import math
 
-__version__ = "1.13"
+__version__ = "1.14"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
