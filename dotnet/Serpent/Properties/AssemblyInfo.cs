@@ -36,5 +36,5 @@ More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpen
 //
 // You can specify all the values or you can use the default the Revision and 
 // Build Numbers by using the '*' as shown below:
-[assembly: AssemblyVersion("1.13.0.*")]
-[assembly: AssemblyFileVersion("1.13.0.0")]
+[assembly: AssemblyVersion("1.15.0.*")]
+[assembly: AssemblyFileVersion("1.15.0.0")]
