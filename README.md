@@ -39,7 +39,7 @@ Example usage can be found in ./java/test/SerpentExample.java
 
 SOME MORE DETAILS
 -----------------
-Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+Compatible with Python 2.7+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
 Serpent handles several special Python types to make life easier:
 
@@ -64,9 +64,6 @@ output doesn't have those problematic 'u' prefixes on strings.
 The serializer is not thread-safe. Make sure you're not making changes
 to the object tree that is being serialized, and don't use the same
 serializer in different threads.
-
-Python 2.6 cannot deserialize complex numbers at all (limitation of
-``ast.literal_eval`` in 2.6).
 
 Because the serialized format is just valid Python source code, it can
 contain comments. Serpent does not add comments by itself apart from the

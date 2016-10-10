@@ -54,7 +54,7 @@ Serpent is more sophisticated than a simple repr() + literal_eval():
 Serpent allows comments in the serialized data (because it is just Python source code).
 Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a ValueError pointing out the problem.
 
-Works with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+Works with Python 2.7+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
 **FAQ**
 
@@ -162,8 +162,11 @@ When you run this (with python 3.2+) it prints:
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Software Development"
     ],
 

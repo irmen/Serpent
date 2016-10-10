@@ -1,11 +1,11 @@
 language: python
 python:
-  - "pypy"
   - "2.7"
-  - "pypy3"
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
+  - "pypy"
 
 # Use fast travis build infrastructure explicitly
 sudo: false

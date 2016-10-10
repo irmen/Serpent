@@ -97,7 +97,7 @@ class TestBasics(unittest.TestCase):
         else:
             self.assertTrue(type(ser) is bytes)
             header, _, rest = ser.partition(b"\n")
-        hdr = "# serpent utf-8 python2.6".encode("utf-8")
+        hdr = "# serpent utf-8 python2.6".encode("utf-8")    # don't change the 2.6 here even though we don't support python 2.6 any longer
         self.assertEqual(hdr, header)
 
     def test_comments(self):

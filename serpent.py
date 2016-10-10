@@ -7,7 +7,7 @@ original object tree. As such it is safe to send serpent data to other
 machines over the network for instance (because only 'safe' literals are
 encoded).
 
-Compatible with Python 2.6+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+Compatible with Python 2.7+ (including 3.x), IronPython 2.7+, Jython 2.7+.
 
 Serpent handles several special Python types to make life easier:
 
@@ -31,9 +31,6 @@ output doesn't have those problematic 'u' prefixes on strings.
 The serializer is not thread-safe. Make sure you're not making changes
 to the object tree that is being serialized, and don't use the same
 serializer in different threads.
-
-Python 2.6 cannot deserialize complex numbers (limitation of
-ast.literal_eval in 2.6)
 
 Because the serialized format is just valid Python source code, it can
 contain comments.
@@ -270,7 +267,7 @@ class Serializer(object):
         if self.set_literals:
             header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
         else:
-            header += "python2.6\n"
+            header += "python2.6\n"   # don't change this even though we don't support 2.6 any longer, otherwise we can't read older serpent strings
         out = [header.encode("utf-8")]
         try:
             if os.name != "java" and sys.platform != "cli":
