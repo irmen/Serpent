@@ -18,6 +18,7 @@ import traceback
 import threading
 import time
 import collections
+import types
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -552,7 +553,36 @@ class TestBasics(unittest.TestCase):
         ser = strip_header(serpent.dumps(values))
         self.assertEqual(b"[1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+4.0j)]", ser)
 
+    def test_tobytes(self):
+        obj = b"test"
+        self.assertIs(obj, serpent.tobytes(obj))
+        obj = memoryview(b"test")
+        self.assertIs(obj, serpent.tobytes(obj))
+        obj = bytearray(b"test")
+        self.assertIs(obj, serpent.tobytes(obj))
+        if hasattr(types, "BufferType"):
+            obj = buffer(b"test")
+            self.assertIs(obj, serpent.tobytes(obj))
+        ser = {'data': 'dGVzdA==', 'encoding': 'base64'}
+        out = serpent.tobytes(ser)
+        self.assertEqual(b"test", out)
+        if sys.platform == 'cli':
+            self.assertIsInstance(out, str)  # ironpython base64 decodes into str type....
+        else:
+            self.assertIsInstance(out, bytes)
+        with self.assertRaises(TypeError):
+            serpent.tobytes({'@@@data': 'dGVzdA==', 'encoding': 'base64'})
+        with self.assertRaises(TypeError):
+            serpent.tobytes({'data': 'dGVzdA==', '@@@encoding': 'base64'})
+        with self.assertRaises(TypeError):
+            serpent.tobytes({'data': 'dGVzdA==', 'encoding': 'base99'})
+        with self.assertRaises(TypeError):
+            serpent.tobytes({})
+        with self.assertRaises(TypeError):
+            serpent.tobytes(42)
 
+
+@unittest.skip("no performance tests in default test suite")
 class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {

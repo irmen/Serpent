@@ -43,7 +43,8 @@ Serpent is more sophisticated than a simple repr() + literal_eval():
 
 - it serializes directly to bytes (utf-8 encoded), instead of a string, so it can immediately be saved to a file or sent over a socket
 - it encodes byte-types as base-64 instead of inefficient escaping notation that repr would use (this does mean you have
-  to base-64 decode these strings manually on the receiving side to get your bytes back)
+  to base-64 decode these strings manually on the receiving side to get your bytes back.
+  You can use the serpent.tobytes utility function for this.)
 - it contains a few custom serializers for several additional Python types such as uuid, datetime, array and decimal
 - it tries to serialize unrecognised types as a dict (you can control this with __getstate__ on your own types)
 - it can create a pretty-printed (indented) output for readability purposes

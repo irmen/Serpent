@@ -67,8 +67,8 @@ import uuid
 import array
 import math
 
-__version__ = "1.14"
-__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class"]
+__version__ = "1.15"
+__all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
@@ -147,7 +147,10 @@ def register_class(clazz, serializer):
 
 
 class BytesWrapper(object):
-    """Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data."""
+    """
+    Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data.
+    You can use the tobytes utility function to decode this back into the actual bytes (or do it manually)
+    """
     def __init__(self, data):
         self.data = data
 
@@ -207,17 +210,35 @@ if sys.version_info >= (3, 0):
         collections.UserString: str
     })
 
+_bytes_types = [bytes, bytearray, memoryview]
+
 # do some dynamic changes to the types configuration if needed
 if bytes is str:
     del _translate_types[bytes]
 if hasattr(types, "BufferType"):
     _translate_types[types.BufferType] = BytesWrapper.from_buffer
+    _bytes_types.append(buffer)
 try:
     _translate_types[memoryview] = BytesWrapper.from_memoryview
 except NameError:
     pass
 if sys.platform == "cli":
     _repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
+_bytes_types = tuple(_bytes_types)
+
+
+def tobytes(obj):
+    """
+    Utility function to convert obj back to actual bytes if it is a serpent-encoded bytes dictionary
+    (a dict with base-64 encoded 'data' in it and 'encoding'='base64').
+    If obj is already bytes or a byte-like type, return obj unmodified.
+    Will raise TypeError if obj is none of the above.
+    """
+    if isinstance(obj, _bytes_types):
+        return obj
+    if isinstance(obj, dict) and "data" in obj and obj.get("encoding") == "base64":
+        return base64.b64decode(obj["data"])
+    raise TypeError("argument is neither bytes nor serpent base64 encoded bytes dict")
 
 
 class Serializer(object):
