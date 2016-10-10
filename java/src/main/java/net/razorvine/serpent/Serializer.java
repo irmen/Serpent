@@ -543,29 +543,4 @@ public class Serializer
 		}
 		serialize_dict(dict, p, level);
 	}
-
-	/**
-	 * Utility function to convert obj back to actual bytes if it is a serpent-encoded bytes dictionary
-	 * (a IDictionary with base-64 encoded 'data' in it and 'encoding'='base64').
-	 * If obj is already a byte array, return obj unmodified.
-	 * If it is something else, throw an IllegalArgumentException
-	 */
-	public static byte[] toBytes(Object obj) {
-		if(obj instanceof Map<?,?>)
-		{
-			@SuppressWarnings("unchecked")
-			Map<String,String> dict = (Map<String,String>)obj;
-			String data = dict.get("data");
-			String encoding = dict.get("encoding");
-			if(data==null || encoding==null || !encoding.equals("base64"))
-			{
-				throw new IllegalArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
-			}
-			return DatatypeConverter.parseBase64Binary(data);
-		}
-		if(obj instanceof byte[])
-		{
-			return (byte[]) obj;
-		}
-		throw new IllegalArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");	}
 }

@@ -601,6 +601,35 @@ namespace Razorvine.Serpent
 			if(numberstr=="-1e30000") return double.NegativeInfinity;
 			return double.Parse(numberstr, CultureInfo.InvariantCulture);
 		}
+
+
+		/// <summary>
+    	/// Utility function to convert obj back to actual bytes if it is a serpent-encoded bytes dictionary
+    	/// (a IDictionary with base-64 encoded 'data' in it and 'encoding'='base64').
+    	/// If obj is already a byte array, return obj unmodified.
+    	/// If it is something else, throw an ArgumentException
+		/// </summary>
+		public static byte[] ToBytes(object obj) {
+			IDictionary<string,string> dict = obj as IDictionary<string,string>;
+			if(dict!=null)
+			{
+				string data;
+				string encoding;
+				bool hasData = dict.TryGetValue("data", out data);
+				bool hasEncoding = dict.TryGetValue("encoding", out encoding);
+				if(!hasData || !hasEncoding || encoding!="base64")
+				{
+					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+				}
+				return Convert.FromBase64String(data);
+			}
+			byte[] bytearray = obj as byte[];
+			if(bytearray!=null)
+			{
+				return bytearray;
+			}
+			throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+		}
 	}
 }
 

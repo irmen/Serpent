@@ -323,21 +323,21 @@ namespace Razorvine.Serpent.Test
             	{"data", "YWJjZGVm"},
             	{"encoding", "base64"}
             };
-            byte[] bytes2 = Serializer.ToBytes(dict);
+            byte[] bytes2 = Parser.ToBytes(dict);
             Assert.AreEqual(bytes, bytes2);
             
             dict["encoding"] = "base99";
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
             dict["data"] = "YWJjZGVm";
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
             dict["encoding"] = "base64";
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(12345));
-            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(null));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(12345));
+            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(null));
 		}
 		
 		[Test]

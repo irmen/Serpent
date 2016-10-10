@@ -198,12 +198,12 @@ public class SerializeTest {
 		dict.put("data", "YWJjZGVm");
 		dict.put("encoding", "base64");
 
-        byte[] bytes2 = Serializer.toBytes(dict);
+        byte[] bytes2 = Parser.toBytes(dict);
         assertArrayEquals(bytes, bytes2);
         
         dict.put("encoding", "base99");
         try {
-        	Serializer.toBytes(dict);
+        	Parser.toBytes(dict);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
@@ -211,7 +211,7 @@ public class SerializeTest {
 
         dict.clear();
         try {
-        	Serializer.toBytes(dict);
+        	Parser.toBytes(dict);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
@@ -219,7 +219,7 @@ public class SerializeTest {
         dict.clear();
         dict.put("data", "YWJjZGVm");
         try {
-        	Serializer.toBytes(dict);
+        	Parser.toBytes(dict);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
@@ -227,19 +227,19 @@ public class SerializeTest {
         dict.clear();
         dict.put("encoding", "base64");
         try {
-        	Serializer.toBytes(dict);
+        	Parser.toBytes(dict);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
         }
         try {
-        	Serializer.toBytes(12345);
+        	Parser.toBytes(12345);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
         }
         try {
-        	Serializer.toBytes(null);
+        	Parser.toBytes(null);
         	fail("error expected");
         } catch (IllegalArgumentException x) {
         	//
