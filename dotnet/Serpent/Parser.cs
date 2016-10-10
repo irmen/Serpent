@@ -506,7 +506,7 @@ namespace Razorvine.Serpent
 				char j_char = sr.Read();
 				if(j_char!='j')
 					throw new ParseException("not an imaginary part");
-			} catch (IndexOutOfRangeException x) {
+			} catch (IndexOutOfRangeException) {
 				throw new ParseException("not an imaginary part");
 			}
 			return double_value;

@@ -318,6 +318,26 @@ namespace Razorvine.Serpent.Test
 			Parser p = new Parser();
 			string parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual(39, parsed.Length);
+
+            IDictionary<string, string> dict = new Dictionary<string, string> {
+            	{"data", "YWJjZGVm"},
+            	{"encoding", "base64"}
+            };
+            byte[] bytes2 = Serializer.ToBytes(dict);
+            Assert.AreEqual(bytes, bytes2);
+            
+            dict["encoding"] = "base99";
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            dict.Clear();
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            dict.Clear();
+            dict["data"] = "YWJjZGVm";
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            dict.Clear();
+            dict["encoding"] = "base64";
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(dict));
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(12345));
+            Assert.Throws<ArgumentException>(()=>Serializer.ToBytes(null));
 		}
 		
 		[Test]
