@@ -193,6 +193,57 @@ public class SerializeTest {
 		Parser p = new Parser();
 		String parsed = p.parse(ser).root.toString();
 		assertEquals(39, parsed.length());
+
+		Map<String,String> dict = new HashMap<String, String>();
+		dict.put("data", "YWJjZGVm");
+		dict.put("encoding", "base64");
+
+        byte[] bytes2 = Serializer.toBytes(dict);
+        assertArrayEquals(bytes, bytes2);
+        
+        dict.put("encoding", "base99");
+        try {
+        	Serializer.toBytes(dict);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
+
+        dict.clear();
+        try {
+        	Serializer.toBytes(dict);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
+        dict.clear();
+        dict.put("data", "YWJjZGVm");
+        try {
+        	Serializer.toBytes(dict);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
+        dict.clear();
+        dict.put("encoding", "base64");
+        try {
+        	Serializer.toBytes(dict);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
+        try {
+        	Serializer.toBytes(12345);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
+        try {
+        	Serializer.toBytes(null);
+        	fail("error expected");
+        } catch (IllegalArgumentException x) {
+        	//
+        }
 	}
 	
 
