@@ -319,11 +319,18 @@ namespace Razorvine.Serpent.Test
 			string parsed = p.Parse(ser).Root.ToString();
             Assert.AreEqual(39, parsed.Length);
 
-            IDictionary<string, string> dict = new Dictionary<string, string> {
+            var hashtable = new Hashtable {
             	{"data", "YWJjZGVm"},
             	{"encoding", "base64"}
             };
-            byte[] bytes2 = Parser.ToBytes(dict);
+            byte[] bytes2 = Parser.ToBytes(hashtable);
+            Assert.AreEqual(bytes, bytes2);
+
+            var dict = new Dictionary<string, string> {
+            	{"data", "YWJjZGVm"},
+            	{"encoding", "base64"}
+            };
+            bytes2 = Parser.ToBytes(dict);
             Assert.AreEqual(bytes, bytes2);
             
             dict["encoding"] = "base99";

@@ -7,6 +7,7 @@
 /// </summary>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -610,6 +611,20 @@ namespace Razorvine.Serpent
     	/// If it is something else, throw an ArgumentException
 		/// </summary>
 		public static byte[] ToBytes(object obj) {
+			Hashtable hashtable  = obj as Hashtable;
+			if(hashtable!=null)
+			{
+				string data = null;
+				string encoding = null;
+				if(hashtable.Contains("data")) data = (string)hashtable["data"];
+				if(hashtable.Contains("encoding")) encoding = (string)hashtable["encoding"];
+				if(data==null || "base64"!=encoding)
+				{
+					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+				}
+				return Convert.FromBase64String(data);
+			}
+			
 			IDictionary<string,string> dict = obj as IDictionary<string,string>;
 			if(dict!=null)
 			{
