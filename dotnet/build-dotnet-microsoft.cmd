@@ -3,3 +3,4 @@ msbuild /verbosity:minimal /p:Platform="Any CPU" /p:Configuration="Release" Serp
 
 if not exist build mkdir build
 copy Serpent\bin\Release\*.dll build\
+copy Serpent\bin\Release\*.pdb build\
