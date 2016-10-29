@@ -7,9 +7,7 @@
 /// </summary>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text;
 
 using NUnit.Framework;
@@ -465,10 +463,8 @@ namespace Razorvine.Serpent.Test
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
 			Serializer serpent = new Serializer(indent: true);
-			object obj = new UnserializableClass();
-			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
 			
-			obj = new SerializeTestClass() {
+			var obj = new SerializeTestClass() {
 				i = 99,
 				s = "hi",
 				x = 42
@@ -521,8 +517,6 @@ namespace Razorvine.Serpent.Test
 		public void TestStruct()
 		{
 			Serializer serpent = new Serializer(indent: true);
-			UnserializableStruct obj;
-			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
 			
 			var obj2 = new SerializeTestStruct() {
 				i = 99,
@@ -537,8 +531,6 @@ namespace Razorvine.Serpent.Test
 		public void TestStruct2()
 		{
 			Serializer serpent = new Serializer(indent: true, namespaceInClassName: true);
-			UnserializableStruct obj;
-			Assert.Throws<SerializationException>( ()=>serpent.Serialize(obj) );
 			
 			var obj2 = new SerializeTestStruct() {
 				i = 99,
@@ -661,12 +653,7 @@ namespace Razorvine.Serpent.Test
 		{
 			ConcreteSubClass c = new ConcreteSubClass();
 			Serializer serpent = new Serializer();
-			try {
-				serpent.Serialize(c);
-				Assert.Fail("should crash");
-			} catch (SerializationException x) {
-				Assert.IsTrue(x.Message.Contains("not serializable"));
-			}
+			serpent.Serialize(c);
 			
 			Serializer.RegisterClass(typeof(AbstractBaseClass), AnyClassSerializer);
 			byte[] data = serpent.Serialize(c);
@@ -679,18 +666,8 @@ namespace Razorvine.Serpent.Test
 			BaseClassWithInterface b = new BaseClassWithInterface();
 			SubClassWithInterface sub = new SubClassWithInterface();
 			Serializer serpent = new Serializer();
-			try {
-				serpent.Serialize(b);
-				Assert.Fail("should crash");
-			} catch (SerializationException x) {
-				Assert.IsTrue(x.Message.Contains("not serializable"));
-			}
-			try {
-				serpent.Serialize(sub);
-				Assert.Fail("should crash");
-			} catch (SerializationException x) {
-				Assert.IsTrue(x.Message.Contains("not serializable"));
-			}
+			serpent.Serialize(b);
+			serpent.Serialize(sub);
 			Serializer.RegisterClass(typeof(IBaseInterface), AnyClassSerializer);
 			byte[] data = serpent.Serialize(b);
 			Assert.AreEqual("{'(SUB)CLASS':'BaseClassWithInterface'}", S(strip_header(data)));
@@ -699,7 +676,6 @@ namespace Razorvine.Serpent.Test
 		}			
 	}
 
-	[Serializable]
 	public class SerializeTestClass
 	{
 		public int x;
@@ -709,19 +685,10 @@ namespace Razorvine.Serpent.Test
 		
 	}
 	
-	[Serializable]
 	public struct SerializeTestStruct
 	{
 		public int x;
 		public string s {get; set;}
 		public int i {get; set;}
-	}
-
-	public class UnserializableClass
-	{
-	}
-	
-	public struct UnserializableStruct
-	{
 	}
 }

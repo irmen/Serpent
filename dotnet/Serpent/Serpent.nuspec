@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Razorvine.Serpent</id>
-    <version>1.15.1.0</version>  <!-- from assembly info -->
+    <version>1.16.0.0</version>  <!-- from assembly info -->
     <title>Razorvine.Serpent</title>
     <authors>Irmen de Jong</authors>
     <owners>Irmen de Jong</owners>
@@ -19,9 +19,7 @@ such a Python expression itself, back into the equivalent .NET datatypes.
 More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</description>
   	<summary>Serpent Python literal expression serialization</summary>
     <releaseNotes>
-Custom converters now work for inheritance tree rather than just one specific class.
-Added Parser.ToBytes utility method to decode serpent base-64 encoded byte arrays.
-(1.15.1.0: fixed Parser.ToBytes to actually work on the hashtable returned by serpent)
+Framework compatibility improvements.
 </releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>serialization python pyro</tags>

@@ -7,7 +7,9 @@
 /// </summary>
 
 using System;
+#if !(SILVERLIGHT || WINDOWS_PHONE || PORTABLE)
 using System.Collections;
+#endif
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -25,7 +27,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public Ast Parse(byte[] serialized)
 		{
-			return Parse(Encoding.UTF8.GetString(serialized));
+			return Parse(Encoding.UTF8.GetString(serialized, 0, serialized.Length));
 		}
 		
 		/// <summary>
@@ -611,6 +613,7 @@ namespace Razorvine.Serpent
     	/// If it is something else, throw an ArgumentException
 		/// </summary>
 		public static byte[] ToBytes(object obj) {
+#if !(SILVERLIGHT || WINDOWS_PHONE || PORTABLE)
 			Hashtable hashtable  = obj as Hashtable;
 			if(hashtable!=null)
 			{
@@ -624,6 +627,7 @@ namespace Razorvine.Serpent
 				}
 				return Convert.FromBase64String(data);
 			}
+#endif
 			
 			IDictionary<string,string> dict = obj as IDictionary<string,string>;
 			if(dict!=null)

@@ -15,7 +15,6 @@ namespace Razorvine.Serpent
 /// <summary>
 /// A Complex Number class. 
 /// </summary>
-[Serializable]
 public class ComplexNumber {
 	
 	public double Real {get; private set;}

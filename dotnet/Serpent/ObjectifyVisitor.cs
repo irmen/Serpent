@@ -53,7 +53,7 @@ namespace Razorvine.Serpent
 		
 		public void Visit(Ast.DictNode dict)
 		{
-			IDictionary obj = new Hashtable(dict.Elements.Count);
+			IDictionary obj = new Dictionary<object, object>(dict.Elements.Count);
 			foreach(Ast.KeyValueNode kv in dict.Elements)
 			{
 				kv.Key.Accept(this);

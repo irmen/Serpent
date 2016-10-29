@@ -9,9 +9,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
-
 using NUnit.Framework;
 
 namespace Razorvine.Serpent.Test
