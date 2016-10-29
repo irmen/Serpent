@@ -331,6 +331,13 @@ namespace Razorvine.Serpent.Test
             bytes2 = Parser.ToBytes(dict);
             Assert.AreEqual(bytes, bytes2);
             
+            var dict2 = new Dictionary<object, object> {
+            	{"data", "YWJjZGVm"},
+            	{"encoding", "base64"}
+            };
+            bytes2 = Parser.ToBytes(dict2);
+            Assert.AreEqual(bytes, bytes2);
+
             dict["encoding"] = "base99";
             Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();

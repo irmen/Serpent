@@ -642,6 +642,21 @@ namespace Razorvine.Serpent
 				}
 				return Convert.FromBase64String(data);
 			}
+			IDictionary<object,object> dict2 = obj as IDictionary<object,object>;
+			if(dict2!=null)
+			{
+				object dataobj;
+				object encodingobj;
+				bool hasData = dict2.TryGetValue("data", out dataobj);
+				bool hasEncoding = dict2.TryGetValue("encoding", out encodingobj);
+				string data = (string)dataobj;
+				string encoding = (string)encodingobj;
+				if(!hasData || !hasEncoding || encoding!="base64")
+				{
+					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+				}
+				return Convert.FromBase64String(data);
+			}			
 			byte[] bytearray = obj as byte[];
 			if(bytearray!=null)
 			{

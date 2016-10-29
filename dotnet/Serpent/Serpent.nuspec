@@ -20,6 +20,7 @@ More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpen
   	<summary>Serpent Python literal expression serialization</summary>
     <releaseNotes>
 Framework compatibility improvements.
+ToBytes helper function can now deal with more dictionary types that are essentially the same.
 </releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>serialization python pyro</tags>
