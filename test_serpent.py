@@ -563,6 +563,17 @@ class TestBasics(unittest.TestCase):
         v = serpent.loads(serpent.dumps((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j)))
         self.assertEqual((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j), v)
 
+    @unittest.skipIf(sys.version_info < (3, 4), "needs python 3.4 to test enum type")
+    def test_enums(self):
+        import enum
+        class Animal(enum.Enum):
+            BEE = 1
+            CAT = 2
+            DOG = 3
+        print(Animal.CAT)
+        v = serpent.loads(serpent.dumps(Animal.CAT))
+        self.assertEqual("Animal.CAT", v)
+
     def test_tobytes(self):
         obj = b"test"
         self.assertIs(obj, serpent.tobytes(obj))
