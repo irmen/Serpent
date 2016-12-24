@@ -552,10 +552,10 @@ class TestBasics(unittest.TestCase):
 
     def test_float_precision(self):
         # make sure we don't lose precision when converting floats (including scientific notation)
-        v = serpent.loads(serpent.dumps(1.23456789))
-        self.assertEqual(1.23456789, v)
-        v = serpent.loads(serpent.dumps(98765432123456.12345678987656))
-        self.assertEqual(98765432123456.12345678987656, v)
+        v = serpent.loads(serpent.dumps(1.2345678987654321))
+        self.assertEqual(1.2345678987654321, v)
+        v = serpent.loads(serpent.dumps(5555.12345678987656))
+        self.assertEqual(5555.12345678987656, v)
         v = serpent.loads(serpent.dumps(98765432123456.12345678987656))
         self.assertEqual(98765432123456.12345678987656, v)
         v = serpent.loads(serpent.dumps(98765432123456.12345678987656e+44))
