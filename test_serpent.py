@@ -50,14 +50,6 @@ class TestDeserialize(unittest.TestCase):
         data = serpent.loads(encoded)
         self.assertEqual(unicodestring, data)
 
-    def test_weird_doubles(self):
-        values = [float('inf'), float('-inf'), float('nan')]
-        ser = serpent.dumps(values)
-        values2 = serpent.loads(ser)
-        self.assertEqual([float('inf'), float('-inf'), {'__class__':'float','value':'nan'}], values2)
-        values2 = serpent.loads(b"[1e30000,-1e30000]")
-        self.assertEqual([float('inf'), float('-inf')], values2)
-
     @unittest.skipIf(sys.version_info < (3, 0), "Python 2.x ast can't parse complex")
     def test_weird_complex(self):
         c1 = complex(float('inf'), 4)
@@ -550,8 +542,26 @@ class TestBasics(unittest.TestCase):
 
     def test_weird_floats(self):
         values = [float('inf'), float('-inf'), float('nan'), complex(float('inf'), 4)]
+        ser = serpent.dumps(values)
         ser = strip_header(serpent.dumps(values))
         self.assertEqual(b"[1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+4.0j)]", ser)
+        values2 = serpent.loads(ser)
+        self.assertEqual([float('inf'), float('-inf'), {'__class__':'float','value':'nan'}, (float('inf')+4j)], values2)
+        values2 = serpent.loads(b"[1e30000,-1e30000]")
+        self.assertEqual([float('inf'), float('-inf')], values2)
+
+    def test_float_precision(self):
+        # make sure we don't lose precision when converting floats (including scientific notation)
+        v = serpent.loads(serpent.dumps(1.23456789))
+        self.assertEqual(1.23456789, v)
+        v = serpent.loads(serpent.dumps(98765432123456.12345678987656))
+        self.assertEqual(98765432123456.12345678987656, v)
+        v = serpent.loads(serpent.dumps(98765432123456.12345678987656))
+        self.assertEqual(98765432123456.12345678987656, v)
+        v = serpent.loads(serpent.dumps(98765432123456.12345678987656e+44))
+        self.assertEqual(98765432123456.12345678987656e+44, v)
+        v = serpent.loads(serpent.dumps((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j)))
+        self.assertEqual((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j), v)
 
     def test_tobytes(self):
         obj = b"test"
