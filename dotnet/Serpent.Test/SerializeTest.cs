@@ -162,9 +162,9 @@ namespace Razorvine.Serpent.Test
 	        data = strip_header(ser);
 	        Assert.AreEqual(B("(-2-3j)"), data);
 		}
-		
+				
 		[Test]
-		public void testDoubleNanInf()
+		public void TestDoubleNanInf()
 		{
 			Serializer serpent = new Serializer();
 			var doubles = new object[] {double.PositiveInfinity, double.NegativeInfinity, double.NaN,

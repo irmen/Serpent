@@ -59,6 +59,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.DoubleNode(42.331), p.Parse("42.331").Root);
 			Assert.AreEqual(new Ast.DoubleNode(-42.331), p.Parse("-42.331").Root);
 			Assert.AreEqual(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e+19").Root);
+			Assert.AreEqual(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e19").Root);
 			Assert.AreEqual(new Ast.DoubleNode(0.0004), p.Parse("4e-4").Root);
 			Assert.AreEqual(new Ast.DoubleNode(40000), p.Parse("4e4").Root);
 			Assert.AreEqual(new Ast.BooleanNode(true), p.Parse("True").Root);
@@ -89,6 +90,39 @@ namespace Razorvine.Serpent.Test
 			Assert.IsTrue(Double.IsNaN(d.Value));
 		}
 
+		[Test]
+		public void TestFloatPrecision()
+		{
+			Parser p = new Parser();
+			Serializer serpent = new Serializer();
+			var ser = serpent.Serialize(1.2345678987654321);
+	Console.WriteLine(Encoding.UTF8.GetString(ser));		// TODO remove
+			Ast.DoubleNode dv = (Ast.DoubleNode) p.Parse(ser).Root;
+			Assert.AreEqual(1.2345678987654321, dv.Value);
+			
+			ser = serpent.Serialize(5555.12345678987656);
+	Console.WriteLine(Encoding.UTF8.GetString(ser));   	// TODO remove
+			dv = (Ast.DoubleNode) p.Parse(ser).Root;
+			Assert.AreEqual(5555.12345678987656, dv.Value);
+
+			ser = serpent.Serialize(98765432123456.12345678987656);
+	Console.WriteLine(Encoding.UTF8.GetString(ser));    	// TODO remove
+			dv = (Ast.DoubleNode) p.Parse(ser).Root;
+			Assert.AreEqual(98765432123456.12345678987656, dv.Value);
+
+			ser = serpent.Serialize(98765432123456.12345678987656e+44);
+			dv = (Ast.DoubleNode) p.Parse(ser).Root;
+	Console.WriteLine(Encoding.UTF8.GetString(ser));    	// TODO remove
+			Assert.AreEqual(98765432123456.12345678987656e+44, dv.Value);
+			
+			Ast.ComplexNumberNode cv = (Ast.ComplexNumberNode)p.Parse("(98765432123456.12345678987656+665544332211.9998877665544j)").Root;
+			Assert.AreEqual(98765432123456.12345678987656, cv.Real);
+			Assert.AreEqual(665544332211.9998877665544, cv.Imaginary);
+			cv = (Ast.ComplexNumberNode)p.Parse("(98765432123456.12345678987656e+33+665544332211.9998877665544e+44j)").Root;
+			Assert.AreEqual(98765432123456.12345678987656e+33, cv.Real);
+			Assert.AreEqual(665544332211.9998877665544e+44, cv.Imaginary);
+		}
+		
 		[Test]
 		public void TestEquality()
 		{
@@ -396,6 +430,19 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(cplx, p.Parse("(2-3j)").Root);
 			cplx.Real = 0;
 			Assert.AreEqual(cplx, p.Parse("-3j").Root);
+			
+			cplx.Real = -3.2e32;
+			cplx.Imaginary = -9.9e44;
+			Assert.AreEqual(cplx, p.Parse("(-3.2e32 -9.9e44j)").Root);
+			Assert.AreEqual(cplx, p.Parse("(-3.2e+32 -9.9e+44j)").Root);
+			Assert.AreEqual(cplx, p.Parse("(-3.2e32-9.9e44j)").Root);
+			Assert.AreEqual(cplx, p.Parse("(-3.2e+32-9.9e+44j)").Root);
+			cplx.Imaginary = 9.9e44;
+			Assert.AreEqual(cplx, p.Parse("(-3.2e32+9.9e44j)").Root);
+			Assert.AreEqual(cplx, p.Parse("(-3.2e+32+9.9e+44j)").Root);
+			cplx.Real = -3.2e-32;
+			cplx.Imaginary = -9.9e-44;
+			Assert.AreEqual(cplx, p.Parse("(-3.2e-32-9.9e-44j)").Root);
 		}
 		
 		[Test]
