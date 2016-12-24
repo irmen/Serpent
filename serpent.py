@@ -331,7 +331,7 @@ class Serializer(object):
             else:
                 out.append(b"-1e30000")
         else:
-            out.append(str(float_obj).encode("ascii"))
+            out.append(repr(float_obj).encode("ascii"))
     dispatch[float] = ser_builtins_float
 
     def ser_builtins_complex(self, complex_obj, out, level):
