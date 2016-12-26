@@ -125,31 +125,24 @@ public class ParserTest
 		Parser p = new Parser();
 		Serializer serpent = new Serializer();
 		byte[] ser = serpent.serialize(1.2345678987654321);
-System.out.println(new String(ser));  // TODO remove
 		DoubleNode dv = (DoubleNode) p.parse(ser).root;
 		assertEquals(new Double(1.2345678987654321), dv.value);
 		
 		ser = serpent.serialize(5555.12345678987656);
-System.out.println(new String(ser));  // TODO remove
 		dv = (DoubleNode) p.parse(ser).root;
 		assertEquals(new Double(5555.12345678987656), dv.value);
 
 		ser = serpent.serialize(98765432123456.12345678987656);
-System.out.println(new String(ser));  // TODO remove
 		dv = (DoubleNode) p.parse(ser).root;
 		assertEquals(new Double(98765432123456.12345678987656), dv.value);
 
 		ser = serpent.serialize(98765432123456.12345678987656e+44);
 		dv = (DoubleNode) p.parse(ser).root;
-System.out.println(new String(ser));  // TODO remove
 		assertEquals(new Double(98765432123456.12345678987656e+44), dv.value);
 		
-		ComplexNumberNode cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656+665544332211.9998877665544j)").root;
-		assertEquals(new Double(98765432123456.12345678987656), cv.real, 0);
-		assertEquals(new Double(665544332211.9998877665544), cv.imaginary, 0);
-		cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656e+33+665544332211.9998877665544e+44j)").root;
-		assertEquals(new Double(98765432123456.12345678987656e+33), cv.real, 0);
-		assertEquals(new Double(665544332211.9998877665544e+44), cv.imaginary, 0);
+		ser = serpent.serialize(-98765432123456.12345678987656e-44);
+		dv = (DoubleNode) p.parse(ser).root;
+		assertEquals(new Double(-98765432123456.12345678987656e-44), dv.value);
 	}
 	
 	@Test
@@ -465,10 +458,10 @@ System.out.println(new String(ser));  // TODO remove
 		
 		cplx.real = -3.2e32;
 		cplx.imaginary = -9.9e44;
-		assertEquals(cplx, p.parse("(-3.2e32 -9.9e44j)").root);
-		assertEquals(cplx, p.parse("(-3.2e+32 -9.9e+44j)").root);
 		assertEquals(cplx, p.parse("(-3.2e32-9.9e44j)").root);
 		assertEquals(cplx, p.parse("(-3.2e+32-9.9e+44j)").root);
+		assertEquals(cplx, p.parse("(-3.2e32 -9.9e44j)").root);
+		assertEquals(cplx, p.parse("(-3.2e+32 -9.9e+44j)").root);
 		cplx.imaginary = 9.9e44;
 		assertEquals(cplx, p.parse("(-3.2e32+9.9e44j)").root);
 		assertEquals(cplx, p.parse("(-3.2e+32+9.9e+44j)").root);
@@ -476,7 +469,47 @@ System.out.println(new String(ser));  // TODO remove
 		cplx.imaginary = -9.9e-44;
 		assertEquals(cplx, p.parse("(-3.2e-32-9.9e-44j)").root);		
 	}
+
+	@Test
+	public void TestComplexPrecision()
+	{
+		Parser p = new Parser();
+		ComplexNumberNode cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656+665544332211.9998877665544j)").root;
+		assertEquals(new Double(98765432123456.12345678987656), cv.real, 0);
+		assertEquals(new Double(665544332211.9998877665544), cv.imaginary, 0);
+		cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656-665544332211.9998877665544j)").root;
+		assertEquals(new Double(98765432123456.12345678987656), cv.real, 0);
+		assertEquals(new Double(-665544332211.9998877665544), cv.imaginary, 0);
+		cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656e+33+665544332211.9998877665544e+44j)").root;
+		assertEquals(new Double(98765432123456.12345678987656e+33), cv.real, 0);
+		assertEquals(new Double(665544332211.9998877665544e+44), cv.imaginary, 0);
+		cv = (ComplexNumberNode)p.parse("(-98765432123456.12345678987656e+33-665544332211.9998877665544e+44j)").root;
+		assertEquals(new Double(-98765432123456.12345678987656e+33), cv.real, 0);
+		assertEquals(new Double(-665544332211.9998877665544e+44), cv.imaginary, 0);
+	}
 	
+	@Test
+	public void CplxFail1_temporary()
+	{
+		Parser p = new Parser();
+		ComplexNumberNode cplx = new ComplexNumberNode();
+		cplx.real = -3.2e32;
+		cplx.imaginary = -9.9e44;
+		assertEquals(cplx, p.parse("(-3.2e32-9.9e44j)").root);
+		assertEquals(cplx, p.parse("(-3.2e+32-9.9e+44j)").root);
+	}
+	
+	@Test
+	public void CplxFail2_temporary()
+	{
+		Parser p = new Parser();
+		ComplexNumberNode cplx = new ComplexNumberNode();
+		cplx.real = -3.2e32;
+		cplx.imaginary = -9.9e44;
+		assertEquals(cplx, p.parse("(-3.2e32 -9.9e44j)").root);
+		assertEquals(cplx, p.parse("(-3.2e+32 -9.9e+44j)").root);
+	}
+
 	@Test
 	public void TestPrimitivesStuffAtEnd()
 	{
