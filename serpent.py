@@ -19,6 +19,8 @@ Serpent handles several special Python types to make life easier:
  - array.array typecode 'c'/'u' --> string/unicode
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
+ - collections module types  --> mostly equivalent primitive types or dict
+ - enums --> the value of the enum (Python 3.4+)
  - all other types  --> dict with  __getstate__  or vars() of the object
 
 Notes:
@@ -126,6 +128,11 @@ _special_classes_registry = {
 }
 if sys.version_info >= (2, 7):
     _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
+if sys.version_info >= (3, 4):
+    import enum
+    def _ser_Enum(obj, serializer, outputstream, indentlevel):
+        serializer._serialize(obj.value, outputstream, indentlevel)
+    _special_classes_registry[enum.Enum] = _ser_Enum
 
 
 def unregister_class(clazz):

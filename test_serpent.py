@@ -562,6 +562,8 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(98765432123456.12345678987656e+44, v)
         v = serpent.loads(serpent.dumps((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j)))
         self.assertEqual((98765432123456.12345678987656e+44+665544332211.9998877665544e+33j), v)
+        v = serpent.loads(serpent.dumps((-98765432123456.12345678987656e+44 -665544332211.9998877665544e+33j)))
+        self.assertEqual((-98765432123456.12345678987656e+44 -665544332211.9998877665544e+33j), v)
 
     @unittest.skipIf(sys.version_info < (3, 4), "needs python 3.4 to test enum type")
     def test_enums(self):
@@ -570,9 +572,11 @@ class TestBasics(unittest.TestCase):
             BEE = 1
             CAT = 2
             DOG = 3
-        print(Animal.CAT)
         v = serpent.loads(serpent.dumps(Animal.CAT))
-        self.assertEqual("Animal.CAT", v)
+        self.assertEqual(2, v)
+        Animal2 = enum.Enum("Animals2", "BEE CAT DOG HORSE RABBIT")
+        v = serpent.loads(serpent.dumps(Animal2.HORSE))
+        self.assertEqual(4, v)
 
     def test_tobytes(self):
         obj = b"test"
@@ -803,7 +807,8 @@ class TestCustomClasses(unittest.TestCase):
         s = SubClass()
         d = serpent.dumps(s)
         x = serpent.loads(d)
-        self.assertEqual("[(sub)class=<class '__main__.SubClass'>]", x)
+        classname = __name__+".SubClass"
+        self.assertEqual("[(sub)class=<class '"+classname+"'>]", x)
 
     def testUUID(self):
         uid = uuid.uuid4()

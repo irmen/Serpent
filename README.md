@@ -52,6 +52,7 @@ Serpent handles several special Python types to make life easier:
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict
+ - enums --> the value of the enum (Python 3.4+)
  - all other types  --> dict with the ``__getstate__`` or ``vars()`` of the object
 
 Notes:
