@@ -101,7 +101,7 @@ namespace Razorvine.Serpent
 					// if the last character before the closing parenthesis is a 'j', it is a complex number
 					{
 						int bm = sr.Bookmark();
-						string betweenparens = sr.ReadUntil(')').TrimEnd();
+						string betweenparens = sr.ReadUntil(new char[]{')','\n'}).TrimEnd();
 						sr.FlipBack(bm);
 						return betweenparens.EndsWith("j") ? (Ast.INode) ParseComplex(sr) : ParseTuple(sr);
 					}
@@ -428,14 +428,28 @@ namespace Razorvine.Serpent
 					numberstr = sr.Read(1) + sr.ReadUntil(new char[] {'+', '-'});
 				}
 				else
+				{
 					numberstr = sr.ReadUntil(new char[] {'+', '-'});
+				}
+				sr.Rewind(1); // rewind the +/-
+				
+				// because we're a bit more cautious here with reading chars than in the float parser,
+				// it can be that the parser now stopped directly after the 'e' in a number like "3.14e+20".
+				// ("3.14e20" is fine) So, check if the last char is 'e' and if so, continue reading 0..9.
+				if(numberstr.EndsWith("e", StringComparison.InvariantCultureIgnoreCase)) {
+					// if the next symbol is + or -, accept it, then read the exponent integer
+					if(sr.Peek()=='-' || sr.Peek()=='+')
+						numberstr+=sr.Read(1);
+					numberstr += sr.ReadWhile("0123456789");
+				}
+
+				sr.SkipWhitespace();
 				double realpart;
 				try {
 					realpart = this.ParseDouble(numberstr);
 				} catch (FormatException x) {
 					throw new ParseException("invalid float format", x);
 				}
-				sr.Rewind(1); // rewind the +/-
 				double imaginarypart = ParseImaginaryPart(sr);
 				if(sr.Read()!=')')
 					throw new ParseException("expected ) to end a complex number");

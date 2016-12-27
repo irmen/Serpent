@@ -105,18 +105,28 @@ public class ParserTest
 	public void TestWeirdFloats()
 	{
 		Parser p = new Parser();
-		TupleNode tuple = (TupleNode) p.parse("(1e30000,-1e30000,(1e30000+3.4j),{'__class__':'float','value':'nan'})").root;
-		assertEquals(4, tuple.elements.size());
-		DoubleNode d = (DoubleNode) tuple.elements.get(0);
+		DoubleNode d = (DoubleNode) p.parse("1e30000").root;
+		assertTrue(Double.isInfinite(d.value));
+		assertTrue(d.value > 0.0);
+		d = (DoubleNode) p.parse("-1e30000").root;
+		assertTrue(Double.isInfinite(d.value));
+		assertTrue(d.value < 0.0);
+
+		TupleNode tuple = (TupleNode) p.parse("(1e30000,-1e30000,{'__class__':'float','value':'nan'})").root;
+		assertEquals(3, tuple.elements.size());
+		d = (DoubleNode) tuple.elements.get(0);
 		assertTrue(Double.isInfinite(d.value));
 		d = (DoubleNode) tuple.elements.get(1);
 		assertTrue(Double.isInfinite(d.value));
 		assertTrue(d.value < 0.0);
-		ComplexNumberNode c = (ComplexNumberNode) tuple.elements.get(2);
-		assertTrue(Double.isInfinite(c.real));
-		assertEquals(3.4,  c.imaginary, 0);
-		d = (DoubleNode) tuple.elements.get(3);
+		d = (DoubleNode) tuple.elements.get(2);
 		assertTrue(Double.isNaN(d.value));
+
+		ComplexNumberNode c = (ComplexNumberNode) p.parse("(1e30000-1e30000j)").root;
+		assertTrue(Double.isInfinite(c.real));
+		assertTrue(c.real>0.0);
+		assertTrue(Double.isInfinite(c.imaginary));
+		assertTrue(c.imaginary<0.0);
 	}
 	
 	@Test

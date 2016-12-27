@@ -108,7 +108,7 @@ public class Parser
 				// if the last character before the closing parenthesis is a 'j', it is a complex number
 				{
 					int bm = sr.bookmark();
-					String betweenparens = sr.readUntil(')').trim();
+					String betweenparens = sr.readUntil(")\n").trim();
 					sr.flipBack(bm);
 					return betweenparens.endsWith("j") ? parseComplex(sr) : parseTuple(sr);
 				}
@@ -433,14 +433,28 @@ public class Parser
 				numberstr = sr.read(1) + sr.readUntil("+-");
 			}
 			else
+			{
 				numberstr = sr.readUntil("+-");
+			}
+			sr.rewind(1); // rewind the +/-
+			
+			// because we're a bit more cautious here with reading chars than in the float parser,
+			// it can be that the parser now stopped directly after the 'e' in a number like "3.14e+20".
+			// ("3.14e20" is fine) So, check if the last char is 'e' and if so, continue reading 0..9.
+			if(numberstr.endsWith("e")||numberstr.endsWith("E")) {
+				// if the next symbol is + or -, accept it, then read the exponent integer
+				if(sr.peek()=='-' || sr.peek()=='+')
+					numberstr+=sr.read(1);
+				numberstr += sr.readWhile("0123456789");
+			}
+			
+			sr.skipWhitespace();
 			double real;
 			try {
 				real = Double.parseDouble(numberstr);
 			} catch (NumberFormatException x) {
 				throw new ParseException("invalid float format", x);
 			}
-			sr.rewind(1); // rewind the +/-
 			double imaginarypart = parseImaginaryPart(sr);
 			if(sr.read()!=')')
 				throw new ParseException("expected ) to end a complex number");
