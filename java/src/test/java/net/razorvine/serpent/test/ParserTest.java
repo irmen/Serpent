@@ -499,28 +499,6 @@ public class ParserTest
 	}
 	
 	@Test
-	public void CplxFail1_temporary()
-	{
-		Parser p = new Parser();
-		ComplexNumberNode cplx = new ComplexNumberNode();
-		cplx.real = -3.2e32;
-		cplx.imaginary = -9.9e44;
-		assertEquals(cplx, p.parse("(-3.2e32-9.9e44j)").root);
-		assertEquals(cplx, p.parse("(-3.2e+32-9.9e+44j)").root);
-	}
-	
-	@Test
-	public void CplxFail2_temporary()
-	{
-		Parser p = new Parser();
-		ComplexNumberNode cplx = new ComplexNumberNode();
-		cplx.real = -3.2e32;
-		cplx.imaginary = -9.9e44;
-		assertEquals(cplx, p.parse("(-3.2e32 -9.9e44j)").root);
-		assertEquals(cplx, p.parse("(-3.2e+32 -9.9e+44j)").root);
-	}
-
-	@Test
 	public void TestPrimitivesStuffAtEnd()
 	{
 		Parser p = new Parser();

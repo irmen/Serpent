@@ -461,30 +461,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(-98765432123456.12345678987656e+33, cv.Real);
 			Assert.AreEqual(-665544332211.9998877665544e+44, cv.Imaginary);
 		}
-		
-		
-		[Test]
-		public void CplxFail1_temporary()
-		{
-			Parser p = new Parser();
-			Ast.ComplexNumberNode cplx = new Ast.ComplexNumberNode();
-			cplx.Real = -3.2e32;
-			cplx.Imaginary = -9.9e44;
-			Assert.AreEqual(cplx, p.Parse("(-3.2e32-9.9e44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e+32-9.9e+44j)").Root);
-		}
-		
-		[Test]
-		public void CplxFail2_temporary()
-		{
-			Parser p = new Parser();
-			Ast.ComplexNumberNode cplx = new Ast.ComplexNumberNode();
-			cplx.Real = -3.2e32;
-			cplx.Imaginary = -9.9e44;
-			Assert.AreEqual(cplx, p.Parse("(-3.2e32 -9.9e44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e+32 -9.9e+44j)").Root);
-		}
-	
+
 		[Test]
 		public void TestPrimitivesStuffAtEnd()
 		{
