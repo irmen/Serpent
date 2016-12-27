@@ -104,16 +104,13 @@ public class Parser
 					}
 				}
 			case '(':
-				// tricky case here, it can be a tuple but also a complex number.
-				// try complex number first
+				// tricky case here, it can be a tuple but also a complex number:
+				// if the last character before the closing parenthesis is a 'j', it is a complex number
 				{
 					int bm = sr.bookmark();
-					try {
-						return parseComplex(sr);
-					} catch(ParseException x) {
-						sr.flipBack(bm);
-						return parseTuple(sr);
-					}
+					String betweenparens = sr.readUntil(')').trim();
+					sr.flipBack(bm);
+					return betweenparens.endsWith("j") ? parseComplex(sr) : parseTuple(sr);
 				}
 			default:
 				throw new ParseException("invalid sequencetype char");

@@ -97,16 +97,13 @@ namespace Razorvine.Serpent
 						}
 					}
 				case '(':
-					// tricky case here, it can be a tuple but also a complex number.
-					// try complex number first
+					// tricky case here, it can be a tuple but also a complex number:
+					// if the last character before the closing parenthesis is a 'j', it is a complex number
 					{
 						int bm = sr.Bookmark();
-						try {
-							return ParseComplex(sr);
-						} catch(ParseException) {
-							sr.FlipBack(bm);
-							return ParseTuple(sr);
-						}
+						string betweenparens = sr.ReadUntil(')').TrimEnd();
+						sr.FlipBack(bm);
+						return betweenparens.EndsWith("j") ? (Ast.INode) ParseComplex(sr) : ParseTuple(sr);
 					}
 				default:
 					throw new ParseException("invalid sequencetype char");
