@@ -96,29 +96,24 @@ namespace Razorvine.Serpent.Test
 			Parser p = new Parser();
 			Serializer serpent = new Serializer();
 			var ser = serpent.Serialize(1.2345678987654321);
-	Console.WriteLine(Encoding.UTF8.GetString(ser));		// TODO remove
 			Ast.DoubleNode dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(1.2345678987654321, dv.Value);
+			Assert.AreEqual(1.2345678987654321.ToString(), dv.Value.ToString());
 			
 			ser = serpent.Serialize(5555.12345678987656);
-	Console.WriteLine(Encoding.UTF8.GetString(ser));   	// TODO remove
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(5555.12345678987656, dv.Value);
+			Assert.AreEqual(5555.12345678987656.ToString(), dv.Value.ToString());
 
 			ser = serpent.Serialize(98765432123456.12345678987656);
-	Console.WriteLine(Encoding.UTF8.GetString(ser));    	// TODO remove
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(98765432123456.12345678987656, dv.Value);
+			Assert.AreEqual(98765432123456.12345678987656.ToString(), dv.Value.ToString());
 
 			ser = serpent.Serialize(98765432123456.12345678987656e+44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-	Console.WriteLine(Encoding.UTF8.GetString(ser));    	// TODO remove
-			Assert.AreEqual(98765432123456.12345678987656e+44, dv.Value);
+			Assert.AreEqual((98765432123456.12345678987656e+44).ToString(), dv.Value.ToString());
 			
 			ser = serpent.Serialize(-98765432123456.12345678987656e-44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-	Console.WriteLine(Encoding.UTF8.GetString(ser));    	// TODO remove
-			Assert.AreEqual(-98765432123456.12345678987656e-44, dv.Value);
+			Assert.AreEqual((-98765432123456.12345678987656e-44).ToString(), dv.Value.ToString());
 		}
 		
 		[Test]
