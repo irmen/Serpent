@@ -27,12 +27,14 @@ Example usage can be found in ./example.py
 
 C#/.NET
 -------
+Package is available on www.nuget.org as 'Razorvine.Serpent'.
 Full source code can be found in ./dotnet/ directory.
 Example usage can be found in ./dotnet/Serpent.Test/Example.cs
 
 
 JAVA
 ----
+Maven-artefact is available on maven central, groupid 'net.razorvine' artifactid 'serpent'.
 Full source code can be found in ./java/ directory.
 Example usage can be found in ./java/test/SerpentExample.java
 
