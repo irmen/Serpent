@@ -19,7 +19,7 @@ such a Python expression itself, back into the equivalent .NET datatypes.
 More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</description>
   	<summary>Serpent Python literal expression serialization</summary>
     <releaseNotes>
-@todo
+Added Serializer.MaximumLevel to avoid too deep recursion resulting in stack overflow errors.
 </releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>serialization python pyro</tags>

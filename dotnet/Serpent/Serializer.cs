@@ -24,9 +24,28 @@ namespace Razorvine.Serpent
 	/// </summary>
 	public class Serializer
 	{
+		/// <summary>
+		/// indent output?
+		/// </summary>
 		public bool Indent;
+		
+		/// <summary>
+		/// use set literals?
+		/// </summary>
 		public bool SetLiterals;
+		
+		/// <summary>
+		/// include namespace prefix for classes that are serialized to dict?
+		/// </summary>
 		public bool NamespaceInClassName;
+		
+		/// <summary>
+		/// The maximum nesting level of the object graphs that you want to serialize.
+		/// This limit has been set to avoid troublesome stack overflow errors.
+		/// (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
+		/// </summary>
+		public int MaximumLevel = 1000;     // avoids stackoverflow errors
+		
 		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
 		
 
@@ -73,6 +92,9 @@ namespace Razorvine.Serpent
 		
 		protected void Serialize(object obj, TextWriter tw, int level)
 		{
+			if(level>MaximumLevel)
+				throw new ArgumentException("Object graph nesting too deep. Increase serializer.MaximumLevel if you think you need more.");
+
 			// null -> None
 			// hashtables/dictionaries -> dict
 			// hashset -> set

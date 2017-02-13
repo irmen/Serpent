@@ -30,15 +30,43 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class Serializer
 {
+	/**
+	 * The maximum nesting level of the object graphs that you want to serialize.
+	 * This limit has been set to avoid troublesome stack overflow errors.
+	 * (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
+	 */
+	public int maximumLevel = 1000;		// to avoid stack overflow errors
+	
+	/**
+	 * Indent the resulting serpent serialization text?
+	 */
 	public boolean indent = false;
+	
+	/**
+	 * Use set literals?
+	 */
 	public boolean setliterals = true;
+	
+	/**
+	 * Include package name in class name, for classes that are serialized to dicts?
+	 */
 	public boolean packageInClassName = false;
+
 	private static Map<Class<?>, IClassSerializer> classToDictRegistry = new HashMap<Class<?>, IClassSerializer>();
 	
+	/**
+	 * Create a Serpent serializer with default options.
+	 */
 	public Serializer()
 	{
 	}
 	
+	/**
+	 * Create a Serpent serializer with custom options.
+	 * @param indent should the output be indented to make it more readable?
+	 * @param setliterals should set literals be used (recommended if you use newer Python versions to parse this)
+	 * @param packageInClassName should the package name be included with the class name for classes that are serialized to dict?
+	 */
 	public Serializer(boolean indent, boolean setliterals, boolean packageInClassName)
 	{
 		this.indent = indent;
@@ -46,11 +74,17 @@ public class Serializer
 		this.packageInClassName = packageInClassName;
 	}
 	
+	/**
+	 * Register a custom class serializer, if you want to tweak the serialization of classes that Serpent doesn't know about yet.
+	 */
 	public static void registerClass(Class<?> clazz, IClassSerializer converter)
 	{
 		classToDictRegistry.put(clazz, converter);
 	} 
 	
+	/**
+	 * Serialize an object graph to a serpent serialized form.
+	 */
 	public byte[] serialize(Object obj)
 	{
 		StringWriter sw = new StringWriter();
@@ -77,6 +111,9 @@ public class Serializer
 	
 	protected void serialize(Object obj, PrintWriter p, int level)
 	{
+		if(level>maximumLevel)
+			throw new IllegalArgumentException("Object graph nesting too deep. Increase serializer.maximumLevel if you think you need more.");
+
 		// null -> None
 		// hashtables/dictionaries -> dict
 		// hashset -> set

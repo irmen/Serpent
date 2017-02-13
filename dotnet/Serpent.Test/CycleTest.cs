@@ -60,7 +60,7 @@ namespace Razorvine.Serpent.Test
 		}
 
 		[Test]
-		[Ignore("stackoverflow")]
+		[ExpectedException(typeof(ArgumentException))]
 		public void testListCycle()
 		{
 			var ser = new Serializer();
@@ -72,7 +72,7 @@ namespace Razorvine.Serpent.Test
 		}
 
 		[Test]
-		[Ignore("stackoverflow")]
+		[ExpectedException(typeof(ArgumentException))]
 		public void testDictCycle()
 		{
 			var ser = new Serializer();
@@ -84,7 +84,7 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
-		[Ignore("stackoverflow")]
+		[ExpectedException(typeof(ArgumentException))]
 		public void testClassCycle()
 		{
 			var ser = new Serializer();
@@ -94,6 +94,37 @@ namespace Razorvine.Serpent.Test
 			d.s = "hello";
 			d.obj = d;
 			var data = ser.Serialize(d);
+		}
+		
+		[Test]
+		public void testMaxLevel()
+		{
+			Serializer ser = new Serializer();
+			Assert.AreEqual(1000, ser.MaximumLevel);
+			
+			Object[] array = new Object[] {
+				"level1",
+				new Object[] {
+					"level2",
+					new Object[] {
+						"level3",
+						new Object[] {
+							"level 4"
+						}
+					}
+				}
+			};
+	
+			ser.MaximumLevel = 4;
+			ser.Serialize(array);		// should work
+			
+			ser.MaximumLevel = 3;
+			try {
+				ser.Serialize(array);
+				Assert.Fail("should fail");
+			} catch(ArgumentException x) {
+				Assert.IsTrue(x.Message.Contains("too deep"));
+			}
 		}
 	}
 }

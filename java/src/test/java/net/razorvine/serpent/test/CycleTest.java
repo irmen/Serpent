@@ -13,6 +13,7 @@ import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 
 public class CycleTest
@@ -60,7 +61,7 @@ public class CycleTest
         parser.parse(data);
 	}
 
-	@Test(expected=StackOverflowError.class)
+	@Test(expected=IllegalArgumentException.class)
 	public void testListCycle()
 	{
 		Serializer ser = new Serializer();
@@ -71,7 +72,7 @@ public class CycleTest
 		ser.serialize(d);
 	}
 	
-	@Test(expected=StackOverflowError.class)
+	@Test(expected=IllegalArgumentException.class)
 	public void testDictCycle()
 	{
 		Serializer ser = new Serializer();
@@ -82,7 +83,7 @@ public class CycleTest
 		ser.serialize(d);
 	}
 
-	@Test(expected=StackOverflowError.class)
+	@Test(expected=IllegalArgumentException.class)
 	public void testClassCycle()
 	{
 		Serializer ser = new Serializer();
@@ -92,5 +93,36 @@ public class CycleTest
 		thing.x = 99;
 		thing.obj = thing;
 		ser.serialize(thing);
+	}
+	
+	@Test
+	public void testMaxLevel()
+	{
+		Serializer ser = new Serializer();
+		assertEquals(1000, ser.maximumLevel);
+		
+		Object[] array = new Object[] {
+			"level1",
+			new Object[] {
+				"level2",
+				new Object[] {
+					"level3",
+					new Object[] {
+						"level 4"
+					}
+				}
+			}
+		};
+
+		ser.maximumLevel = 4;
+		ser.serialize(array);		// should work
+		
+		ser.maximumLevel = 3;
+		try {
+			ser.serialize(array);
+			fail("should fail");
+		} catch(IllegalArgumentException x) {
+			assertTrue(x.getMessage().contains("too deep"));
+		}
 	}
 }
