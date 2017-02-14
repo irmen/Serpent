@@ -199,6 +199,12 @@ class TestBasics(unittest.TestCase):
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 
+    def test_detectNullByte(self):
+        with self.assertRaises(ValueError) as ex:
+            serpent.loads(b"contains\x00nullbyte")
+            self.fail("must fail")
+        self.assertTrue("0-bytes" in str(ex.exception))
+
     def test_unicode(self):
         u = "euro" + unichr(0x20ac)
         self.assertTrue(type(u) is unicode)
@@ -257,7 +263,10 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"123456789123456789123456789", data)
         ser = serpent.dumps(99.1234)
         data = strip_header(ser)
-        self.assertEqual(b"99.1234", data)
+        if sys.platform == 'cli':
+            self.assertEqual(b"99.123400000000004", data)
+        else:
+            self.assertEqual(b"99.1234", data)
         ser = serpent.dumps(decimal.Decimal("1234.9999999999"))
         data = strip_header(ser)
         self.assertEqual(b"'1234.9999999999'", data)
@@ -512,7 +521,10 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"'23:59:45'", data)
         ser = serpent.dumps(datetime.timedelta(1, 4000, 999888, minutes=22))
         data = strip_header(ser)
-        self.assertEqual(b"91720.999888", data)
+        if sys.platform == 'cli':
+            self.assertEqual(b"91720.999888000006", data)
+        else:
+            self.assertEqual(b"91720.999888", data)
         ser = serpent.dumps(datetime.timedelta(seconds=12345))
         data = strip_header(ser)
         self.assertEqual(b"12345.0", data)

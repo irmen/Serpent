@@ -66,7 +66,7 @@ import uuid
 import array
 import math
 
-__version__ = "1.16"
+__version__ = "1.17"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -85,6 +85,8 @@ def dump(obj, file, indent=False, set_literals=can_use_set_literals, module_in_c
 def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     serialized = serialized_bytes.decode("utf-8")
+    if '\x00' in serialized:
+        raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
     if sys.version_info < (3, 0) and sys.platform != "cli":
         if os.name == "java":
             # Because of a bug in Jython we have to manually convert all Str nodes to unicode. See http://bugs.jython.org/issue2008
