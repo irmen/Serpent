@@ -114,6 +114,9 @@ public class Serializer
 		if(level>maximumLevel)
 			throw new IllegalArgumentException("Object graph nesting too deep. Increase serializer.maximumLevel if you think you need more.");
 
+		if(obj!=null && obj.getClass().getName().startsWith("org.python."))
+			obj = convertJythonObject(obj);
+
 		// null -> None
 		// hashtables/dictionaries -> dict
 		// hashset -> set
@@ -207,6 +210,51 @@ public class Serializer
 		{
 			throw new IllegalArgumentException("cannot serialize object of type "+type);
 		}
+	}
+	
+	/**
+	 * When used from Jython directly, it sometimes passes some Jython specific
+	 * classes to the serializer (such as org.python.core.PyComplex for a complex number).
+	 * Due to the way these are constructed, Serpent is greatly confused, and will often
+	 * end up in an endless loop eventually crashing with too deep nesting.
+	 * For the know cases, we convert them here to appropriate representations.
+	 */
+	protected Object convertJythonObject(Object obj)
+	{
+		final Class<? extends Object> clazz = obj.getClass();
+		final String classname = clazz.getName();
+		
+		try
+		{
+			// use reflection because I don't want to have a compiler dependency on Jython. 
+			if(classname.equals("org.python.core.PyTuple")) {
+				return clazz.getMethod("toArray").invoke(obj);
+			}
+			else if(classname.equals("org.python.core.PyComplex")) {
+				Object pyImag = clazz.getMethod("getImag").invoke(obj);
+				Object pyReal = clazz.getMethod("getReal").invoke(obj);
+				Double imag = (Double) pyImag.getClass().getMethod("getValue").invoke(pyImag); 
+				Double real = (Double) pyReal.getClass().getMethod("getValue").invoke(pyReal); 
+				return new ComplexNumber(real, imag);
+			}
+			else if(classname.equals("org.python.core.PyByteArray")) {
+				Object pyStr = clazz.getMethod("__str__").invoke(obj);
+				return pyStr.getClass().getMethod("toBytes").invoke(pyStr);
+			}
+			else if(classname.equals("org.python.core.PyMemoryView")) {
+				Object pyBytes = clazz.getMethod("tobytes").invoke(obj);
+				return pyBytes.getClass().getMethod("toBytes").invoke(pyBytes);
+			}
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalArgumentException("cannot serialize Jython object of type "+clazz, e);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("cannot serialize Jython object of type "+clazz, e);
+		} catch (SecurityException e) {
+			throw new IllegalArgumentException("cannot serialize Jython object of type "+clazz, e);
+		}
+		
+		// instead of an endless nesting loop, report a proper exception
+		throw new IllegalArgumentException("cannot serialize Jython object of type "+obj.getClass());
 	}
 	
 	protected void serialize_collection(Collection<?> collection, PrintWriter p, int level)
