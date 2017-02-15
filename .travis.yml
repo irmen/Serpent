@@ -15,4 +15,4 @@ install:
   - pip install pytz
   - pip install .
 
-script: python -bb test_serpent.py
+script: cd tests && python -bb test_serpent.py
