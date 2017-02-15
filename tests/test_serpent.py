@@ -6,6 +6,7 @@ Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
 import sys
+import ast
 import timeit
 import datetime
 import uuid
@@ -179,9 +180,21 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(line, data)
 
     def test_nullbytesstring(self):
-        ser = serpent.dumps("\0null")
+        ser = serpent.dumps(u"\x00null")
         data = serpent.loads(ser)
-        self.assertEqual("\0null", data)
+        self.assertEqual("\x00null", data)
+        ser = serpent.dumps(u"\x01")
+        self.assertEqual(b"'\\x01'", strip_header(ser))
+        data = serpent.loads(ser)
+        self.assertEqual("\x01", data)
+        ser = serpent.dumps(u"\x1f")
+        self.assertEqual(b"'\\x1f'", strip_header(ser))
+        data = serpent.loads(ser)
+        self.assertEqual("\x1f", data)
+        ser = serpent.dumps(u"\x20")
+        self.assertEqual(b"' '", strip_header(ser))
+        data = serpent.loads(ser)
+        self.assertEqual(" ", data)
 
     def test_nullbytesunicode(self):
         line = unichr(0) + "null"
@@ -209,6 +222,19 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(unicode("quotes2'"))
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
+
+    def test_utf8_correctness(self):
+        u = u"\x00\x01\x80\x81\xfe\xffabcdef\u20ac"
+        utf_8_correct = repr(u).encode("utf-8")
+        if utf_8_correct.startswith(b"u"):
+            utf_8_correct=utf_8_correct[1:]
+        ser = serpent.dumps(u)
+        d = strip_header(ser)
+        print("\nSERPENT:", d)  # XXX
+        print("\nCORRECT=>", repr(utf_8_correct))
+        print("      D=>", repr(d))
+        self.assertEqual(utf_8_correct, d)
+
 
     @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
     def test_unicode_with_escapes_py2(self):

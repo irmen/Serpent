@@ -363,25 +363,36 @@ class Serializer(object):
                 # unfortunately we also cannot use repr() as it seems to cause errors later in the ast parser...
                 # that means we have to replicate the desired behavior here.
                 # double-escape existing backslashes:
-                z = z.replace("\\", "\\\\")
-                # backslash-escape control characters in the same way as repr() would:
-                z = z.replace("\a", "\\x07")
-                z = z.replace("\b", "\\x08")
-                z = z.replace("\f", "\\x0c")
-                z = z.replace("\n", "\\n")
-                z = z.replace("\r", "\\r")
-                z = z.replace("\t", "\\t")
-                z = z.replace("\v", "\\x0b")
-                # escape the 0-byte:
-                z = z.replace("\x00", "\\x00")
-                if "'" not in z:
-                    z = "'" + z + "'"
-                elif '"' not in z:
-                    z = '"' + z + '"'
+                b = []
+                contains_single_quote = False
+                contains_quote = False
+                for c in z:
+                    if c == '\\':
+                        b.append("\\\\")
+                    elif c == '\n':
+                        b.append("\\n")
+                    elif c == '\r':
+                        b.append("\\r")
+                    elif c == '\t':
+                        b.append("\\t")
+                    elif c < ' ':
+                        b.append("\\x%02x" % ord(c))
+                    else:
+                        b.append(c)
+                    contains_single_quote |= c == '\''
+                    contains_quote |= c == '"'
+                if not contains_single_quote:
+                    out.append('\'')
+                    out.append("".join(b))
+                    out.append('\'')
+                elif not contains_quote:
+                    out.append('"')
+                    out.append("".join(b))
+                    out.append('"')
                 else:
-                    z = z.replace("'", "\\'")
-                    z = "'" + z + "'"
-                out.append(z)
+                    out.append('\'')
+                    out.append("".join(b).replace("\'", "\\'"))
+                    out.append('\'')
         else:
             def ser_builtins_unicode(self, unicode_obj, out, level):
                 z = repr(unicode_obj)
