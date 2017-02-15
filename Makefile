@@ -1,7 +1,7 @@
 .PHONY: all sdist wheel install upload clean test check
 
 all:
-	@echo "targets include sdist, wheel, upload, install, clean"
+	@echo "targets include sdist, wheel, upload, install, clean, test"
 
 sdist:
 	python setup.py sdist
@@ -19,7 +19,7 @@ install:
 	python setup.py install
 
 test:
-	python -E test_serpent.py
+	cd tests && python -E test_serpent.py
 
 check:
 	flake8 --exclude .tox --ignore E501

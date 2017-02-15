@@ -24,7 +24,7 @@ This license, including disclaimer, is available in the 'LICENSE' file.
 PYTHON
 ------
 Package can be found on Pypi as 'serpent': https://pypi.python.org/pypi/serpent
-Example usage can be found in ./example.py
+Example usage can be found in ./tests/example.py
 
 
 C#/.NET
