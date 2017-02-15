@@ -170,32 +170,24 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"'\\n'", d)
         ser = serpent.dumps("\a")
         d = strip_header(ser)
-        if sys.platform == "cli":
-            self.assertEqual(b"'\\a'", d)     # ironpython doesn't use repr()
-        else:
-            self.assertEqual(b"'\\x07'", d)     # repr() does this hex escape
+        self.assertEqual(b"'\\x07'", d)     # repr() does this hex escape
         line = "'hello\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
         ser = serpent.dumps(line)
         d = strip_header(ser)
-        if sys.platform == "cli":
-            self.assertEqual(b"\"'hello\\nlastline\\ttab\\\\@slash\\a\\b\\f\\n\\r\\t\\v'\"", d)    # ironpython doesn't use repr()
-        else:
-            self.assertEqual(b"\"'hello\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)    # the hex escapes are done by repr()
+        self.assertEqual(b"\"'hello\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)    # the hex escapes are done by repr()
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 
-    @unittest.skipIf(sys.platform == "cli", "IronPython has problems with null bytes in strings")
     def test_nullbytesstring(self):
         ser = serpent.dumps("\0null")
         data = serpent.loads(ser)
         self.assertEqual("\0null", data)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "needs python 3.x to correctly process null bytes in unicode strings")
     def test_nullbytesunicode(self):
         line = unichr(0) + "null"
         ser = serpent.dumps(line)
         data = strip_header(ser)
-        self.assertEqual(b"'\\x00null'", data)
+        self.assertEqual(b"'\\x00null'", data, "must escape 0-byte")
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 
@@ -225,14 +217,22 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"'\\n'", d)
         ser = serpent.dumps(unicode("\a"))
         d = strip_header(ser)
-        self.assertEqual(b"'\\a'", d)
+        self.assertEqual(b"'\\x07'", d)
         ser = serpent.dumps("\a"+unichr(0x20ac))
         d = strip_header(ser)
-        self.assertEqual(b"'\\a\xe2\x82\xac'", d)
+        if os.name == "java":
+            # different because of Jython bug workaround
+            self.assertEqual(b"'\\x07\xe2\x82\xac'", d)
+        else:
+            self.assertEqual(b"'\\x07\\u20ac'", d)
         line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
         ser = serpent.dumps(line)
         d = strip_header(ser)
-        self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\a\\b\\f\\n\\r\\t\\v'\"", d)
+        if os.name=="java":
+            # different because of Jython bug workaround
+            self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
+        else:
+            self.assertEqual(b"\"'euro\\u20ac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 

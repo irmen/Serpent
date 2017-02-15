@@ -87,7 +87,7 @@ def loads(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
     if '\x00' in serialized:
         raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
-    if sys.version_info < (3, 0) and sys.platform != "cli":
+    if sys.version_info < (3, 0):
         if os.name == "java":
             # Because of a bug in Jython we have to manually convert all Str nodes to unicode. See http://bugs.jython.org/issue2008
             serialized = ast.parse(serialized, "<serpent>", mode="eval")
@@ -353,27 +353,41 @@ class Serializer(object):
     dispatch[complex] = ser_builtins_complex
 
     if sys.version_info < (3, 0):
-        def ser_builtins_unicode(self, unicode_obj, out, level):
-            # this method is used for python 2.x unicode (python 3.x doesn't use this)
-            z = unicode_obj.encode("utf-8")
-            # double-escape existing backslashes:
-            z = z.replace("\\", "\\\\")
-            # backslash-escape control characters:
-            z = z.replace("\a", "\\a")
-            z = z.replace("\b", "\\b")
-            z = z.replace("\f", "\\f")
-            z = z.replace("\n", "\\n")
-            z = z.replace("\r", "\\r")
-            z = z.replace("\t", "\\t")
-            z = z.replace("\v", "\\v")
-            if "'" not in z:
-                z = "'" + z + "'"
-            elif '"' not in z:
-                z = '"' + z + '"'
-            else:
-                z = z.replace("'", "\\'")
-                z = "'" + z + "'"
-            out.append(z)
+        # this method is used for python 2.x unicode (python 3.x doesn't use this)
+        if os.name == "java":
+            def ser_builtins_unicode(self, unicode_obj, out, level):
+                # because of a bug in Jython we cannot encode unicode literals. See http://bugs.jython.org/issue2008
+                # workaround is to encode them first as utf-8 into a normal string, and when deserializing,
+                # decode all str nodes in the ast tree manually back into unicode.
+                z = unicode_obj.encode("utf-8")
+                # unfortunately we also cannot use repr() as it seems to cause errors later in the ast parser...
+                # that means we have to replicate the desired behavior here.
+                # double-escape existing backslashes:
+                z = z.replace("\\", "\\\\")
+                # backslash-escape control characters in the same way as repr() would:
+                z = z.replace("\a", "\\x07")
+                z = z.replace("\b", "\\x08")
+                z = z.replace("\f", "\\x0c")
+                z = z.replace("\n", "\\n")
+                z = z.replace("\r", "\\r")
+                z = z.replace("\t", "\\t")
+                z = z.replace("\v", "\\x0b")
+                # escape the 0-byte:
+                z = z.replace("\x00", "\\x00")
+                if "'" not in z:
+                    z = "'" + z + "'"
+                elif '"' not in z:
+                    z = '"' + z + '"'
+                else:
+                    z = z.replace("'", "\\'")
+                    z = "'" + z + "'"
+                out.append(z)
+        else:
+            def ser_builtins_unicode(self, unicode_obj, out, level):
+                z = repr(unicode_obj)
+                if z[0] == 'u':
+                    z = z[1:]    # get rid of the unicode 'u' prefix
+                out.append(z)
         dispatch[unicode] = ser_builtins_unicode
 
     if sys.version_info < (3, 0):
