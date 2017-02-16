@@ -113,7 +113,7 @@ public class SerializeTest {
 		assertEquals("'blerp'", S(result));
 		result = ser.serialize("\\");
 		result=strip_header(result);
-		assertEquals("'\\\\'", S(result));    // XXX
+		assertEquals("'\\\\'", S(result));
 		result = ser.serialize(UUID.fromString("f1f8d00e-49a5-4662-ac1d-d5f0426ed293"));
 		result=strip_header(result);
 		assertEquals("'f1f8d00e-49a5-4662-ac1d-d5f0426ed293'", S(result));

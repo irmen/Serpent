@@ -8,7 +8,6 @@
 package net.razorvine.serpent;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
@@ -35,7 +34,7 @@ public class Serializer
 	 * This limit has been set to avoid troublesome stack overflow errors.
 	 * (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
 	 */
-	public int maximumLevel = 1000;		// to avoid stack overflow errors
+	public int maximumLevel = 800;		// to avoid stack overflow errors
 	
 	/**
 	 * Indent the resulting serpent serialization text?
@@ -88,17 +87,15 @@ public class Serializer
 	public byte[] serialize(Object obj)
 	{
 		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
 
 		if(this.setliterals)
-			pw.print("# serpent utf-8 python3.2\n");  // set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
+			sw.write("# serpent utf-8 python3.2\n");  // set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
 		else
-			pw.print("# serpent utf-8 python2.6\n");
-		serialize(obj, pw, 0);
+			sw.write("# serpent utf-8 python2.6\n");
+		serialize(obj, sw, 0);
 		
-		pw.flush();
+		sw.flush();
 		final String ser = sw.toString();
-		pw.close();
 		try {
 			sw.close();
 			return ser.getBytes("utf-8");
@@ -107,7 +104,7 @@ public class Serializer
 		}
 	}
 	
-	protected void serialize(Object obj, PrintWriter p, int level)
+	protected void serialize(Object obj, StringWriter sw, int level)
 	{
 		if(level>maximumLevel)
 			throw new IllegalArgumentException("Object graph nesting too deep. Increase serializer.maximumLevel if you think you need more.");
@@ -134,75 +131,75 @@ public class Serializer
 			// byte array? encode as base-64
 			if(componentType==Byte.TYPE)
 			{
-				serialize_bytes((byte[])obj, p, level);
+				serialize_bytes((byte[])obj, sw, level);
 				return;
 			}
 			else
 			{
-				serialize_primitive_array(obj, p, level);
+				serialize_primitive_array(obj, sw, level);
 			}
 			return;
 		}
 		
 		if(obj==null)
 		{
-			p.print("None");
+			sw.write("None");
 		}
 		else if(obj instanceof String)
 		{
-			serialize_string((String)obj, p, level);
+			serialize_string((String)obj, sw, level);
 		}
 		else if(type.isPrimitive() || isBoxed(type))
 		{
-			serialize_primitive(obj, p, level);
+			serialize_primitive(obj, sw, level);
 		}
 		else if(obj instanceof Enum)
 		{
-			serialize_string(obj.toString(), p, level);
+			serialize_string(obj.toString(), sw, level);
 		}
 		else if(obj instanceof BigDecimal)
 		{
-			serialize_bigdecimal((BigDecimal)obj, p, level);
+			serialize_bigdecimal((BigDecimal)obj, sw, level);
 		}
 		else if(obj instanceof Number)
 		{
-			serialize_primitive(obj, p, level);
+			serialize_primitive(obj, sw, level);
 		}
 		else if(obj instanceof Date)
 		{
-			serialize_date((Date)obj, p, level);
+			serialize_date((Date)obj, sw, level);
 		}
 		else if(obj instanceof Calendar)
 		{
-			serialize_calendar((Calendar)obj, p, level);
+			serialize_calendar((Calendar)obj, sw, level);
 		}
 		else if(obj instanceof UUID)
 		{
-			serialize_uuid((UUID)obj, p, level);
+			serialize_uuid((UUID)obj, sw, level);
 		}
 		else if(obj instanceof Set<?>)
 		{
-			serialize_set((Set<?>)obj, p, level);
+			serialize_set((Set<?>)obj, sw, level);
 		}
 		else if(obj instanceof Map<?,?>)
 		{
-			serialize_dict((Map<?,?>)obj, p, level);
+			serialize_dict((Map<?,?>)obj, sw, level);
 		}
 		else if(obj instanceof Collection<?>)
 		{
-			serialize_collection((Collection<?>)obj, p, level);
+			serialize_collection((Collection<?>)obj, sw, level);
 		}
 		else if(obj instanceof ComplexNumber)
 		{
-			serialize_complex((ComplexNumber)obj, p, level);
+			serialize_complex((ComplexNumber)obj, sw, level);
 		}
 		else if(obj instanceof Exception)
 		{
-			serialize_exception((Exception)obj, p, level);
+			serialize_exception((Exception)obj, sw, level);
 		}
 		else if(obj instanceof Serializable)
 		{
-			serialize_class(obj, p, level);
+			serialize_class(obj, sw, level);
 		}
 		else
 		{
@@ -255,70 +252,70 @@ public class Serializer
 		throw new IllegalArgumentException("cannot serialize Jython object of type "+obj.getClass());
 	}
 	
-	protected void serialize_collection(Collection<?> collection, PrintWriter p, int level)
+	protected void serialize_collection(Collection<?> collection, StringWriter sw, int level)
 	{
 		// output a list
-		p.print("[");
-		serialize_sequence_elements(collection, false, p, level+1);
+		sw.write("[");
+		serialize_sequence_elements(collection, false, sw, level+1);
 		if(this.indent && collection.size()>0)
 		{
 			for(int i=0; i<level; ++i)
-				p.print("  ");
+				sw.write("  ");
 		}
-		p.print("]");
+		sw.write("]");
 	}
 
-	protected void serialize_sequence_elements(Collection<?> elts, boolean trailingComma, PrintWriter p, int level)
+	protected void serialize_sequence_elements(Collection<?> elts, boolean trailingComma, StringWriter sw, int level)
 	{
 		if(elts.size()==0)
 			return;
 		int count=0;
 		if(this.indent)
 		{
-			p.print("\n");
+			sw.write("\n");
 			String innerindent = "";
 			for(int i=0; i<level; ++i)
 				innerindent += "  ";
 			for(Object e: elts)
 			{
-				p.print(innerindent);
-				serialize(e, p, level);
+				sw.write(innerindent);
+				serialize(e, sw, level);
 				count++;
 				if(count<elts.size())
 				{
-					p.print(",\n");
+					sw.write(",\n");
 				}
 			}
 			if(trailingComma)
-				p.print(",");
-			p.print("\n");
+				sw.write(",");
+			sw.write("\n");
 		}
 		else
 		{
 			for(Object e: elts)
 			{
-				serialize(e, p, level);
+				serialize(e, sw, level);
 				count++;
 				if(count<elts.size())
-					p.print(",");
+					sw.write(",");
 			}
 			if(trailingComma)
-				p.print(",");
+				sw.write(",");
 		}
 	}
 
-	protected void serialize_set(Set<?> set, PrintWriter p, int level)
+	protected void serialize_set(Set<?> set, StringWriter sw, int level)
 	{
 		if(!this.setliterals)
 		{
 			// output a tuple instead of a set-literal
-			serialize_tuple(set, p, level);
+			serialize_tuple(set, sw, level);
 			return;
 		}
 		
 		if(set.size()>0)
 		{
-			p.print("{");
+			sw.write("{");
 			Collection<?> output = set;
 			if(this.indent)
 			{
@@ -331,59 +328,59 @@ public class Serializer
 				}
 				output = outputset;
 			}
-			serialize_sequence_elements(output, false, p, level+1);
+			serialize_sequence_elements(output, false, sw, level+1);
 	
 			if(this.indent)
 			{
 				for(int i=0; i<level; ++i)
-					p.print("  ");
+					sw.write("  ");
 			}
-			p.print("}");
+			sw.write("}");
 		}
 		else
 		{
 			// empty set literal doesn't exist, replace with empty tuple
-			serialize_tuple(Collections.EMPTY_LIST, p, level+1);
+			serialize_tuple(Collections.EMPTY_LIST, sw, level+1);
 		}
 	}
 
-	protected void serialize_primitive_array(Object array, PrintWriter p, int level)
+	protected void serialize_primitive_array(Object array, StringWriter sw, int level)
 	{
 		// output a tuple
 		int length = Array.getLength(array);
 		ArrayList<Object> items = new ArrayList<Object>(length);
 		for(int i=0; i<length; ++i)
 			items.add(Array.get(array, i));
-		serialize_tuple(items, p, level);
+		serialize_tuple(items, sw, level);
 	}
 
-	protected void serialize_tuple(Collection<?> items, PrintWriter p, int level)
+	protected void serialize_tuple(Collection<?> items, StringWriter sw, int level)
 	{
-		p.print("(");
-		serialize_sequence_elements(items, items.size()==1, p, level+1);
+		sw.write("(");
+		serialize_sequence_elements(items, items.size()==1, sw, level+1);
 		if(this.indent && items.size()>0)
 		{
 			for(int i=0; i<level; ++i)
-				p.print("  ");
+				sw.write("  ");
 		}
-		p.print(")");
+		sw.write(")");
 	}
 
-	protected void serialize_bytes(byte[] obj, PrintWriter p, int level)
+	protected void serialize_bytes(byte[] obj, StringWriter sw, int level)
 	{
 		// base-64 struct output
 		String str = DatatypeConverter.printBase64Binary(obj);
 		Map<String, String> dict = new HashMap<String, String>();
 		dict.put("data", str);
 		dict.put("encoding", "base64");
-		serialize_dict(dict, p, level);
+		serialize_dict(dict, sw, level);
 	}
 
-	protected void serialize_dict(Map<?, ?> dict, PrintWriter p,int level)
+	protected void serialize_dict(Map<?, ?> dict, StringWriter sw,int level)
 	{
 		if(dict.size()==0)
 		{
-			p.print("{}");
+			sw.write("{}");
 			return;
 		}
 
@@ -393,7 +390,7 @@ public class Serializer
 			String innerindent = "  ";
 			for(int i=0; i<level; ++i)
 				innerindent += "  ";
-			p.print("{\n");
+			sw.write("{\n");
 			
 			// try to sort the dictionary keys
 			Map<?,?> outputdict = dict;
@@ -405,66 +402,66 @@ public class Serializer
 			
 			for(Map.Entry<?,?> e: outputdict.entrySet())
 			{
-				p.print(innerindent);
-				serialize(e.getKey(), p, level+1);
-				p.print(": ");
-				serialize(e.getValue(), p, level+1);
+				sw.write(innerindent);
+				serialize(e.getKey(), sw, level+1);
+				sw.write(": ");
+				serialize(e.getValue(), sw, level+1);
 				counter++;
 				if(counter<dict.size())
-					p.print(",\n");
+					sw.write(",\n");
 			}
-			p.print("\n");
+			sw.write("\n");
 			for(int i=0; i<level; ++i)
-				p.print("  ");
-			p.print("}");
+				sw.write("  ");
+			sw.write("}");
 		}
 		else
 		{
-			p.print("{");
+			sw.write("{");
 			for(Map.Entry<?,?> e: dict.entrySet())
 			{
-				serialize(e.getKey(), p, level+1);
-				p.print(":");
-				serialize(e.getValue(), p, level+1);
+				serialize(e.getKey(), sw, level+1);
+				sw.write(":");
+				serialize(e.getValue(), sw, level+1);
 				counter++;
 				if(counter<dict.size())
-					p.print(",");
+					sw.write(",");
 			}
-			p.print("}");
+			sw.write("}");
 		}
 	}
 
-	protected void serialize_calendar(Calendar cal, PrintWriter p, int level)
+	protected void serialize_calendar(Calendar cal, StringWriter sw, int level)
 	{
 		// use JAXB datetime serializer to output as ISO-8601
-		serialize_string(javax.xml.bind.DatatypeConverter.printDateTime(cal), p, level);
+		serialize_string(javax.xml.bind.DatatypeConverter.printDateTime(cal), sw, level);
 	}
 
-	protected void serialize_date(Date date, PrintWriter p, int level)
+	protected void serialize_date(Date date, StringWriter sw, int level)
 	{
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		df.setTimeZone(TimeZone.getTimeZone("UTC"));
-		serialize_string(df.format(date), p, level);
+		serialize_string(df.format(date), sw, level);
 	}
 
-	protected void serialize_complex(ComplexNumber cplx, PrintWriter p, int level)
+	protected void serialize_complex(ComplexNumber cplx, StringWriter sw, int level)
 	{
-		p.print("(");
-		serialize_primitive(cplx.real, p, level);
+		sw.write("(");
+		serialize_primitive(cplx.real, sw, level);
 		if(cplx.imaginary>=0)
-			p.print("+");
-		serialize_primitive(cplx.imaginary, p, level);
-		p.print("j)");
+			sw.write("+");
+		serialize_primitive(cplx.imaginary, sw, level);
+		sw.write("j)");
 	}
 
-	protected void serialize_uuid(UUID obj, PrintWriter p, int level)
+	protected void serialize_uuid(UUID obj, StringWriter sw, int level)
 	{
-		serialize_string(obj.toString(), p, level);
+		serialize_string(obj.toString(), sw, level);
 	}
 
-	protected void serialize_bigdecimal(BigDecimal decimal, PrintWriter p, int level)
+	protected void serialize_bigdecimal(BigDecimal decimal, StringWriter sw, int level)
 	{
-		serialize_string(decimal.toEngineeringString(), p, level);
+		serialize_string(decimal.toEngineeringString(), sw, level);
 	}
 
 	private static final HashSet<Class<?>> boxedTypes;
@@ -485,7 +482,7 @@ public class Serializer
 		return boxedTypes.contains(type);
 	}
 
-	protected void serialize_class(Object obj, PrintWriter p, int level) 
+	protected void serialize_class(Object obj, StringWriter sw, int level) 
 	{
 		Map<String,Object> map;
 		IClassSerializer converter=getCustomConverter(obj.getClass());
@@ -529,7 +526,7 @@ public class Serializer
 				throw new IllegalArgumentException("couldn't introspect javabean: "+e);
 			}
 		}
-		serialize_dict(map, p, level);
+		serialize_dict(map, sw, level);
 	}
 
 	protected IClassSerializer getCustomConverter(Class<?> type) {
@@ -549,16 +546,16 @@ public class Serializer
 		return null;
 	}
 
-	protected void serialize_primitive(Object obj, PrintWriter p, int level) 
+	protected void serialize_primitive(Object obj, StringWriter sw, int level) 
 	{
 		if(obj instanceof Boolean || obj.getClass()==Boolean.TYPE)
 		{
-			p.print(obj.equals(Boolean.TRUE)? "True": "False");
+			sw.write(obj.equals(Boolean.TRUE)? "True": "False");
 		}
 		else if (obj instanceof Float || obj.getClass()==Float.TYPE)
 		{
 			Float f = (Float)obj;
-			serialize_primitive(f.doubleValue(), p, level);
+			serialize_primitive(f.doubleValue(), sw, level);
 		}
 		else if (obj instanceof Double || obj.getClass()==Double.TYPE)
 		{
@@ -566,21 +563,21 @@ public class Serializer
 			if(d.isInfinite()) {
 				// output a literal expression that overflows the float and results in +/-INF
 				if(d>0.0) {
-					p.print("1e30000");
+					sw.write("1e30000");
 				} else {
-					p.print("-1e30000");
+					sw.write("-1e30000");
 				}
 			}
 			else if(d.isNaN()) {
 				// there's no literal expression for a float NaN...
-				p.print("{'__class__':'float','value':'nan'}");
+				sw.write("{'__class__':'float','value':'nan'}");
 			} else {
-				p.print(d);
+				sw.write(d.toString());
 			}
 		}
 		else
 		{
-			p.print(obj);
+			sw.write(obj.toString());
 		}
 	}
 	
@@ -608,7 +605,7 @@ public class Serializer
 		repr_255[0xad] = "\\0xad";
 	}
 
-	protected void serialize_string(String str, PrintWriter p, int level)
+	protected void serialize_string(String str, StringWriter sw, int level)
 	{
 		// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
 		StringBuilder b=new StringBuilder(str.length());
@@ -635,21 +632,21 @@ public class Serializer
 		if(!containsSingleQuote) {
 			b.insert(0, '\'');
 			b.append('\'');
-			p.print(b.toString());
+			sw.write(b.toString());
 		} else if (!containsQuote) {
 			b.insert(0, '"');
 			b.append('"');
-			p.print(b.toString());
+			sw.write(b.toString());
 		} else {
 			String str2 = b.toString();
         	str2 = str2.replace("'", "\\'");
-        	p.print("'");
-        	p.print(str2);
-        	p.print("'");
+        	sw.write("'");
+        	sw.write(str2);
+        	sw.write("'");
 		}
 	}
 	
-	protected void serialize_exception(Exception ex, PrintWriter p, int level)
+	protected void serialize_exception(Exception ex, StringWriter sw, int level)
 	{
 		Map<String, Object> dict;
 		IClassSerializer converter=classToDictRegistry.get(ex.getClass());
@@ -668,6 +665,6 @@ public class Serializer
 			dict.put("args", new String[]{ex.getMessage()});
 			dict.put("attributes", java.util.Collections.EMPTY_MAP);
 		}
-		serialize_dict(dict, p, level);
+		serialize_dict(dict, sw, level);
 	}
 }

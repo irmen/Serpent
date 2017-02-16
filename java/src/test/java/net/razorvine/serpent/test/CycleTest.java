@@ -99,7 +99,7 @@ public class CycleTest
 	public void testMaxLevel()
 	{
 		Serializer ser = new Serializer();
-		assertEquals(1000, ser.maximumLevel);
+		assertEquals(800, ser.maximumLevel);
 		
 		Object[] array = new Object[] {
 			"level1",
