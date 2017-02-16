@@ -90,16 +90,14 @@ public class Serializer
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		String header = "# serpent utf-8 ";
 		if(this.setliterals)
-			header += "python3.2\n";  // set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
+			pw.print("# serpent utf-8 python3.2\n");  // set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
 		else
-			header += "python2.6\n";
-		pw.print(header);
+			pw.print("# serpent utf-8 python2.6\n");
 		serialize(obj, pw, 0);
 		
 		pw.flush();
-		String ser = sw.toString();
+		final String ser = sw.toString();
 		pw.close();
 		try {
 			sw.close();
@@ -585,26 +583,70 @@ public class Serializer
 			p.print(obj);
 		}
 	}
+	
+	// the repr translation table for characters 0x00-0xff
+	private final static String[] repr_255;
+	static {
+		repr_255=new String[256];
+		for(int c=0; c<32; ++c) {
+			repr_255[c] = String.format("\\x%02x",c);
+		}
+		for(char c=0x20; c<0x7f; ++c) {
+			repr_255[c] = String.valueOf(c);
+		}
+		for(int c=0x7f; c<=0xa0; ++c) {
+			repr_255[c] = String.format("\\x%02x", c);
+		}
+		for(char c=0xa1; c<=0xff; ++c) {
+			repr_255[c] = String.valueOf(c);
+		}
+		// odd ones out:
+		repr_255['\t'] = "\\t";
+		repr_255['\n'] = "\\n";
+		repr_255['\r'] = "\\r";
+		repr_255['\\'] = "\\\\";
+		repr_255[0xad] = "\\0xad";
+	}
 
 	protected void serialize_string(String str, PrintWriter p, int level)
 	{
-		// backslash-escaped string
-		str = str.replace("\\", "\\\\");  // double-escape the backslashes
-        str = str.replace("\b", "\\b");
-        str = str.replace("\f", "\\f");
-        str = str.replace("\n", "\\n");
-        str = str.replace("\r", "\\r");
-        str = str.replace("\t", "\\t");
-		if(!str.contains("'"))
-        	str = "'" + str + "'";
-		else if(!str.contains("\""))
-			str = '"' + str + '"';
-    	else
-    	{
-        	str = str.replace("'", "\\'");
-        	str = "'" + str + "'";
-    	}
-		p.print(str);
+		// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
+		StringBuilder b=new StringBuilder(str.length());
+		boolean containsSingleQuote=false;
+		boolean containsQuote=false;
+		for(int i=0; i<str.length(); ++i)
+		{
+			final char c = str.charAt(i);
+			containsSingleQuote |= c=='\'';
+			containsQuote |= c=='"';
+			
+			if(c<256) {
+				// characters 0..255 via quick lookup table
+				b.append(repr_255[c]);
+			} else {
+				if(Character.isDefined(c)) {
+					b.append(c);
+				} else {
+					b.append(String.format("\\u%04x", (int)c));
+				}
+			}
+		}
+
+		if(!containsSingleQuote) {
+			b.insert(0, '\'');
+			b.append('\'');
+			p.print(b.toString());
+		} else if (!containsQuote) {
+			b.insert(0, '"');
+			b.append('"');
+			p.print(b.toString());
+		} else {
+			String str2 = b.toString();
+        	str2 = str2.replace("'", "\\'");
+        	p.print("'");
+        	p.print(str2);
+        	p.print("'");
+		}
 	}
 	
 	protected void serialize_exception(Exception ex, PrintWriter p, int level)

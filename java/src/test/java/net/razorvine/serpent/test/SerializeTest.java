@@ -111,6 +111,9 @@ public class SerializeTest {
 		byte[] result = ser.serialize("blerp");
 		result=strip_header(result);
 		assertEquals("'blerp'", S(result));
+		result = ser.serialize("\\");
+		result=strip_header(result);
+		assertEquals("'\\\\'", S(result));    // XXX
 		result = ser.serialize(UUID.fromString("f1f8d00e-49a5-4662-ac1d-d5f0426ed293"));
 		result=strip_header(result);
 		assertEquals("'f1f8d00e-49a5-4662-ac1d-d5f0426ed293'", S(result));
@@ -146,29 +149,83 @@ public class SerializeTest {
 	}
 	
 	@Test
-	public void testUnicode()
+	public void testUnicodeEscapes()
+	{
+		Serializer serpent=new Serializer();
+		
+		// regular escaped chars first
+	  	byte[] ser = serpent.serialize("\b\r\n\f\t \\");
+	  	byte[] data = strip_header(ser);
+	  	// '\\x08\\r\\n\\x0c\\t \\\\'
+	  	assertArrayEquals(new byte[] {39,
+	  			92, 120, 48, 56,
+	  			92, 114,
+	  			92, 110,
+	  			92, 120, 48, 99,
+	  			92, 116,
+	  			32,
+	  			92, 92,
+	  			39}, data);
+	  	
+		// simple cases  (chars < 0x80)
+	  	ser = serpent.serialize("\u0000\u0001\u001f\u007f");
+	    data = strip_header(ser);
+	  	// '\\x00\\x01\\x1f\\x7f'
+	  	assertArrayEquals(new byte[] {39,
+	  			92, 120, 48, 48,
+	  			92, 120, 48, 49,
+	  			92, 120, 49, 102,
+	  			92, 120, 55, 102,
+	  			39 }, data);
+
+	  	// chars 0x80 .. 0xff
+	  	ser = serpent.serialize("\u0080\u0081\u00ff");
+	  	data = strip_header(ser);
+	  	// '\\x80\\x81\xc3\xbf'  (has some utf-8 encoded chars in it)
+	  	assertArrayEquals(new byte[] {39,
+	  			92, 120, 56, 48,
+	  			92, 120, 56, 49,
+	  			-61, -65,
+	  			39}, data);
+
+	  	// chars above 0xff
+	  	ser = serpent.serialize("\u0100\u20ac\u8899");
+	  	data = strip_header(ser);
+	  	// '\xc4\x80\xe2\x82\xac\xe8\xa2\x99'   (has some utf-8 encoded chars in it)
+	  	assertArrayEquals(new byte[] {39, -60, -128, -30, -126, -84, -24, -94, -103, 39}, data);
+	  	
+	  	// some random high chars that are all printable in python and not escaped
+	  	ser = serpent.serialize("\u0377\u082d\u10c5\u135d\uac00");
+	  	data = strip_header(ser);
+	  	// '\xcd\xb7\xe0\xa0\xad\xe1\x83\x85\xe1\x8d\x9d\xea\xb0\x80'   (only a bunch of utf-8 encoded chars)
+	  	assertArrayEquals(new byte[] {39, -51, -73, -32, -96, -83, -31, -125, -123, -31, -115, -99, -22, -80, -128, 39}, data);
+	  	
+	  	// some random high chars that are all non-printable in python and that are escaped
+	  	ser = serpent.serialize("\u0378\u082e\u10c6\u135c\uabff");
+	  	data = strip_header(ser);
+	  	// '\\u0378\\u082e\\u10c6\\u135c\\uabff'
+	  	assertArrayEquals(new byte[] {39,
+	  			92, 117, 48, 51, 55, 56,
+	  			92, 117, 48, 56, 50, 101,
+	  			92, 117, 49, 48, 99, 54,
+	  			92, 117, 49, 51, 53, 99,
+	  			92, 117, 97, 98, 102, 102,
+	  			39}, data);
+	}
+	
+	@Test
+	public void testNullByte()
 	{
 		Serializer serpent = new Serializer();
-		byte[] ser = serpent.serialize("euro\u20ac");
+		byte[] ser = serpent.serialize("null\u0000byte");
 		byte[] data = strip_header(ser);
-		assertArrayEquals(new byte[] {39, 101, 117, 114, 111, (byte) 0xe2, (byte) 0x82, (byte) 0xac, 39}, data);
-
-		ser = serpent.serialize("A\n\t\\Z");
-		// 'A\\n\\t\\\\Z'  (10 bytes)
-		data = strip_header(ser);
-		assertArrayEquals(new byte[] {39, 65, 92, 110, 92, 116, 92, 92, 90, 39}, data);
-		
-		ser = serpent.serialize("euro\u20ac\nlastline\ttab\\@slash");
-		// 'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'   (32 bytes)
-		data = strip_header(ser);
-		assertArrayEquals(new byte[] {
-							39, 101, 117, 114, 111, (byte) 226, (byte) 130, (byte) 172,
-							92, 110, 108, 97, 115, 116, 108, 105,
-							110, 101, 92, 116, 116, 97, 98, 92,
-							92, 64, 115, 108, 97, 115, 104, 39}
-			                , data);
+		assertEquals("'null\\x00byte'", new String(data));
+		for(byte b: ser) {
+			if(b==0)
+				fail("serialized data may not contain 0-bytes");
+		}
 	}
-
+	
 	@Test
 	public void testBool()
 	{
