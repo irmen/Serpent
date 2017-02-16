@@ -100,7 +100,7 @@ namespace Razorvine.Serpent.Test
 		public void testMaxLevel()
 		{
 			Serializer ser = new Serializer();
-			Assert.AreEqual(1000, ser.MaximumLevel);
+			Assert.AreEqual(800, ser.MaximumLevel);
 			
 			Object[] array = new Object[] {
 				"level1",

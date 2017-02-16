@@ -101,27 +101,70 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
-		public void TestUnicode()
+		public void TestUnicodeEscapes()
 		{
-			Serializer serpent = new Serializer();
-			byte[] ser = serpent.Serialize("euro\u20ac");
-			byte[] data = strip_header(ser);
-			Assert.AreEqual(new byte[] {39, 101, 117, 114, 111, 0xe2, 0x82, 0xac, 39}, data);
-
-			ser = serpent.Serialize("A\n\t\\Z");
-			// 'A\\n\\t\\\\Z'  (10 bytes)
-			data = strip_header(ser);
-			Assert.AreEqual(new byte[] {39, 65, 92, 110, 92, 116, 92, 92, 90, 39}, data);
+			Serializer serpent=new Serializer();
 			
-			ser = serpent.Serialize("euro\u20ac\nlastline\ttab\\@slash");
-			// 'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash'   (32 bytes)
-			data = strip_header(ser);
-			Assert.AreEqual(new byte[] {
-								39, 101, 117, 114, 111, 226, 130, 172,
-								92, 110, 108, 97, 115, 116, 108, 105,
-								110, 101, 92, 116, 116, 97, 98, 92,
-								92, 64, 115, 108, 97, 115, 104, 39}
-				                , data);
+			// regular escaped chars first
+		  	byte[] ser = serpent.Serialize("\b\r\n\f\t \\");
+		  	byte[] data = strip_header(ser);
+		  	// '\\x08\\r\\n\\x0c\\t \\\\'
+		  	Assert.AreEqual(new byte[] {39,
+		  			92, 120, 48, 56,
+		  			92, 114,
+		  			92, 110,
+		  			92, 120, 48, 99,
+		  			92, 116,
+		  			32,
+		  			92, 92,
+		  			39}, data);
+		  	
+			// simple cases  (chars < 0x80)
+		  	ser = serpent.Serialize("\u0000\u0001\u001f\u007f");
+		    data = strip_header(ser);
+		  	// '\\x00\\x01\\x1f\\x7f'
+		  	Assert.AreEqual(new byte[] {39,
+		  			92, 120, 48, 48,
+		  			92, 120, 48, 49,
+		  			92, 120, 49, 102,
+		  			92, 120, 55, 102,
+		  			39 }, data);
+	
+		  	// chars 0x80 .. 0xff
+		  	ser = serpent.Serialize("\u0080\u0081\u00ff");
+		  	data = strip_header(ser);
+		  	// '\\x80\\x81\xc3\xbf'  (has some utf-8 encoded chars in it)
+		  	Assert.AreEqual(new byte[] {39, 
+		  	        92, 120, 56, 48,
+		  	        92, 120, 56, 49,
+		  	        195, 191,
+		  	        39}, data);
+	
+		  	// chars above 0xff
+		  	ser = serpent.Serialize("\u0100\u20ac\u8899");
+		  	data = strip_header(ser);
+		  	// '\xc4\x80\xe2\x82\xac\xe8\xa2\x99'   (has some utf-8 encoded chars in it)
+		  	Assert.AreEqual(new byte[] {39, 196, 128, 226, 130, 172, 232, 162, 153, 39}, data);
+		  	
+//		  	// some random high chars that are all printable in python and not escaped
+//		  	ser = serpent.Serialize("\u0377\u082d\u10c5\u135d\uac00");
+//		  	data = strip_header(ser);
+//		  	Console.WriteLine(S(data)); // XXX
+//		  	// '\xcd\xb7\xe0\xa0\xad\xe1\x83\x85\xe1\x8d\x9d\xea\xb0\x80'   (only a bunch of utf-8 encoded chars)
+//		  	Assert.AreEqual(new byte[] {39, 205, 183, 224, 160, 173, 225, 131, 133, 225, 141, 157, 234, 176, 128, 39}, data);
+		  	
+		  	// some random high chars that are all non-printable in python and that are escaped
+		  	ser = serpent.Serialize("\u0378\u082e\u10c6\u135c\uabff");
+		  	data = strip_header(ser);
+		  	Console.WriteLine(S(data)); // XXX
+		  	// '\\u0378\\u082e\\u10c6\\u135c\\uabff'
+		  	Assert.AreEqual(new byte[] {39,
+		  			92, 117, 48, 51, 55, 56,
+		  			92, 117, 48, 56, 50, 101,
+		  			92, 117, 49, 48, 99, 54,
+		  			92, 117, 49, 51, 53, 99,
+		  			92, 117, 97, 98, 102, 102,
+		  			39}, data);
 		}
 
 		[Test]

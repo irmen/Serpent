@@ -44,7 +44,7 @@ namespace Razorvine.Serpent
 		/// This limit has been set to avoid troublesome stack overflow errors.
 		/// (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
 		/// </summary>
-		public int MaximumLevel = 1000;     // avoids stackoverflow errors
+		public int MaximumLevel = 800;     // avoids stackoverflow errors
 		
 		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
 		
@@ -75,15 +75,13 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public byte[] Serialize(object obj)
 		{
-			using(MemoryStream ms = new MemoryStream())
+			using(MemoryStream ms = new MemoryStream())	// XXX StringWriter?
 			using(TextWriter tw = new StreamWriter(ms, new UTF8Encoding(false)))			// don't write BOM
 			{
-				string header = "# serpent utf-8 ";
 				if(this.SetLiterals)
-					header += "python3.2\n";  //set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
+					tw.Write("# serpent utf-8 python3.2\n");  //set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
 				else
-					header += "python2.6\n";
-				tw.Write(header);
+					tw.Write("# serpent utf-8 python2.6\n");
 				Serialize(obj, tw, 0);
 				tw.Flush();
 				return ms.ToArray();
@@ -343,27 +341,70 @@ namespace Razorvine.Serpent
 			Serialize_dict(dict, tw, level);
 		}
 		
+		
+		// the repr translation table for characters 0x00-0xff
+		private static readonly string[] repr_255;
+		static Serializer() {
+			repr_255=new String[256];
+			for(int c=0; c<32; ++c) {
+				repr_255[c] = "\\x"+c.ToString("x2");
+			}
+			for(int c=0x20; c<0x7f; ++c) {
+				repr_255[c] = Convert.ToString((char)c);
+			}
+			for(int c=0x7f; c<=0xa0; ++c) {
+				repr_255[c] = "\\x"+c.ToString("x2");
+			}
+			for(int c=0xa1; c<=0xff; ++c) {
+				repr_255[c] = Convert.ToString((char)c);
+			}
+			// odd ones out:
+			repr_255['\t'] = "\\t";
+			repr_255['\n'] = "\\n";
+			repr_255['\r'] = "\\r";
+			repr_255['\\'] = "\\\\";
+			repr_255[0xad] = "\\0xad";
+		}
+	
 		protected void Serialize_string(string str, TextWriter tw, int level)
 		{
-			// backslash-escaped string
-			str = str.Replace("\\", "\\\\");  // double-escape the backslashes
-			str = str.Replace("\a", "\\a");
-			str = str.Replace("\b", "\\b");
-			str = str.Replace("\f", "\\f");
-			str = str.Replace("\n", "\\n");
-			str = str.Replace("\r", "\\r");
-			str = str.Replace("\t", "\\t");
-			str = str.Replace("\v", "\\v");
-			if(!str.Contains("'"))
-				str = "'" + str + "'";
-			else if(!str.Contains("\""))
-				str = '"' + str + '"';
-			else
+			// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
+			StringBuilder b=new StringBuilder(str.Length);
+			bool containsSingleQuote=false;
+			bool containsQuote=false;
+			foreach(char c in str)
 			{
-				str = str.Replace("'", "\\'");
-				str = "'" + str + "'";
+				containsSingleQuote |= c=='\'';
+				containsQuote |= c=='"';
+				
+				if(c<256) {
+					// characters 0..255 via quick lookup table
+					b.Append(repr_255[c]);
+				} else {
+					if(Char.IsLetterOrDigit(c) || Char.IsNumber(c) || Char.IsPunctuation(c) || Char.IsSymbol(c)) {
+						b.Append(c);
+					} else {
+						b.Append("\\u");
+						b.Append(((int)c).ToString("x4"));
+					}
+				}
 			}
-			tw.Write(str);
+	
+			if(!containsSingleQuote) {
+				b.Insert(0, '\'');
+				b.Append('\'');
+				tw.Write(b.ToString());
+			} else if (!containsQuote) {
+				b.Insert(0, '"');
+				b.Append('"');
+				tw.Write(b.ToString());
+			} else {
+				String str2 = b.ToString();
+	        	str2 = str2.Replace("'", "\\'");
+	        	tw.Write("'");
+	        	tw.Write(str2);
+	        	tw.Write("'");
+			}
 		}
 
 		protected void Serialize_datetime(DateTime dt, TextWriter tw, int level)
