@@ -46,6 +46,9 @@ class TestDeserialize(unittest.TestCase):
     def test_deserialize(self):
         data = serpent.loads(b"555")
         self.assertEqual(555, data)
+
+    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
+    def test_deserialize_unichr(self):
         unicodestring = "euro" + unichr(0x20ac)
         encoded = repr(unicodestring).encode("utf-8")
         data = serpent.loads(encoded)
@@ -72,6 +75,13 @@ class TestDeserialize(unittest.TestCase):
     def test_trailing_comma_set(self):
         v = serpent.loads(b"{1,2,3,}")
         self.assertEqual(set([1, 2, 3]), v)
+
+    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
+    def test_unicode_escapes(self):
+        v = serpent.loads(b"'\u20ac'")
+        self.assertEqual(u"\u20ac", v)
+        v = serpent.loads(b"'\U00022001'")
+        self.assertEqual(u"\U00022001", v)
 
 
 class TestBasics(unittest.TestCase):
@@ -210,12 +220,15 @@ class TestBasics(unittest.TestCase):
             self.fail("must fail")
         self.assertTrue("0-bytes" in str(ex.exception))
 
+    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
     def test_unicode(self):
-        u = "euro" + unichr(0x20ac)
+        u = "euro" + unichr(0x20ac)+"\U00022001"
         self.assertTrue(type(u) is unicode)
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
+
+    def test_unicode_quotes(self):
         ser = serpent.dumps(unicode("quotes'\""))
         data = strip_header(ser)
         self.assertEqual(b"'quotes\\'\"'", data)
@@ -230,11 +243,7 @@ class TestBasics(unittest.TestCase):
             utf_8_correct=utf_8_correct[1:]
         ser = serpent.dumps(u)
         d = strip_header(ser)
-        print("\nSERPENT:", d)  # XXX
-        print("\nCORRECT=>", repr(utf_8_correct))
-        print("      D=>", repr(d))
         self.assertEqual(utf_8_correct, d)
-
 
     @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
     def test_unicode_with_escapes_py2(self):
@@ -244,21 +253,17 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(unicode("\a"))
         d = strip_header(ser)
         self.assertEqual(b"'\\x07'", d)
+
+    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
+    @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
+    def test_unicode_with_escapes_unichrs(self):
         ser = serpent.dumps("\a"+unichr(0x20ac))
         d = strip_header(ser)
-        if os.name == "java":
-            # different because of Jython bug workaround
-            self.assertEqual(b"'\\x07\xe2\x82\xac'", d)
-        else:
-            self.assertEqual(b"'\\x07\\u20ac'", d)
+        self.assertEqual(b"'\\x07\\u20ac'", d)
         line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
         ser = serpent.dumps(line)
         d = strip_header(ser)
-        if os.name=="java":
-            # different because of Jython bug workaround
-            self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
-        else:
-            self.assertEqual(b"\"'euro\\u20ac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
+        self.assertEqual(b"\"'euro\\u20ac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
         data = serpent.loads(ser)
         self.assertEqual(line, data)
 

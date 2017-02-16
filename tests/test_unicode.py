@@ -10,7 +10,7 @@ teststrings = [
     u"",
     u"abc",
     u"\u20ac",
-    u"\x00\x01\x80\x81\xfe\xff"
+    u"\x00\x01\x80\x81\xfe\xff\u20ac\u4444\u0240slashu:\\uend.\\u20ac(no euro!)\\U00022001bigone"
 ]
 
 large = u"".join(unichr(i) for i in range(256))
@@ -33,7 +33,7 @@ def main():
         for i, source in enumerate(teststrings):
             data = ser.serialize(source)
             out.write(data)
-            out.write(b"\n\n")
+            out.write(b"~\n~\n")
             assert b"\x00" not in data
             results.append(data)
 
@@ -41,8 +41,11 @@ def main():
     for i, source in enumerate(teststrings):
         print(i)
         result = serpent.loads(results[i])
-        assert type(source) is type(result)
-        assert source==result
+        if source!=result:
+            print("ERRROR!!! RESULT AFTER serpent.loads IS NOT CORRECT!")
+            print("SOURCE:",repr(source))
+            print("RESULT:",repr(result))
+            return
     print("OK")
 
 if __name__ == "__main__":

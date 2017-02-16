@@ -1,5 +1,7 @@
+from __future__ import print_function
 import os
 import io
+import re
 import serpent
 from test_unicode import teststrings
 
@@ -11,13 +13,15 @@ for f in files:
     resultstrings=[]
     with io.open(f, "rb") as inf:
         data = inf.read()
-        data = data.split(b"\n\n")[:-1]
+        data = re.split(b"~\n~\n", data)[:-1]
+        assert len(data) == len(teststrings)
         # data = data[:-2] # XXX
-        for d in data:
+        for num, d in enumerate(data, start=1):
             try:
+                print("data item ",num,"...")
                 resultstrings.append(serpent.loads(d))
             except Exception as x:
-                print("SERPENT ERROR", type(x))
+                print("\nSERPENT ERROR", type(x))
 
     if resultstrings==teststrings:
         print("OK")
