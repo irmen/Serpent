@@ -75,8 +75,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public byte[] Serialize(object obj)
 		{
-			using(MemoryStream ms = new MemoryStream())	// XXX StringWriter?
-			using(TextWriter tw = new StreamWriter(ms, new UTF8Encoding(false)))			// don't write BOM
+			using(StringWriter tw = new StringWriter())
 			{
 				if(this.SetLiterals)
 					tw.Write("# serpent utf-8 python3.2\n");  //set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
@@ -84,7 +83,7 @@ namespace Razorvine.Serpent
 					tw.Write("# serpent utf-8 python2.6\n");
 				Serialize(obj, tw, 0);
 				tw.Flush();
-				return ms.ToArray();
+				return Encoding.UTF8.GetBytes(tw.ToString());
 			}
 		}
 		
