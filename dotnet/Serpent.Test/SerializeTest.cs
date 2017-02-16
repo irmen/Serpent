@@ -156,7 +156,6 @@ namespace Razorvine.Serpent.Test
 		  	// some random high chars that are all non-printable in python and that are escaped
 		  	ser = serpent.Serialize("\u0378\u082e\u10c6\u135c\uabff");
 		  	data = strip_header(ser);
-		  	Console.WriteLine(S(data)); // XXX
 		  	// '\\u0378\\u082e\\u10c6\\u135c\\uabff'
 		  	Assert.AreEqual(new byte[] {39,
 		  			92, 117, 48, 51, 55, 56,
