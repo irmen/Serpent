@@ -48,7 +48,6 @@ class TestDeserialize(unittest.TestCase):
         data = serpent.loads(b"555")
         self.assertEqual(555, data)
 
-    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
     def test_deserialize_unichr(self):
         unicodestring = "euro" + unichr(0x20ac)
         encoded = repr(unicodestring).encode("utf-8")
@@ -77,7 +76,6 @@ class TestDeserialize(unittest.TestCase):
         v = serpent.loads(b"{1,2,3,}")
         self.assertEqual(set([1, 2, 3]), v)
 
-    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
     def test_unicode_escapes(self):
         v = serpent.loads(b"'\u20ac'")
         self.assertEqual(u"\u20ac", v)
@@ -221,27 +219,37 @@ class TestBasics(unittest.TestCase):
             self.fail("must fail")
         self.assertTrue("0-bytes" in str(ex.exception))
 
-    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
-    def test_unicode(self):
+    @unittest.skipIf(os.name == "java", "jython can't parse unicode U's")
+    def test_unicode_U(self):
         u = "euro" + unichr(0x20ac)+"\U00022001"
         self.assertTrue(type(u) is unicode)
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
 
-    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
     def test_unicode_escape_allchars(self):
         # this checks for all 0x0000-0xffff chars that they will be serialized
         # into a proper repr form and when processed back by ast.literal_parse directly
         # will get turned back into the chars 0x0000-0xffff again
-        all_chars = u"".join(unichr(c) for c in range(65536))
+        # For Jython we take the range upto 0x4100 because after that it starts
+        # complaining about surrogates or "mark invalid" (an utf-8 parsing bug it seems)
+        highest_char = 0x4100 if os.name == "java" else 0xffff
+        all_chars = u"".join(unichr(c) for c in range(highest_char+1))
         ser = serpent.dumps(all_chars)
         self.assertGreater(len(ser), len(all_chars))
         ser = ser.decode("utf-8")
         if sys.version_info < (3, 0):
             ser = compile(ser, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+            if os.name == "java":
+                # The ast module in Jython will not have parsed this correctly into unicode literals.
+                # So we have to patch up the ast tree ourselves and decode Str nodes to unicode manually.
+                # (this is the same what Serpent does internally so we replicate it here)
+                # See http://bugs.jython.org/issue2008
+                for node in ast.walk(ser):
+                    if isinstance(node, ast.Str):
+                        node.s = node.s.decode("unicode-escape")
         data = ast.literal_eval(ser)
-        self.assertEqual(65536, len(data))
+        self.assertEqual(highest_char+1, len(data))
         for i, c in enumerate(data):
             if unichr(i) != c:
                 self.fail("char different for "+str(i))
@@ -272,7 +280,6 @@ class TestBasics(unittest.TestCase):
         d = strip_header(ser)
         self.assertEqual(b"'\\x07'", d)
 
-    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
     @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
     def test_unicode_with_escapes_unichrs(self):
         ser = serpent.dumps("\a"+unichr(0x20ac))

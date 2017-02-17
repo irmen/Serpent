@@ -88,28 +88,15 @@ def loads(serialized_bytes):
         raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
     serialized = serialized_bytes.decode("utf-8")
     if sys.version_info < (3, 0):
+        # python 2.x: parse with unicode_literals (promotes all strings to unicode)
+        serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
         if os.name == "java":
-            # Because of a bug in Jython we cannot correctly parse strings with characters >255 in them.
-            # These are encoded using the \u???? escape sequence, and should be parsed back into a proper
-            # unicode string. However the ast module in Jython is unable to do this correctly.
+            # The ast module in Jython will not have parsed this correctly into unicode literals.
+            # So we have to patch up the ast tree ourselves and decode Str nodes to unicode manually.
             # See http://bugs.jython.org/issue2008
-            # I tried various things (unicode-escaping, re-encoding in utf-8, modifying the ast syntax tree to
-            # try to convert the str nodes, but all seems in vain. The parsing simply processes the unicode wrong,
-            # and loses information in the process that cannot be restored by postprocessing.
-            # The only option for now seems to be to give up if we encounter such a string.
-            # So for Jython: only use ASCII strings or encode/decode the unicode strings yourself into bytes or ASCII
-            # before sending them through Serpent.
-            import re
-            if re.search(r"\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}", serialized):
-                raise ValueError("Unsupported serialized string encountered. Unfortunately it is currently " \
-                                 "impossible to deserialize a string with characters above value 255 in it, " \
-                                 "due to a bug with the ast module in Jython. Either change the string that is " \
-                                 "given to this application (for instance make sure it is ASCII only), " \
-                                 "or wait until the bug in Jython is fixed: http://bugs.jython.org/issue2008 "\
-                                 "(Unfortunately there seems little progress in solving the bug)")
-        else:
-            # python 2.x: parse with unicode_literals (promotes all strings to unicode)
-            serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+            for node in ast.walk(serialized):
+                if isinstance(node, ast.Str):
+                    node.s = node.s.decode("unicode-escape")
     try:
         if os.name != "java" and sys.platform != "cli":
             gc.disable()
