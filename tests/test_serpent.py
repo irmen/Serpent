@@ -5,7 +5,9 @@ Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
+import __future__
 import sys
+import ast
 import timeit
 import datetime
 import uuid
@@ -226,6 +228,23 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
+
+    @unittest.skipIf(os.name=="java", "Jython can't deserialize strings with unicode in them, bug #2008")
+    def test_unicode_escape_allchars(self):
+        # this checks for all 0x0000-0xffff chars that they will be serialized
+        # into a proper repr form and when processed back by ast.literal_parse directly
+        # will get turned back into the chars 0x0000-0xffff again
+        all_chars = u"".join(unichr(c) for c in range(65536))
+        ser = serpent.dumps(all_chars)
+        self.assertGreater(len(ser), len(all_chars))
+        ser = ser.decode("utf-8")
+        if sys.version_info < (3, 0):
+            ser = compile(ser, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
+        data = ast.literal_eval(ser)
+        self.assertEqual(65536, len(data))
+        for i, c in enumerate(data):
+            if unichr(i) != c:
+                self.fail("char different for "+str(i))
 
     def test_unicode_quotes(self):
         ser = serpent.dumps(unicode("quotes'\""))

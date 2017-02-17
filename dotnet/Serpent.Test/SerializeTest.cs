@@ -710,7 +710,7 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
-		public void testInterfaceHierarchyPickler()
+		public void TestInterfaceHierarchyPickler()
 		{
 			BaseClassWithInterface b = new BaseClassWithInterface();
 			SubClassWithInterface sub = new SubClassWithInterface();
