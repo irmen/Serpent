@@ -557,6 +557,12 @@ public class Parser
 					case 't':
 						sb.append('\t');
 						break;
+					case 'x':		//  "\x00"
+						sb.append((char)Integer.parseInt(sr.read(2), 16));
+						break;
+					case 'u':		//  "\u0000"
+						sb.append((char)Integer.parseInt(sr.read(4), 16));
+						break;
 					default:
 						sb.append(c);
 						break;

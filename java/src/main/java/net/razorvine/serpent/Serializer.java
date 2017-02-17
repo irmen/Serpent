@@ -602,13 +602,13 @@ public class Serializer
 		repr_255['\n'] = "\\n";
 		repr_255['\r'] = "\\r";
 		repr_255['\\'] = "\\\\";
-		repr_255[0xad] = "\\0xad";
+		repr_255[0xad] = "\\xad";
 	}
 
 	protected void serialize_string(String str, StringWriter sw, int level)
 	{
 		// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
-		StringBuilder b=new StringBuilder(str.length());
+		StringBuilder b=new StringBuilder(str.length()*2);
 		boolean containsSingleQuote=false;
 		boolean containsQuote=false;
 		for(int i=0; i<str.length(); ++i)
@@ -621,7 +621,7 @@ public class Serializer
 				// characters 0..255 via quick lookup table
 				b.append(repr_255[c]);
 			} else {
-				if(Character.isDefined(c)) {
+				if(Character.isDefined(c) && !Character.isISOControl(c) && !Character.isSurrogate(c) && !Character.isWhitespace(c)) {
 					b.append(c);
 				} else {
 					b.append(String.format("\\u%04x", (int)c));

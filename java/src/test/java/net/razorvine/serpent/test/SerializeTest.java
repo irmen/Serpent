@@ -214,6 +214,24 @@ public class SerializeTest {
 	}
 	
 	@Test
+	public void testLongUnicodeRoundtrip()
+	{
+		char[] chars64k = new char[65536];
+		for(int i=0; i<=65535; ++i)
+			chars64k[i]=(char)i;
+
+		String str64k= new String(chars64k);
+		
+		Serializer ser=new Serializer();
+		byte[] data = ser.serialize(str64k);
+		assertTrue(data.length > chars64k.length);
+		
+		Parser p=new Parser();
+		String result = (String)p.parse(data).getData();
+		assertEquals(str64k, result);
+	}
+	
+	@Test
 	public void testNullByte()
 	{
 		Serializer serpent = new Serializer();
