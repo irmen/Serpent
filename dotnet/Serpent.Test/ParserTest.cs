@@ -507,6 +507,24 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Test]
+		public void TestLongUnicodeRoundtrip()
+		{
+			Char[] chars64k = new Char[65536];
+			for(int i=0; i<=65535; ++i)
+				chars64k[i]=(Char)i;
+	
+			String str64k= new String(chars64k);
+			
+			Serializer ser=new Serializer();
+			byte[] data = ser.Serialize(str64k);
+			Assert.Greater(data.Length, chars64k.Length);
+			
+			Parser p=new Parser();
+			String result = (String)p.Parse(data).GetData();
+			Assert.AreEqual(str64k, result);
+		}
+		
+		[Test]
 		public void TestWhitespace()
 		{
 			Parser p = new Parser();

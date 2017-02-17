@@ -570,6 +570,12 @@ namespace Razorvine.Serpent
 						case 'v':
 							sb.Append('\v');
 							break;
+						case 'x':		//  "\x00"
+							sb.Append((char)int.Parse(sr.Read(2), NumberStyles.HexNumber));
+							break;
+						case 'u':		//  "\u0000"
+							sb.Append((char)int.Parse(sr.Read(4), NumberStyles.HexNumber));
+							break;
 						default:
 							sb.Append(c);
 							break;
