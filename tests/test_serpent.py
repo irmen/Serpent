@@ -934,7 +934,7 @@ class TestCyclic(unittest.TestCase):
     # noinspection PyUnreachableCode
     def testMaxLevel(self):
         ser = serpent.Serializer()
-        self.assertGreater(ser.maximum_level, 100)
+        self.assertGreater(ser.maximum_level, 20)   # 20 seems quite low, but Pypy appears to have a low default recursionlimit (100)
         array=[]
         arr=array
         for level in range(min(sys.getrecursionlimit()+10, 2000)):
