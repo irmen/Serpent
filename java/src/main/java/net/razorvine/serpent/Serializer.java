@@ -34,7 +34,7 @@ public class Serializer
 	 * This limit has been set to avoid troublesome stack overflow errors.
 	 * (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
 	 */
-	public int maximumLevel = 800;		// to avoid stack overflow errors
+	public int maximumLevel = 500;		// to avoid stack overflow errors
 	
 	/**
 	 * Indent the resulting serpent serialization text?
