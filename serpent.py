@@ -281,6 +281,7 @@ class Serializer(object):
         self.module_in_classname = module_in_classname
         self.serialized_obj_ids = set()
         self.special_classes_registry_copy = None
+        self.maximum_level = min(sys.getrecursionlimit() // 3.5, 1000)
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
@@ -307,6 +308,8 @@ class Serializer(object):
     _shortcut_dispatch_types = frozenset([float, complex, tuple, list, dict, set, frozenset])
 
     def _serialize(self, obj, out, level):
+        if level > self.maximum_level:
+            raise ValueError("Object graph nesting too deep. Increase serializer.maximum_level if you think you need more.")
         t = type(obj)
         if t in _translate_types:
             obj = _translate_types[t](obj)

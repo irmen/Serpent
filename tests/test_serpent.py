@@ -6,7 +6,6 @@ Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 from __future__ import print_function, division
 import sys
-import ast
 import timeit
 import datetime
 import uuid
@@ -931,6 +930,31 @@ class TestCyclic(unittest.TestCase):
         with self.assertRaises(ValueError) as e:
             serpent.dumps(d)
         self.assertEqual("Circular reference detected (class)", str(e.exception))
+
+    # noinspection PyUnreachableCode
+    def testMaxLevel(self):
+        ser = serpent.Serializer()
+        self.assertGreater(ser.maximum_level, 100)
+        array=[]
+        arr=array
+        for level in range(min(sys.getrecursionlimit()+10, 2000)):
+            arr.append("level"+str(level))
+            arr2 = []
+            arr.append(arr2)
+            arr=arr2
+        with self.assertRaises(ValueError) as x:
+            ser.serialize(array)
+            self.fail("should crash")
+        self.assertTrue("too deep" in str(x.exception))
+        # check setting the maxlevel
+        array = ["level1", ["level2", ["level3", ["level4"]]]]
+        ser.maximum_level = 4
+        ser.serialize(array)    # should work
+        ser.maximum_level = 3
+        with self.assertRaises(ValueError) as x:
+            ser.serialize(array)    # should crash
+            self.fail("should crash")
+        self.assertTrue("too deep" in str(x.exception))
 
 
 class Cycle(object):
