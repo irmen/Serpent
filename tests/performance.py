@@ -7,6 +7,8 @@ from __future__ import print_function
 from timeit import default_timer as perf_timer
 import sys
 import datetime
+import decimal
+import uuid
 
 
 class Person(object):
@@ -15,8 +17,9 @@ class Person(object):
         self.age = age
 
 
-data = {
+guid = uuid.uuid4()
 
+data = {
     "bytes": b"0123456789abcdefghijklmnopqrstuvwxyz" * 2000,
     "bytearray": bytearray(b"0123456789abcdefghijklmnopqrstuvwxyz") * 2000,
     "str": "\"0123456789\"\n'abcdefghijklmnopqrstuvwxyz'\t" * 2000,
@@ -27,11 +30,13 @@ data = {
     "tuple": [(x * x, "tuple", (300, 400, (500, 600, (x * x, x * x)))) for x in range(200)],
     "list": [[x * x, "list", [300, 400, [500, 600, [x * x]]]] for x in range(200)],
     "set": set(x * x for x in range(1000)),
-    "dict": {i * i: {1000 + j: chr(j + 65) for j in range(5)} for i in range(100)},
+    "dict": {str(i * i): {str(1000 + j): chr(j + 65) for j in range(5)} for i in range(100)},
     "exception": [ZeroDivisionError("test exeception", x * x) for x in range(1000)],
     "class": [Person("harry", x * x) for x in range(1000)],
     "datetime": [datetime.datetime.now() for x in range(1000)],
-    "complex": [complex(x + x, x * x) for x in range(1000)]
+    "complex": [complex(x + x, x * x) for x in range(1000)],
+    "decimal": [decimal.Decimal("1122334455667788998877665544332211.9876543212345678987654321123456789") for x in range(1000)],
+    "uuid": [guid for x in range(1000)]
 }
 
 serializers = {}
@@ -75,6 +80,7 @@ def run():
     results = {}
     number = 10
     repeat = 3
+    serializers = {"serpent": (serpent.dumps, serpent.loads)}   # XXX
     for ser in serializers:
         print("serializer:", ser)
         results[ser] = {"sizes": {}, "ser-times": {}, "deser-times": {}}

@@ -66,7 +66,7 @@ import uuid
 import array
 import math
 
-__version__ = "1.17"
+__version__ = "1.18"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -189,13 +189,6 @@ class BytesWrapper(object):
         return BytesWrapper(data)
 
 
-if sys.version_info < (3, 0):
-    _repr = repr     # python <3.0 won't need explicit encoding to utf-8, so we optimize this
-else:
-    def _repr(obj):
-        return repr(obj).encode("utf-8")
-
-
 _repr_types = set([
     str,
     int,
@@ -278,7 +271,7 @@ class Serializer(object):
             header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
         else:
             header += "python2.6\n"   # don't change this even though we don't support 2.6 any longer, otherwise we can't read older serpent strings
-        out = [header.encode("utf-8")]
+        out = [header]
         try:
             if os.name != "java" and sys.platform != "cli":
                 gc.disable()
@@ -288,9 +281,7 @@ class Serializer(object):
             gc.enable()
         self.special_classes_registry_copy = None
         del self.serialized_obj_ids
-        if sys.platform == "cli":
-            return "".join(out)
-        return b"".join(out)
+        return "".join(out).encode("utf-8")
 
     _shortcut_dispatch_types = frozenset([float, complex, tuple, list, dict, set, frozenset])
 
@@ -302,7 +293,7 @@ class Serializer(object):
             obj = _translate_types[t](obj)
             t = type(obj)
         if t in _repr_types:
-            out.append(_repr(obj))    # just a simple repr() is enough for these objects
+            out.append(repr(obj))    # just a simple repr() is enough for these objects
             return
         if t in self._shortcut_dispatch_types:
             # we shortcut these builtins directly to the dispatch function to avoid type lookup overhead below
@@ -335,24 +326,24 @@ class Serializer(object):
     def ser_builtins_float(self, float_obj, out, level):
         if math.isnan(float_obj):
             # there's no literal expression for a float NaN...
-            out.append(b"{'__class__':'float','value':'nan'}")
+            out.append("{'__class__':'float','value':'nan'}")
         elif math.isinf(float_obj):
             # output a literal expression that overflows the float and results in +/-INF
             if float_obj > 0:
-                out.append(b"1e30000")
+                out.append("1e30000")
             else:
-                out.append(b"-1e30000")
+                out.append("-1e30000")
         else:
-            out.append(repr(float_obj).encode("ascii"))
+            out.append(repr(float_obj))
     dispatch[float] = ser_builtins_float
 
     def ser_builtins_complex(self, complex_obj, out, level):
-        out.append(b"(")
+        out.append("(")
         self.ser_builtins_float(complex_obj.real, out, level)
         if complex_obj.imag >= 0:
-            out.append(b"+")
+            out.append("+")
         self.ser_builtins_float(complex_obj.imag, out, level)
-        out.append(b"j)")
+        out.append("j)")
     dispatch[complex] = ser_builtins_complex
 
     if sys.version_info < (3, 0):
@@ -374,25 +365,25 @@ class Serializer(object):
         append = out.append
         serialize = self._serialize
         if self.indent and tuple_obj:
-            indent_chars = b"  " * level
-            indent_chars_inside = indent_chars + b"  "
-            append(b"(\n")
+            indent_chars = "  " * level
+            indent_chars_inside = indent_chars + "  "
+            append("(\n")
             for elt in tuple_obj:
                 append(indent_chars_inside)
                 serialize(elt, out, level + 1)
-                append(b",\n")
+                append(",\n")
             out[-1] = out[-1].rstrip()  # remove the last \n
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
-            append(b"\n" + indent_chars + b")")
+            append("\n" + indent_chars + ")")
         else:
-            append(b"(")
+            append("(")
             for elt in tuple_obj:
                 serialize(elt, out, level + 1)
-                append(b",")
+                append(",")
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
-            append(b")")
+            append(")")
     dispatch[tuple] = ser_builtins_tuple
 
     def ser_builtins_list(self, list_obj, out, level):
@@ -402,23 +393,23 @@ class Serializer(object):
         append = out.append
         serialize = self._serialize
         if self.indent and list_obj:
-            indent_chars = b"  " * level
-            indent_chars_inside = indent_chars + b"  "
-            append(b"[\n")
+            indent_chars = "  " * level
+            indent_chars_inside = indent_chars + "  "
+            append("[\n")
             for elt in list_obj:
                 append(indent_chars_inside)
                 serialize(elt, out, level + 1)
-                append(b",\n")
+                append(",\n")
             del out[-1]  # remove the last ,\n
-            append(b"\n" + indent_chars + b"]")
+            append("\n" + indent_chars + "]")
         else:
-            append(b"[")
+            append("[")
             for elt in list_obj:
                 serialize(elt, out, level + 1)
-                append(b",")
+                append(",")
             if list_obj:
                 del out[-1]  # remove the last ,
-            append(b"]")
+            append("]")
         self.serialized_obj_ids.discard(id(list_obj))
     dispatch[list] = ser_builtins_list
 
@@ -429,9 +420,9 @@ class Serializer(object):
         append = out.append
         serialize = self._serialize
         if self.indent and dict_obj:
-            indent_chars = b"  " * level
-            indent_chars_inside = indent_chars + b"  "
-            append(b"{\n")
+            indent_chars = "  " * level
+            indent_chars_inside = indent_chars + "  "
+            append("{\n")
             dict_items = dict_obj.items()
             try:
                 sorted_items = sorted(dict_items)
@@ -440,21 +431,21 @@ class Serializer(object):
             for key, value in sorted_items:
                 append(indent_chars_inside)
                 serialize(key, out, level + 1)
-                append(b": ")
+                append(": ")
                 serialize(value, out, level + 1)
-                append(b",\n")
+                append(",\n")
             del out[-1]  # remove last ,\n
-            append(b"\n" + indent_chars + b"}")
+            append("\n" + indent_chars + "}")
         else:
-            append(b"{")
+            append("{")
             for key, value in dict_obj.items():
                 serialize(key, out, level + 1)
-                append(b":")
+                append(":")
                 serialize(value, out, level + 1)
-                append(b",")
+                append(",")
             if dict_obj:
                 del out[-1]  # remove the last ,
-            append(b"}")
+            append("}")
         self.serialized_obj_ids.discard(id(dict_obj))
     dispatch[dict] = ser_builtins_dict
 
@@ -467,9 +458,9 @@ class Serializer(object):
         append = out.append
         serialize = self._serialize
         if self.indent and set_obj:
-            indent_chars = b"  " * level
-            indent_chars_inside = indent_chars + b"  "
-            append(b"{\n")
+            indent_chars = "  " * level
+            indent_chars_inside = indent_chars + "  "
+            append("{\n")
             try:
                 sorted_elts = sorted(set_obj)
             except TypeError:   # can occur when elements can't be ordered (Python 3.x)
@@ -477,16 +468,16 @@ class Serializer(object):
             for elt in sorted_elts:
                 append(indent_chars_inside)
                 serialize(elt, out, level + 1)
-                append(b",\n")
+                append(",\n")
             del out[-1]  # remove the last ,\n
-            append(b"\n" + indent_chars + b"}")
+            append("\n" + indent_chars + "}")
         elif set_obj:
-            append(b"{")
+            append("{")
             for elt in set_obj:
                 serialize(elt, out, level + 1)
-                append(b",")
+                append(",")
             del out[-1]  # remove the last ,
-            append(b"}")
+            append("}")
         else:
             # empty set literal doesn't exist unfortunately, replace with empty tuple
             self.ser_builtins_tuple((), out, level)
@@ -498,33 +489,33 @@ class Serializer(object):
 
     def ser_decimal_Decimal(self, decimal_obj, out, level):
         # decimal is serialized as a string to avoid losing precision
-        self._serialize(str(decimal_obj), out, level)
+        out.append(repr(str(decimal_obj)))
     dispatch[decimal.Decimal] = ser_decimal_Decimal
 
     def ser_datetime_datetime(self, datetime_obj, out, level):
-        self._serialize(datetime_obj.isoformat(), out, level)
+        out.append(repr(datetime_obj.isoformat()))
     dispatch[datetime.datetime] = ser_datetime_datetime
     
     def ser_datetime_date(self, date_obj, out, level):
-        self._serialize(date_obj.isoformat(), out, level)
+        out.append(repr(date_obj.isoformat()))
     dispatch[datetime.date] = ser_datetime_date
     
     if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10 ** 6 + timedelta_obj.microseconds) / 10 ** 6
-            self._serialize(secs, out, level)
+            out.append(repr(secs))
     else:
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = timedelta_obj.total_seconds()
-            self._serialize(secs, out, level)
+            out.append(repr(secs))
     dispatch[datetime.timedelta] = ser_datetime_timedelta
 
     def ser_datetime_time(self, time_obj, out, level):
-        self._serialize(str(time_obj), out, level)
+        out.append(repr(str(time_obj)))
     dispatch[datetime.time] = ser_datetime_time
 
     def ser_uuid_UUID(self, uuid_obj, out, level):
-        self._serialize(str(uuid_obj), out, level)
+        out.append(repr(str(uuid_obj)))
     dispatch[uuid.UUID] = ser_uuid_UUID
 
     def ser_exception_class(self, exc_obj, out, level):
