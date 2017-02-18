@@ -44,7 +44,7 @@ namespace Razorvine.Serpent
 		/// This limit has been set to avoid troublesome stack overflow errors.
 		/// (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
 		/// </summary>
-		public int MaximumLevel = 800;     // avoids stackoverflow errors
+		public int MaximumLevel = 500;     // avoids stackoverflow errors
 		
 		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
 		
