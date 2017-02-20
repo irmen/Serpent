@@ -49,7 +49,7 @@ class TestDeserialize(unittest.TestCase):
         self.assertEqual(555, data)
 
     def test_deserialize_unichr(self):
-        unicodestring = "euro" + unichr(0x20ac)
+        unicodestring = u"euro\u20ac"
         encoded = repr(unicodestring).encode("utf-8")
         data = serpent.loads(encoded)
         self.assertEqual(unicodestring, data)
@@ -84,6 +84,23 @@ class TestDeserialize(unittest.TestCase):
 
 
 class TestBasics(unittest.TestCase):
+
+    def test_py2_py3_unicode_repr(self):
+        data = u"hello\u20ac"
+        py2repr = b"# serpent utf-8 python2.6\n'hello\\u20ac'"
+        result = serpent.loads(py2repr)
+        self.assertEqual(data, result, "must understand python 2.x repr form of unicode string")
+        py3repr = b"# serpent utf-8 python3.2\n'hello\xe2\x82\xac'"
+        try:
+            result = serpent.loads(py3repr)   # jython fails this test.
+            if os.name != "java":
+                self.assertEqual(data, result, "must understand python 3.x repr form of unicode string")
+        except ValueError as x:
+            if os.name == "java":
+                self.assertIn("issue2008", str(x))
+            else:
+                self.fail("non-jython must parse it correctly")
+
     def test_header(self):
         ser = serpent.dumps(None, set_literals=True)
         if sys.platform == "cli":

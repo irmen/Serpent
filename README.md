@@ -83,3 +83,10 @@ Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
 and is represented by the special value:  ``{'__class__':'float','value':'nan'}``
 We chose not to encode it as just the string 'NaN' because that could cause
 memory issues when used in multiplications.
+
+Jython's ast module cannot properly parse some literal reprs of unicode strings.
+This is a known bug http://bugs.jython.org/issue2008
+It seems to work when your server is Python 2.x but safest is perhaps to make
+sure your data to parse contains only ascii strings when dealing with Jython.
+Serpent checks for possible problems and will raise an error if it finds one,
+rather than continuing with string data that might be incorrect.

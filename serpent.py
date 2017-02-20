@@ -47,6 +47,13 @@ and is represented by the special value:  {'__class__':'float','value':'nan'}
 We chose not to encode it as just the string 'NaN' because that could cause
 memory issues when used in multiplications.
 
+Jython's ast module cannot properly parse some literal reprs of unicode strings.
+This is a known bug http://bugs.jython.org/issue2008
+It seems to work when your server is Python 2.x but safest is perhaps to make
+sure your data to parse contains only ascii strings when dealing with Jython.
+Serpent checks for possible problems and will raise an error if it finds one,
+rather than continuing with string data that might be incorrect.
+
 Copyright by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
@@ -66,7 +73,7 @@ import uuid
 import array
 import math
 
-__version__ = "1.18"
+__version__ = "1.18.1"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -89,13 +96,16 @@ def loads(serialized_bytes):
     serialized = serialized_bytes.decode("utf-8")
     if sys.version_info < (3, 0):
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
+        # note: this doesn't work on jython... see bug http://bugs.jython.org/issue2008
+        # so we add a safety net, to avoid working with incorrectly processed unicode strings
         serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
         if os.name == "java":
-            # The ast module in Jython will not have parsed this correctly into unicode literals.
-            # So we have to patch up the ast tree ourselves and decode Str nodes to unicode manually.
-            # See http://bugs.jython.org/issue2008
             for node in ast.walk(serialized):
                 if isinstance(node, ast.Str):
+                    if isinstance(node.s, str) and any(c for c in node.s if c > '\x7f'):
+                        # In this case there is risk of incorrectly parsed unicode data. Play safe and crash.
+                        raise ValueError("cannot properly parse unicode string with ast in Jython, see bug http://bugs.jython.org/issue2008"
+                                         " - use python 2.x server or convert strings to ascii yourself first")
                     node.s = node.s.decode("unicode-escape")
     try:
         if os.name != "java" and sys.platform != "cli":
