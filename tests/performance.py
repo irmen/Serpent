@@ -57,6 +57,11 @@ serializers["serpent"] = (serpent.dumps, serpent.loads)
 import marshal
 serializers["marshal"] = (marshal.dumps, marshal.loads)
 try:
+    import msgpack
+    serializers["msgpack"] = (lambda d: msgpack.packb(d, use_bin_type=True), lambda d: msgpack.unpackb(d, encoding="utf-8"))
+except ImportError:
+    pass
+try:
     import xmlrpclib as xmlrpc
 except ImportError:
     import xmlrpc.client as xmlrpc
@@ -80,7 +85,6 @@ def run():
     results = {}
     number = 10
     repeat = 3
-    serializers = {"serpent": (serpent.dumps, serpent.loads)}   # XXX
     for ser in serializers:
         print("serializer:", ser)
         results[ser] = {"sizes": {}, "ser-times": {}, "deser-times": {}}
