@@ -258,7 +258,10 @@ def tobytes(obj):
     if isinstance(obj, _bytes_types):
         return obj
     if isinstance(obj, dict) and "data" in obj and obj.get("encoding") == "base64":
-        return base64.b64decode(obj["data"])
+        try:
+            return base64.b64decode(obj["data"])
+        except TypeError:
+            return base64.b64decode(obj["data"].encode("ascii"))   # needed for certain older versions of pypy
     raise TypeError("argument is neither bytes nor serpent base64 encoded bytes dict")
 
 
