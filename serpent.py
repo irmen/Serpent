@@ -92,8 +92,6 @@ def dump(obj, file, indent=False, set_literals=can_use_set_literals, module_in_c
 
 def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
-    if b'\x00' in serialized_bytes:
-        raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
     if os.name == "java":
         if type(serialized_bytes) is memoryview:
             serialized_bytes = serialized_bytes.tobytes()
@@ -106,6 +104,8 @@ def loads(serialized_bytes):
         serialized = codecs.decode(serialized_bytes, "utf-8")
     else:
         serialized = codecs.decode(serialized_bytes, "utf-8")
+    if '\x00' in serialized:
+        raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
     if sys.version_info < (3, 0):
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
         # note: this doesn't work on jython... see bug http://bugs.jython.org/issue2008

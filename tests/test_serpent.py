@@ -243,9 +243,19 @@ class TestBasics(unittest.TestCase):
 
     def test_detectNullByte(self):
         with self.assertRaises(ValueError) as ex:
-            serpent.loads(b"contains\x00nullbyte")
+            serpent.loads(b"'contains\x00nullbyte'")
             self.fail("must fail")
         self.assertTrue("0-bytes" in str(ex.exception))
+        with self.assertRaises(ValueError) as ex:
+            serpent.loads(bytearray(b"'contains\x00nullbyte'"))
+            self.fail("must fail")
+        self.assertTrue("0-bytes" in str(ex.exception))
+        with self.assertRaises(ValueError) as ex:
+            serpent.loads(memoryview(b"'contains\x00nullbyte'"))
+            self.fail("must fail")
+        self.assertTrue("0-bytes" in str(ex.exception))
+        serpent.loads(bytearray(b"'contains no nullbyte'"))
+        serpent.loads(memoryview(b"'contains no nullbyte'"))
 
     @unittest.skipIf(os.name == "java", "jython can't parse unicode U's")
     def test_unicode_U(self):
