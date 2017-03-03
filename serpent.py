@@ -72,8 +72,9 @@ import datetime
 import uuid
 import array
 import math
+import codecs
 
-__version__ = "1.18.1"
+__version__ = "1.19"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -93,7 +94,18 @@ def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     if b'\x00' in serialized_bytes:
         raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
-    serialized = serialized_bytes.decode("utf-8")
+    if os.name == "java":
+        if type(serialized_bytes) is memoryview:
+            serialized_bytes = serialized_bytes.tobytes()
+        elif type(serialized_bytes) is buffer:
+            serialized_bytes = serialized_bytes[:]
+        serialized = serialized_bytes.decode("utf-8")
+    elif sys.platform == "cli":
+        if type(serialized_bytes) is memoryview:
+            serialized_bytes = serialized_bytes.tobytes()
+        serialized = codecs.decode(serialized_bytes, "utf-8")
+    else:
+        serialized = codecs.decode(serialized_bytes, "utf-8")
     if sys.version_info < (3, 0):
         # python 2.x: parse with unicode_literals (promotes all strings to unicode)
         # note: this doesn't work on jython... see bug http://bugs.jython.org/issue2008
@@ -282,6 +294,8 @@ class Serializer(object):
         else:
             header += "python2.6\n"   # don't change this even though we don't support 2.6 any longer, otherwise we can't read older serpent strings
         out = [header]
+        if os.name == "java" and type(obj) is buffer:
+            obj = bytearray(obj)
         try:
             if os.name != "java" and sys.platform != "cli":
                 gc.disable()

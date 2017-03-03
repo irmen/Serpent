@@ -82,6 +82,17 @@ class TestDeserialize(unittest.TestCase):
         v = serpent.loads(b"'\U00022001'")
         self.assertEqual(u"\U00022001", v)
 
+    def test_input_types(self):
+        bytes_input = b"'text'"
+        bytearray_input = bytearray(bytes_input)
+        memview_input = memoryview(bytes_input)
+        self.assertEqual("text", serpent.loads(bytes_input))
+        self.assertEqual("text", serpent.loads(bytearray_input))
+        self.assertEqual("text", serpent.loads(memview_input))
+        if sys.version_info < (3, 0):
+            buffer_input = buffer(bytes_input)
+            self.assertEqual("text", serpent.loads(buffer_input))
+
 
 class TestBasics(unittest.TestCase):
 
@@ -479,6 +490,10 @@ class TestBasics(unittest.TestCase):
         self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
         if sys.version_info >= (2, 7):
             ser = serpent.dumps(memoryview(b"abcdef"))
+            data = serpent.loads(ser)
+            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
+        if sys.version_info < (3, 0):
+            ser = serpent.dumps(buffer(b"abcdef"))
             data = serpent.loads(ser)
             self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
