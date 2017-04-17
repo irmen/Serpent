@@ -6,6 +6,7 @@ Serpent serialization library (Python/.NET/Java)
 [![Latest Version](https://img.shields.io/pypi/v/Serpent.svg)](https://pypi.python.org/pypi/Serpent/)
 [![Maven Central](https://img.shields.io/maven-central/v/net.razorvine/serpent.svg)](http://search.maven.org/#search|ga|1|g%3A%22net.razorvine%22%20AND%20a%3A%22serpent%22)
 [![NuGet](https://img.shields.io/nuget/v/Razorvine.Serpent.svg)](https://www.nuget.org/packages/Razorvine.Serpent/)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/serpent/badges/version.svg)](https://anaconda.org/conda-forge/serpent)
 
 Serpent provides ast.literal_eval() compatible object tree serialization.
 It serializes an object tree into bytes (utf-8 encoded string) that can be decoded and then
