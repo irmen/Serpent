@@ -1,0 +1,27 @@
+package:
+  name: serpent
+  version: 1.12
+
+source:
+  path: ..
+
+build:
+  number: 2
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+
+test:
+  # Python imports
+  imports:
+    - serpent
+
+
+about:
+  home: https://pypi.python.org/pypi/serpent
+  license: MIT
