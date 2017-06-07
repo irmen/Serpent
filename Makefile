@@ -19,7 +19,7 @@ install:
 	python setup.py install
 
 test:
-	cd tests && python -E test_serpent.py
+	cd tests && (PYTHONPATH=.. python -s test_serpent.py)
 
 check:
 	flake8 --exclude .tox --ignore E501
