@@ -72,9 +72,10 @@ import datetime
 import uuid
 import array
 import math
+import numbers
 import codecs
 
-__version__ = "1.19"
+__version__ = "1.20"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -440,6 +441,13 @@ class Serializer(object):
         self.serialized_obj_ids.discard(id(list_obj))
     dispatch[list] = ser_builtins_list
 
+    def _check_hashable_type(self, t):
+        if t not in (bool, bytes, str, tuple) and not issubclass(t, numbers.Number):
+            if sys.version_info < (3, 0) and t is unicode:
+                return
+            raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
+                            + str(type(t)) + ". Use simple types as keys or use a list or tuple as container.")
+
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:
             raise ValueError("Circular reference detected (dict)")
@@ -457,6 +465,7 @@ class Serializer(object):
                 sorted_items = dict_items
             for key, value in sorted_items:
                 append(indent_chars_inside)
+                self._check_hashable_type(type(key))
                 serialize(key, out, level + 1)
                 append(": ")
                 serialize(value, out, level + 1)
@@ -466,6 +475,7 @@ class Serializer(object):
         else:
             append("{")
             for key, value in dict_obj.items():
+                self._check_hashable_type(type(key))
                 serialize(key, out, level + 1)
                 append(":")
                 serialize(value, out, level + 1)
@@ -494,6 +504,7 @@ class Serializer(object):
                 sorted_elts = set_obj
             for elt in sorted_elts:
                 append(indent_chars_inside)
+                self._check_hashable_type(type(elt))
                 serialize(elt, out, level + 1)
                 append(",\n")
             del out[-1]  # remove the last ,\n
@@ -501,6 +512,7 @@ class Serializer(object):
         elif set_obj:
             append("{")
             for elt in set_obj:
+                self._check_hashable_type(type(elt))
                 serialize(elt, out, level + 1)
                 append(",")
             del out[-1]  # remove the last ,

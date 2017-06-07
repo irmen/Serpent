@@ -592,6 +592,17 @@ class TestBasics(unittest.TestCase):
         data = serpent.loads(ser)
         self.assertEqual('pprint.PrettyPrinter', data["__class__"])
 
+    def test_class_hashable_key_check(self):
+        import pprint
+        pp = pprint.PrettyPrinter(stream="dummy", width=42)
+        with self.assertRaises(TypeError) as x:
+            serpent.dumps({1: 1, 2: 1, 3: 1, pp: 1})    # can only serialize simple types as dict keys (hashable)
+        self.assertTrue("hashable type" in str(x.exception))
+        if serpent.can_use_set_literals:
+            with self.assertRaises(TypeError) as x:
+                serpent.dumps({1, 2, 3, pp})     # can only serialize simple typles as set elements (hashable)
+            self.assertTrue("hashable type" in str(x.exception))
+
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
         data = strip_header(ser)
