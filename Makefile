@@ -1,19 +1,14 @@
-.PHONY: all sdist wheel install upload clean test check
+.PHONY: all dist install upload clean test check
 
 all:
 	@echo "targets include sdist, wheel, upload, install, clean, test"
 
-sdist:
-	python setup.py sdist
-	@echo "Look in the dist/ directory"
-
-wheel:
-	python setup.py bdist_wheel
+dist:
+	python setup.py sdist bdist_wheel
 	@echo "Look in the dist/ directory"
 
 upload:
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+	python setup.py sdist bdist_wheel upload
 
 install:
 	python setup.py install
