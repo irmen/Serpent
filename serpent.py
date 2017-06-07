@@ -446,7 +446,7 @@ class Serializer(object):
             if sys.version_info < (3, 0) and t is unicode:
                 return
             raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
-                            + str(type(t)) + ". Use simple types as keys or use a list or tuple as container.")
+                            + str(t) + ". Use simple types as keys or use a list or tuple as container.")
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:

@@ -596,12 +596,22 @@ class TestBasics(unittest.TestCase):
         import pprint
         pp = pprint.PrettyPrinter(stream="dummy", width=42)
         with self.assertRaises(TypeError) as x:
+            serpent.dumps({1: 1, 2: 1, 3: 1, strip_header: 1})    # can only serialize simple types as dict keys (hashable)
+        self.assertTrue("hashable type" in str(x.exception))
+        with self.assertRaises(TypeError) as x:
             serpent.dumps({1: 1, 2: 1, 3: 1, pp: 1})    # can only serialize simple types as dict keys (hashable)
         self.assertTrue("hashable type" in str(x.exception))
-        if serpent.can_use_set_literals:
-            with self.assertRaises(TypeError) as x:
-                serpent.dumps({1, 2, 3, pp})     # can only serialize simple typles as set elements (hashable)
-            self.assertTrue("hashable type" in str(x.exception))
+
+    @unittest.skipIf(not serpent.can_use_set_literals, reason="no problem if serpent doesn't serializes set literals")
+    def test_class_hashable_set_element_check(self):
+        import pprint
+        pp = pprint.PrettyPrinter(stream="dummy", width=42)
+        with self.assertRaises(TypeError) as x:
+            serpent.dumps({1, 2, 3, strip_header})     # can only serialize simple typles as set elements (hashable)
+        self.assertTrue("hashable type" in str(x.exception))
+        with self.assertRaises(TypeError) as x:
+            serpent.dumps({1, 2, 3, pp})     # can only serialize simple typles as set elements (hashable)
+        self.assertTrue("hashable type" in str(x.exception))
 
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
