@@ -613,6 +613,20 @@ class TestBasics(unittest.TestCase):
             serpent.dumps({1, 2, 3, pp})     # can only serialize simple typles as set elements (hashable)
         self.assertTrue("hashable type" in str(x.exception))
 
+    @unittest.skipIf(sys.version_info < (3, 4), reason="python 3.4 introduced enums")
+    def test_enum_hashable(self):
+        import enum
+        class Color(enum.Enum):
+            RED = 1
+            GREEN = 2
+            BLUE = 3
+        data = serpent.dumps({"abc", Color.RED, Color.GREEN, Color.BLUE})
+        orig = serpent.loads(data)
+        self.assertEqual({"abc", 1, 2, 3}, orig)
+        data = serpent.dumps({"abc": 1, Color.RED: 1, Color.GREEN: 1, Color.BLUE: 1})
+        orig = serpent.loads(data)
+        self.assertEqual({"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
+
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
         data = strip_header(ser)

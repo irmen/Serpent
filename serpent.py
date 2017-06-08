@@ -75,7 +75,7 @@ import math
 import numbers
 import codecs
 
-__version__ = "1.20"
+__version__ = "1.21"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -443,9 +443,12 @@ class Serializer(object):
 
     def _check_hashable_type(self, t):
         if t not in (bool, bytes, str, tuple) and not issubclass(t, numbers.Number):
-            if sys.version_info < (3, 0) and t is unicode:
+            if sys.version_info >= (3, 4) and issubclass(t, enum.Enum):
                 return
-            raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
+            elif sys.version_info < (3, 0) and t is unicode:
+                return
+            else:
+                raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
                             + str(t) + ". Use simple types as keys or use a list or tuple as container.")
 
     def ser_builtins_dict(self, dict_obj, out, level):
