@@ -146,7 +146,7 @@ def _ser_DictView(obj, serializer, outputstream, indentlevel):
     serializer.ser_builtins_list(obj, outputstream, indentlevel)
 
 
-_special_classes_registry = {} # XXXcollections.OrderedDict()
+_special_classes_registry = collections.OrderedDict()   # must be insert-order preserving to make sure of proper precedence rules
 
 
 def _reset_special_classes_registry():
