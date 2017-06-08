@@ -973,6 +973,23 @@ class TestCustomClasses(unittest.TestCase):
         finally:
             serpent.unregister_class(uuid.UUID)
 
+    def testRegisterOrderPreserving(self):
+        serpent._reset_special_classes_registry()
+        serpent.register_class(BaseClass, lambda: None)
+        serpent.register_class(SubClass, lambda: None)
+        classes = list(serpent._special_classes_registry)
+        self.assertEqual(collections.KeysView, classes.pop(0))
+        self.assertEqual(collections.ValuesView, classes.pop(0))
+        self.assertEqual(collections.ItemsView, classes.pop(0))
+        if sys.version_info >= (2, 7):
+            self.assertEqual(collections.OrderedDict, classes.pop(0))
+        if sys.version_info >= (3, 4):
+            import enum
+            self.assertEqual(enum.Enum, classes.pop(0))
+        self.assertEqual(BaseClass, classes.pop(0))
+        self.assertEqual(SubClass, classes.pop(0))
+        self.assertEqual(0, len(classes))
+
 
 class TestPyro4(unittest.TestCase):
     def testException(self):

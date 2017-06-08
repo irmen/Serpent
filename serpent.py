@@ -75,7 +75,7 @@ import math
 import numbers
 import codecs
 
-__version__ = "1.21"
+__version__ = "1.22"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -146,18 +146,23 @@ def _ser_DictView(obj, serializer, outputstream, indentlevel):
     serializer.ser_builtins_list(obj, outputstream, indentlevel)
 
 
-_special_classes_registry = {
-    collections.KeysView: _ser_DictView,
-    collections.ValuesView: _ser_DictView,
-    collections.ItemsView: _ser_DictView
-}
-if sys.version_info >= (2, 7):
-    _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
-if sys.version_info >= (3, 4):
-    import enum
-    def _ser_Enum(obj, serializer, outputstream, indentlevel):
-        serializer._serialize(obj.value, outputstream, indentlevel)
-    _special_classes_registry[enum.Enum] = _ser_Enum
+_special_classes_registry = {} # XXXcollections.OrderedDict()
+
+
+def _reset_special_classes_registry():
+    _special_classes_registry.clear()
+    _special_classes_registry[collections.KeysView] = _ser_DictView
+    _special_classes_registry[collections.ValuesView] = _ser_DictView
+    _special_classes_registry[collections.ItemsView] = _ser_DictView
+    if sys.version_info >= (2, 7):
+        _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
+    if sys.version_info >= (3, 4):
+        import enum
+        def _ser_Enum(obj, serializer, outputstream, indentlevel):
+            serializer._serialize(obj.value, outputstream, indentlevel)
+        _special_classes_registry[enum.Enum] = _ser_Enum
+
+_reset_special_classes_registry()
 
 
 def unregister_class(clazz):
@@ -443,13 +448,14 @@ class Serializer(object):
 
     def _check_hashable_type(self, t):
         if t not in (bool, bytes, str, tuple) and not issubclass(t, numbers.Number):
-            if sys.version_info >= (3, 4) and issubclass(t, enum.Enum):
-                return
+            if sys.version_info >= (3, 4):
+                import enum
+                if issubclass(t, enum.Enum):
+                    return
             elif sys.version_info < (3, 0) and t is unicode:
                 return
-            else:
-                raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
-                            + str(t) + ". Use simple types as keys or use a list or tuple as container.")
+            raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
+                        + str(t) + ". Use simple types as keys or use a list or tuple as container.")
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:
