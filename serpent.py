@@ -75,7 +75,7 @@ import math
 import numbers
 import codecs
 
-__version__ = "1.22"
+__version__ = "1.23"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -292,7 +292,7 @@ class Serializer(object):
         self.module_in_classname = module_in_classname
         self.serialized_obj_ids = set()
         self.special_classes_registry_copy = None
-        self.maximum_level = min(sys.getrecursionlimit() // 3.5, 1000)
+        self.maximum_level = min(sys.getrecursionlimit() // 5, 1000)
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
@@ -320,7 +320,8 @@ class Serializer(object):
 
     def _serialize(self, obj, out, level):
         if level > self.maximum_level:
-            raise ValueError("Object graph nesting too deep. Increase serializer.maximum_level if you think you need more.")
+            raise ValueError("Object graph nesting too deep. Increase serializer.maximum_level if you think you need more, "
+                             " but this may cause a RecursionError instead if Python's recursion limit doesn't allow it.")
         t = type(obj)
         if t in _translate_types:
             obj = _translate_types[t](obj)
