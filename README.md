@@ -40,6 +40,8 @@ JAVA
 Maven-artefact is available on maven central, groupid 'net.razorvine' artifactid 'serpent'.
 Full source code can be found in ./java/ directory.
 Example usage can be found in ./java/test/SerpentExample.java
+Versions before 1.23 require Java 7 or Java 8 (JDK 1.7 or 1.8) to compile and run.
+Version 1.23 and later require Java 8 (JDK 1.8) at a minimum to compile and run.
 
 
 SOME MORE DETAILS
