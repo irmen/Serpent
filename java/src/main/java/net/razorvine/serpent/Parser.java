@@ -10,13 +10,12 @@ package net.razorvine.serpent;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.bind.DatatypeConverter;
 
 import net.razorvine.serpent.ast.*;
 
@@ -618,7 +617,7 @@ public class Parser
 			{
 				throw new IllegalArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
 			}
-			return DatatypeConverter.parseBase64Binary(data);
+			return Base64.getDecoder().decode(data);
 		}
 		if(obj instanceof byte[])
 		{

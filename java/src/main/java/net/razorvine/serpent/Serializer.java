@@ -18,9 +18,8 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Base64;
 import java.util.Map.Entry;
-
-import javax.xml.bind.DatatypeConverter;
 
 
 /**
@@ -369,7 +368,7 @@ public class Serializer
 	protected void serialize_bytes(byte[] obj, StringWriter sw, int level)
 	{
 		// base-64 struct output
-		String str = DatatypeConverter.printBase64Binary(obj);
+		String str = Base64.getEncoder().encodeToString(obj);
 		Map<String, String> dict = new HashMap<String, String>();
 		dict.put("data", str);
 		dict.put("encoding", "base64");
@@ -433,13 +432,36 @@ public class Serializer
 
 	protected void serialize_calendar(Calendar cal, StringWriter sw, int level)
 	{
-		// use JAXB datetime serializer to output as ISO-8601
-		serialize_string(javax.xml.bind.DatatypeConverter.printDateTime(cal), sw, level);
+		DateFormat df;
+		String tzformat = "Z";
+
+		if(cal.get(Calendar.ZONE_OFFSET)==0) {
+			// UTC, GMT+0, output simple time zone string 'Z'
+			tzformat = "'Z'";
+		}
+		
+		if(cal.get(Calendar.MILLISECOND)>0) {
+			// we have millis
+			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"+tzformat);
+		} else {
+			// no millis
+			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"+tzformat);
+		}
+		df.setTimeZone(cal.getTimeZone());
+		serialize_string(df.format(cal.getTime()), sw, level);
 	}
 
 	protected void serialize_date(Date date, StringWriter sw, int level)
 	{
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		DateFormat df;
+		
+		if((date.getTime() % 1000) != 0) {
+			// we have millis
+			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		} else {
+			// no millis
+			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		}
 		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 		serialize_string(df.format(date), sw, level);
 	}

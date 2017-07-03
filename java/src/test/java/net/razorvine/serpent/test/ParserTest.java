@@ -136,23 +136,23 @@ public class ParserTest
 		Serializer serpent = new Serializer();
 		byte[] ser = serpent.serialize(1.2345678987654321);
 		DoubleNode dv = (DoubleNode) p.parse(ser).root;
-		assertEquals(new Double(1.2345678987654321), dv.value);
+		assertEquals(Double.valueOf(1.2345678987654321), dv.value);
 		
 		ser = serpent.serialize(5555.12345678987656);
 		dv = (DoubleNode) p.parse(ser).root;
-		assertEquals(new Double(5555.12345678987656), dv.value);
+		assertEquals(Double.valueOf(5555.12345678987656), dv.value);
 
 		ser = serpent.serialize(98765432123456.12345678987656);
 		dv = (DoubleNode) p.parse(ser).root;
-		assertEquals(new Double(98765432123456.12345678987656), dv.value);
+		assertEquals(Double.valueOf(98765432123456.12345678987656), dv.value);
 
 		ser = serpent.serialize(98765432123456.12345678987656e+44);
 		dv = (DoubleNode) p.parse(ser).root;
-		assertEquals(new Double(98765432123456.12345678987656e+44), dv.value);
+		assertEquals(Double.valueOf(98765432123456.12345678987656e+44), dv.value);
 		
 		ser = serpent.serialize(-98765432123456.12345678987656e-44);
 		dv = (DoubleNode) p.parse(ser).root;
-		assertEquals(new Double(-98765432123456.12345678987656e-44), dv.value);
+		assertEquals(Double.valueOf(-98765432123456.12345678987656e-44), dv.value);
 	}
 	
 	@Test
@@ -485,17 +485,17 @@ public class ParserTest
 	{
 		Parser p = new Parser();
 		ComplexNumberNode cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656+665544332211.9998877665544j)").root;
-		assertEquals(new Double(98765432123456.12345678987656), cv.real, 0);
-		assertEquals(new Double(665544332211.9998877665544), cv.imaginary, 0);
+		assertEquals(Double.valueOf(98765432123456.12345678987656), cv.real, 0);
+		assertEquals(Double.valueOf(665544332211.9998877665544), cv.imaginary, 0);
 		cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656-665544332211.9998877665544j)").root;
-		assertEquals(new Double(98765432123456.12345678987656), cv.real, 0);
-		assertEquals(new Double(-665544332211.9998877665544), cv.imaginary, 0);
+		assertEquals(Double.valueOf(98765432123456.12345678987656), cv.real, 0);
+		assertEquals(Double.valueOf(-665544332211.9998877665544), cv.imaginary, 0);
 		cv = (ComplexNumberNode)p.parse("(98765432123456.12345678987656e+33+665544332211.9998877665544e+44j)").root;
-		assertEquals(new Double(98765432123456.12345678987656e+33), cv.real, 0);
-		assertEquals(new Double(665544332211.9998877665544e+44), cv.imaginary, 0);
+		assertEquals(Double.valueOf(98765432123456.12345678987656e+33), cv.real, 0);
+		assertEquals(Double.valueOf(665544332211.9998877665544e+44), cv.imaginary, 0);
 		cv = (ComplexNumberNode)p.parse("(-98765432123456.12345678987656e+33-665544332211.9998877665544e+44j)").root;
-		assertEquals(new Double(-98765432123456.12345678987656e+33), cv.real, 0);
-		assertEquals(new Double(-665544332211.9998877665544e+44), cv.imaginary, 0);
+		assertEquals(Double.valueOf(-98765432123456.12345678987656e+33), cv.real, 0);
+		assertEquals(Double.valueOf(-665544332211.9998877665544e+44), cv.imaginary, 0);
 	}
 	
 	@Test

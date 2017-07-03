@@ -80,8 +80,8 @@ public class ComplexNumber implements Serializable {
 	@Override
 	public int hashCode()
 	{
-		Double r = new Double(real);
-		Double i = new Double(imaginary);
+		Double r = Double.valueOf(real);
+		Double i = Double.valueOf(imaginary);
 		return r.hashCode() ^ i.hashCode();
 	}
 }
