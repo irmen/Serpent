@@ -10,6 +10,7 @@ python:
 
 # Use fast travis build infrastructure explicitly
 sudo: false
+dist: trusty
 
 # Installation installs dependencies
 install:
