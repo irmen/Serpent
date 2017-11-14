@@ -77,9 +77,9 @@ class TestDeserialize(unittest.TestCase):
         self.assertEqual(set([1, 2, 3]), v)
 
     def test_unicode_escapes(self):
-        v = serpent.loads(b"'\u20ac'")
+        v = serpent.loads(b"'\\u20ac'")
         self.assertEqual(u"\u20ac", v)
-        v = serpent.loads(b"'\U00022001'")
+        v = serpent.loads(b"'\\U00022001'")
         self.assertEqual(u"\U00022001", v)
 
     def test_input_types(self):
