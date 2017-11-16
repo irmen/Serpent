@@ -24,7 +24,7 @@ namespace Razorvine.Serpent.Test
 			var d = new object[] {t,t,t};
 			var data = ser.Serialize(d);
 			var parser = new Parser();
-	        var ast = parser.Parse(data);
+	        parser.Parse(data);
 		}
 
 		[Test]
@@ -41,7 +41,7 @@ namespace Razorvine.Serpent.Test
 			d.Add(t);
 			var data = ser.Serialize(d);
 			var parser = new Parser();
-	        var ast = parser.Parse(data);
+	        parser.Parse(data);
 		}
 
 		[Test]
@@ -56,7 +56,7 @@ namespace Razorvine.Serpent.Test
 			d["z"] = t;
 			var data = ser.Serialize(d);
 			var parser = new Parser();
-	        var ast = parser.Parse(data);
+	        parser.Parse(data);
 		}
 
 		[Test]
@@ -68,7 +68,7 @@ namespace Razorvine.Serpent.Test
 			d.Add(1);
 			d.Add(2);
 			d.Add(d);
-			var data = ser.Serialize(d);
+			ser.Serialize(d);
 		}
 
 		[Test]
@@ -80,7 +80,7 @@ namespace Razorvine.Serpent.Test
 			d["x"] = 1;
 			d["y"] = 2;
 			d["z"] = d;
-			var data = ser.Serialize(d);
+			ser.Serialize(d);
 		}
 		
 		[Test]
@@ -93,7 +93,7 @@ namespace Razorvine.Serpent.Test
 			d.i = 99;
 			d.s = "hello";
 			d.obj = d;
-			var data = ser.Serialize(d);
+			ser.Serialize(d);
 		}
 		
 		[Test]

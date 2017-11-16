@@ -14,7 +14,7 @@ namespace Razorvine.Serpent.Test
 	/// </summary>
 	[TestFixture]
 	[Explicit("example")]
-	public class Example 
+	public class Example
 	{
 		[Test]
 		public void ExampleUsage()
