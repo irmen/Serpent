@@ -1,1 +1,3 @@
-TEST-*.xml
+/bin
+/target
+.idea/
