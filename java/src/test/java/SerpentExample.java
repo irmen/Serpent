@@ -96,7 +96,7 @@ public class SerpentExample {
 		System.out.println("");
 
 		// parse and print the example file
-		File testdatafile = new File("test/testserpent.utf8.bin");
+		File testdatafile = new File("src/test/java/testserpent.utf8.bin");
 		ser = new byte[(int) testdatafile.length()];
 		FileInputStream fis=new FileInputStream(testdatafile);
 		DataInputStream dis = new DataInputStream(fis);
