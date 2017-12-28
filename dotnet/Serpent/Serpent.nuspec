@@ -23,7 +23,7 @@ CRITICAL FIX: rewrote serialization and parsing of strings containing chars abov
 Added Serializer.MaximumLevel to avoid too deep recursion resulting in stack overflow errors. 
 Serializer.MaximumLevel decreased to 500.
 </releaseNotes>
-    <copyright>Copyright 2017</copyright>
+    <copyright>Copyright 2017, 2018</copyright>
     <tags>serialization python pyro</tags>
   </metadata>
   <files>
