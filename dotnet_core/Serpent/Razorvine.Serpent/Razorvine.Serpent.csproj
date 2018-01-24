@@ -2,5 +2,24 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>6</LangVersion>
+    <Authors>Irmen de Jong</Authors>
+    <Product>Serpent Python literal expression serialization</Product>
+    <PackageId>Razorvine.Serpent</PackageId>
+    <Version>1.20.0</Version>
+    <AssemblyVersion>1.20.0.0</AssemblyVersion>
+    <FileVersion>1.20.0.0</FileVersion>
+    <Summary>Serpent provides Python ast.literal_eval() compatible object tree serialization.</Summary>
+    <Description>Serpent provides Python ast.literal_eval() compatible object tree serialization.
+It serializes an object tree into bytes that can be transferred to Python and
+decoded there (using ast.literal_eval()). It can ofcourse also deserialize
+such a Python expression itself, back into the equivalent .NET datatypes.
+More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</Description>
+    <Copyright>Copyright Irmen de Jong</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/irmen/serpent</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/irmen/Serpent.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>serialization python pyro</PackageTags>
+    <PackageReleaseNotes>Migrated to dotnet core and NetStandard 2.0</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
