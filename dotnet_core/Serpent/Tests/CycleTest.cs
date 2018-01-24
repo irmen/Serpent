@@ -9,14 +9,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Razorvine.Serpent.Test
 {
-	[TestFixture]
+	[TestClass]
 	public class CycleTest
 	{
-		[Test]
+		[TestMethod]
 		public void testTupleOk()
 		{
 			var ser = new Serializer();
@@ -27,7 +27,7 @@ namespace Razorvine.Serpent.Test
 	        parser.Parse(data);
 		}
 
-		[Test]
+		[TestMethod]
 		public void testListOk()
 		{
 			var ser = new Serializer();
@@ -44,7 +44,7 @@ namespace Razorvine.Serpent.Test
 	        parser.Parse(data);
 		}
 
-		[Test]
+		[TestMethod]
 		public void testDictOk()
 		{
 			var ser = new Serializer();
@@ -59,7 +59,7 @@ namespace Razorvine.Serpent.Test
 	        parser.Parse(data);
 		}
 
-		[Test]
+		[TestMethod]
 		[ExpectedException(typeof(ArgumentException))]
 		public void testListCycle()
 		{
@@ -71,7 +71,7 @@ namespace Razorvine.Serpent.Test
 			ser.Serialize(d);
 		}
 
-		[Test]
+		[TestMethod]
 		[ExpectedException(typeof(ArgumentException))]
 		public void testDictCycle()
 		{
@@ -83,7 +83,7 @@ namespace Razorvine.Serpent.Test
 			ser.Serialize(d);
 		}
 		
-		[Test]
+		[TestMethod]
 		[ExpectedException(typeof(ArgumentException))]
 		public void testClassCycle()
 		{
@@ -96,7 +96,7 @@ namespace Razorvine.Serpent.Test
 			ser.Serialize(d);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void testMaxLevel()
 		{
 			Serializer ser = new Serializer();

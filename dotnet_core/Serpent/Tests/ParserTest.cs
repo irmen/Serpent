@@ -11,14 +11,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Razorvine.Serpent.Test
 {
-	[TestFixture]
+	[TestClass]
 	public class ParserTest
 	{
-		[Test]
+		[TestMethod]
 		public void TestBasic()
 		{
 			Parser p = new Parser();
@@ -27,7 +27,7 @@ namespace Razorvine.Serpent.Test
 			Assert.IsNotNull(p.Parse("# comment\n42\n").Root);
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestComments()
 		{
 			Parser p = new Parser();
@@ -50,7 +50,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new int[] {1,2,3,4}, obj);
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestPrimitives()
 		{
 			Parser p = new Parser();
@@ -70,10 +70,10 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.DecimalNode(123456789123456789123456789M), p.Parse("123456789123456789123456789").Root);
 			Assert.AreNotEqual(new Ast.LongNode(52), p.Parse("52").Root);
 			Assert.AreEqual(new Ast.LongNode(123456789123456789L), p.Parse("123456789123456789").Root);
-			Assert.Throws<ParseException>(()=>p.Parse("123456789123456789123456789123456789")); // overflow
+			Assert.ThrowsException<ParseException>(()=>p.Parse("123456789123456789123456789123456789")); // overflow
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestWeirdFloats()
 		{
 			Parser p = new Parser();
@@ -96,7 +96,7 @@ namespace Razorvine.Serpent.Test
 			Assert.IsTrue(double.IsNegativeInfinity(c.Imaginary));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestFloatPrecision()
 		{
 			Parser p = new Parser();
@@ -122,7 +122,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual((-98765432123456.12345678987656e-44).ToString(), dv.Value.ToString());
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestEquality()
 		{
 			Ast.INode n1, n2;
@@ -258,7 +258,7 @@ namespace Razorvine.Serpent.Test
 			
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestDictEquality()
 		{
 			Ast.DictNode dict1 = new Ast.DictNode();
@@ -304,7 +304,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreNotEqual(dict1, dict2);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestSetEquality()
 		{
 			Ast.SetNode set1 = new Ast.SetNode();
@@ -322,7 +322,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreNotEqual(set1, set2);
 		}
 	
-		[Test]
+		[TestMethod]
 		public void TestPrintSingle()
 		{
 			Parser p = new Parser();
@@ -354,7 +354,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("123456789123456789123456789", p.Parse("123456789123456789123456789").Root.ToString());
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestPrintSeq()
 		{
 			Parser p=new Parser();
@@ -380,23 +380,23 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{'a':42,'b':45}", p.Parse("{'a': 42, 'b': 43, 'b': 44, 'b': 45}").Root.ToString());
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestInvalidPrimitives()
 		{
 			Parser p = new Parser();
-			Assert.Throws<ParseException>(()=>p.Parse("1+2"));
-			Assert.Throws<ParseException>(()=>p.Parse("1-2"));
-			Assert.Throws<ParseException>(()=>p.Parse("1.1+2.2"));
-			Assert.Throws<ParseException>(()=>p.Parse("1.1-2.2"));
-			Assert.Throws<ParseException>(()=>p.Parse("True+2"));
-			Assert.Throws<ParseException>(()=>p.Parse("False-2"));
-			Assert.Throws<ParseException>(()=>p.Parse("3j+2"));
-			Assert.Throws<ParseException>(()=>p.Parse("3j-2"));
-			Assert.Throws<ParseException>(()=>p.Parse("None+2"));
-			Assert.Throws<ParseException>(()=>p.Parse("None-2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("1+2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("1-2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("1.1+2.2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("1.1-2.2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("True+2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("False-2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("3j+2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("3j-2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("None+2"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("None-2"));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestComplex()
 		{
 			Parser p = new Parser();
@@ -444,7 +444,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(cplx, p.Parse("(-3.2e-32-9.9e-44j)").Root);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestComplexPrecision()
 		{
 			Parser p = new Parser();
@@ -462,7 +462,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(-665544332211.9998877665544e+44, cv.Imaginary);
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestPrimitivesStuffAtEnd()
 		{
 			Parser p = new Parser();
@@ -479,7 +479,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(cplx, p.ParseSingle(new SeekableStringReader("3j@")));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestStrings()
 		{
 			Parser p = new Parser();
@@ -492,7 +492,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.StringNode("tab\tnewline\n."), p.Parse("'tab\\tnewline\\n.'").Root);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestUnicode()
 		{
 			Parser p = new Parser();
@@ -506,7 +506,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.StringNode(value), p.Parse(bytes).Root);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestLongUnicodeRoundtrip()
 		{
 			Char[] chars64k = new Char[65536];
@@ -517,14 +517,14 @@ namespace Razorvine.Serpent.Test
 			
 			Serializer ser=new Serializer();
 			byte[] data = ser.Serialize(str64k);
-			Assert.Greater(data.Length, chars64k.Length);
+			Assert.IsTrue(data.Length > chars64k.Length);
 			
 			Parser p=new Parser();
 			String result = (String)p.Parse(data).GetData();
 			Assert.AreEqual(str64k, result);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestWhitespace()
 		{
 			Parser p = new Parser();
@@ -533,7 +533,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse("\t42\r\n").Root);
 			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse(" \t 42 \r \n ").Root);
 			Assert.AreEqual(new Ast.StringNode("   string value    "), p.Parse("  '   string value    '   ").Root);
-			Assert.Throws<ParseException>(()=>p.Parse("     (  42  ,  ( 'x',   'y'  )   "));  // missing tuple close )
+			Assert.ThrowsException<ParseException>(()=>p.Parse("     (  42  ,  ( 'x',   'y'  )   "));  // missing tuple close )
 			Ast ast = p.Parse("     (  42  ,  ( 'x',   'y'  )  )  ");
 			Ast.TupleNode tuple = (Ast.TupleNode) ast.Root;
 			Assert.AreEqual(new Ast.IntegerNode(42), tuple.Elements[0]);
@@ -547,7 +547,7 @@ namespace Razorvine.Serpent.Test
 			p.Parse(" { 52 } ");
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestTuple()
 		{
 			Parser p = new Parser();
@@ -569,12 +569,12 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(tuple, p.Parse("(42,)").Root);
 			Assert.AreEqual(tuple2, p.Parse("( 42,43, 44 )").Root);
 
-			Assert.Throws<ParseException>(()=>p.Parse("(42,43]"));
-			Assert.Throws<ParseException>(()=>p.Parse("()@"));
-			Assert.Throws<ParseException>(()=>p.Parse("(42,43)@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("(42,43]"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("()@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("(42,43)@"));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestList()
 		{
 			Parser p = new Parser();
@@ -596,12 +596,12 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(list, p.Parse("[42]").Root);
 			Assert.AreEqual(list2, p.Parse("[ 42,43, 44 ]").Root);
 
-			Assert.Throws<ParseException>(()=>p.Parse("[42,43}"));
-			Assert.Throws<ParseException>(()=>p.Parse("[]@"));
-			Assert.Throws<ParseException>(()=>p.Parse("[42,43]@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("[42,43}"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("[]@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("[42,43]@"));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestSet()
 		{
 			Parser p = new Parser();
@@ -623,8 +623,8 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(set1, p.Parse("{42}").Root);
 			Assert.AreEqual(set2, p.Parse("{ 42,43, 44 }").Root);
 
-			Assert.Throws<ParseException>(()=>p.Parse("{42,43]"));
-			Assert.Throws<ParseException>(()=>p.Parse("{42,43}@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("{42,43]"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("{42,43}@"));
 			
 			set1 = p.Parse("{'first','second','third','fourth','fifth','second', 'first', 'third', 'third' }").Root as Ast.SetNode;
 			Assert.AreEqual("'first'", set1.Elements[0].ToString());
@@ -635,7 +635,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(5, set1.Elements.Count);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestDict()
 		{
 			Parser p = new Parser();
@@ -664,9 +664,9 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(dict1, p.Parse("{'key1': 42}").Root);
 			Assert.AreEqual(dict2, p.Parse("{'key1': 42, 'key2': 43, 'key3':44}").Root);
 
-			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42]"));
-			Assert.Throws<ParseException>(()=>p.Parse("{}@"));
-			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42}@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("{'key': 42]"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("{}@"));
+			Assert.ThrowsException<ParseException>(()=>p.Parse("{'key': 42}@"));
 			
 			dict1 = p.Parse("{'a': 1, 'b': 2, 'c': 3, 'c': 4, 'c': 5, 'c': 6}").Root as Ast.DictNode;
 			Assert.AreEqual("'a':1", dict1.Elements[0].ToString());
@@ -675,7 +675,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(3, dict1.Elements.Count);
 		}		
 		
-		[Test]
+		[TestMethod]
 		public void TestFile()
 		{
 			Parser p = new Parser();
@@ -700,7 +700,7 @@ namespace Razorvine.Serpent.Test
 			// @TODO Assert.AreEqual(ast.Root, ast2.Root);
 		}
 
-		[Test]
+		[TestMethod]
 		[Ignore("can't yet get the ast to compare equal on mono")]
 		public void TestAstEquals()
 		{
@@ -725,7 +725,7 @@ namespace Razorvine.Serpent.Test
 				sb.AppendLine(string.Format("{0} = {1}", node.GetType(), node.ToString()));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestTrailingCommas()
 		{
 			Parser p = new Parser();
@@ -762,10 +762,10 @@ namespace Razorvine.Serpent.Test
 		}		
 	}
 
-	[TestFixture]
+	[TestClass]
 	public class VisitorTest
 	{
-		[Test]
+		[TestMethod]
 		public void TestObjectify()
 		{
 			Parser p = new Parser();
@@ -800,7 +800,7 @@ namespace Razorvine.Serpent.Test
 			return null;
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestObjectifyDictToClass()
 		{
 			Parser p = new Parser();

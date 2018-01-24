@@ -1,15 +1,15 @@
 ﻿using System;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Razorvine.Serpent.Test
 {
 
-[TestFixture]
+[TestClass]
 public class SlowPerformanceTest {
 
 	// tests some performance regressions when they occur
 
-	[Test]
+	[TestMethod]
 	[Ignore("number parse performance in long lists has been resolved")]
 	public void TestManyFloats()
 	{
@@ -30,7 +30,7 @@ public class SlowPerformanceTest {
 		Console.WriteLine(""+duration+"  valuelen="+values.Length);
 	}
 
-	[Test]
+	[TestMethod]
 	[Ignore("number parse performance in long lists has been resolved")]
 	public void TestManyInts()
 	{

@@ -8,14 +8,14 @@
 
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Razorvine.Serpent.Test
 {
-	[TestFixture]
+	[TestClass]
 	public class StringreaderTest
 	{
-		[Test]
+		[TestMethod]
 		public void TestStuff()
 		{
 			using(SeekableStringReader s=new SeekableStringReader("hello"))
@@ -36,11 +36,11 @@ namespace Razorvine.Serpent.Test
 				Assert.AreEqual("whitespace", s2.ReadUntil('.'));
 				s2.SkipWhitespace();
 				Assert.IsFalse(s2.HasMore());
-				Assert.Throws<IndexOutOfRangeException>(()=>s2.Peek());
+				Assert.ThrowsException<IndexOutOfRangeException>(()=>s2.Peek());
 			}
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestRead()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");
@@ -48,40 +48,40 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual('e', s.Read());
 			Assert.AreEqual("l", s.Read(1));
 			Assert.AreEqual("lo", s.Read(2));
-			Assert.Throws<IndexOutOfRangeException>(()=>s.Read());
+			Assert.ThrowsException<IndexOutOfRangeException>(()=>s.Read());
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestRanges()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");
-			Assert.Throws<ParseException>(()=>s.Read(-1));
+			Assert.ThrowsException<ParseException>(()=>s.Read(-1));
 			Assert.AreEqual("hello", s.Read(999));
-			Assert.Throws<ParseException>(()=>s.Read(1));
+			Assert.ThrowsException<ParseException>(()=>s.Read(1));
 			s.Rewind(int.MaxValue);
 			Assert.IsTrue(s.HasMore());
 			Assert.AreEqual("hello", s.Peek(999));
 			Assert.IsTrue(s.HasMore());
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestReadUntil()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello there");
 			s.Read();
 			Assert.AreEqual("ello", s.ReadUntil(' '));
 			Assert.AreEqual('t', s.Peek());
-			Assert.Throws<ParseException>(()=>s.ReadUntil('x'));
+			Assert.ThrowsException<ParseException>(()=>s.ReadUntil('x'));
 			
 			Assert.AreEqual("there", s.Rest());
-			Assert.Throws<ParseException>(()=>s.Rest());
+			Assert.ThrowsException<ParseException>(()=>s.Rest());
 			
 			s.Rewind(int.MaxValue);
 			Assert.AreEqual("hell", s.ReadUntil('x', 'y', 'z', ' ', 'o'));
-			Assert.Throws<ParseException>(()=>s.ReadUntil('x', 'y', '@'));
+			Assert.ThrowsException<ParseException>(()=>s.ReadUntil('x', 'y', '@'));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestReadWhile()
 		{
 			SeekableStringReader s = new SeekableStringReader("123.456 foo");
@@ -91,7 +91,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("foo", s.Rest());
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestBookmark()
 		{
 			SeekableStringReader s = new SeekableStringReader("hello");
@@ -103,7 +103,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("o", s.Read(999));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestNesting()
 		{
 			SeekableStringReader outer = new SeekableStringReader("hello!");
@@ -122,7 +122,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("!", outer.Read(1));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestContext()
 		{
 			SeekableStringReader s = new SeekableStringReader("abcdefghijklmnopqrstuvwxyz");

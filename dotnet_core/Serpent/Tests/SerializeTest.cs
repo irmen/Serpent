@@ -10,13 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hashtable = System.Collections.Hashtable;
 using IDictionary = System.Collections.IDictionary;
 
 namespace Razorvine.Serpent.Test
 {
-	[TestFixture]
+	[TestClass]
 	public class SerializeTest
 	{
 		public byte[] strip_header(byte[] data)
@@ -41,7 +41,7 @@ namespace Razorvine.Serpent.Test
 		}
 
 
-		[Test]
+		[TestMethod]
 		public void TestHeader()
 		{
 			Serializer ser = new Serializer();
@@ -61,7 +61,7 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		
-		[Test]
+		[TestMethod]
 		public void TestStuff()
 		{
 			Serializer ser=new Serializer();
@@ -76,7 +76,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(B("'123456789.98765432198765432199'"), result);
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestNull()
 		{
 			Serializer ser = new Serializer();
@@ -85,7 +85,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(B("None"),data);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestStrings()
 		{
 			Serializer serpent = new Serializer();
@@ -100,7 +100,7 @@ namespace Razorvine.Serpent.Test
         	Assert.AreEqual(B("\"quotes2'\""), data);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestUnicodeEscapes()
 		{
 			Serializer serpent=new Serializer();
@@ -166,7 +166,7 @@ namespace Razorvine.Serpent.Test
 		  			39}, data);
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestNumbers()
 		{
 			Serializer serpent = new Serializer();
@@ -205,7 +205,7 @@ namespace Razorvine.Serpent.Test
 	        Assert.AreEqual(B("(-2-3j)"), data);
 		}
 				
-		[Test]
+		[TestMethod]
 		public void TestDoubleNanInf()
 		{
 			Serializer serpent = new Serializer();
@@ -217,7 +217,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.4j))", S(data));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestBool()
 		{
 			Serializer serpent = new Serializer();
@@ -229,7 +229,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(B("False"),data);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestList()
 		{
 			Serializer serpent = new Serializer();
@@ -254,7 +254,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("[\n  42,\n  'Sally',\n  16.5\n]", S(ser));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestSet()
 		{
 			// test with set literals
@@ -287,7 +287,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("(42,'Sally',16.5)", S(ser));	// needs to be tuple now
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestDictionary()
 		{
 			Serializer serpent = new Serializer();
@@ -347,7 +347,7 @@ namespace Razorvine.Serpent.Test
             Assert.IsTrue(ser_str=="{2:'two',1:'one'}" || ser_str=="{1:'one',2:'two'}");
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestBytes()
 		{
 			Serializer serpent = new Serializer(indent: true);
@@ -381,20 +381,20 @@ namespace Razorvine.Serpent.Test
             Assert.AreEqual(bytes, bytes2);
 
             dict["encoding"] = "base99";
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
             dict["data"] = "YWJjZGVm";
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(dict));
             dict.Clear();
             dict["encoding"] = "base64";
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(12345));
-            Assert.Throws<ArgumentException>(()=>Parser.ToBytes(null));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(dict));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(12345));
+            Assert.ThrowsException<ArgumentException>(()=>Parser.ToBytes(null));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestCollection()
 		{
 			ICollection<int> intlist = new LinkedList<int>();
@@ -420,7 +420,7 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		
-		[Test]
+		[TestMethod]
 		public void TestIndentation()
 		{
 			var dict = new Dictionary<string, object>();
@@ -464,7 +464,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual(txt, ser_txt);
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestSorting()
 		{
 			Serializer serpent=new Serializer();
@@ -507,7 +507,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  'a',\n  'b',\n  'c',\n  'x',\n  'y',\n  'z'\n}", S(ser));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestClass()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
@@ -522,7 +522,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'SerializeTestClass',\n  'i': 99,\n  'obj': None,\n  's': 'hi'\n}", S(ser));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestClass2()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
@@ -547,7 +547,7 @@ namespace Razorvine.Serpent.Test
 			return result;
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestCustomClassDict()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), testclassConverter);
@@ -562,7 +562,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class@__': 'SerializeTestClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestStruct()
 		{
 			Serializer serpent = new Serializer(indent: true);
@@ -576,7 +576,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'SerializeTestStruct',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestStruct2()
 		{
 			Serializer serpent = new Serializer(indent: true, namespaceInClassName: true);
@@ -590,7 +590,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'Razorvine.Serpent.Test.SerializeTestStruct',\n  'i': 99,\n  's': 'hi'\n}", S(ser));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestAnonymousClass()
 		{
 			Serializer serpent = new Serializer(indent: true);
@@ -604,7 +604,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  'Age': 33,\n  'Country': 'NL',\n  'Name': 'Harry'\n}", S(ser));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestDateTime()
 		{
 			Serializer serpent = new Serializer();
@@ -630,7 +630,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("123630.999", S(ser));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestDateTimeOffset()
 		{
 			Serializer serpent = new Serializer();
@@ -644,7 +644,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("'2013-05-10T13:59:45+02:00'", S(ser));
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestException()
 		{
 			Exception x = new ApplicationException("errormessage");
@@ -657,7 +657,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {\n    'custom_attribute': 999\n  }\n}", S(ser));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestExceptionWithNamespace()
 		{
 			Exception x = new ApplicationException("errormessage");
@@ -671,7 +671,7 @@ namespace Razorvine.Serpent.Test
 			Jarjar
 		}
 
-		[Test]
+		[TestMethod]
 		public void TestEnum()
 		{
 			FooType e = FooType.Jarjar;
@@ -697,7 +697,7 @@ namespace Razorvine.Serpent.Test
 			return result;
 		}
 
-		[Test]
+		[TestMethod]
 		public void testAbstractBaseClassHierarchyPickler()
 		{
 			ConcreteSubClass c = new ConcreteSubClass();
@@ -709,7 +709,7 @@ namespace Razorvine.Serpent.Test
 			Assert.AreEqual("{'(SUB)CLASS':'ConcreteSubClass'}", S(strip_header(data)));
 		}
 		
-		[Test]
+		[TestMethod]
 		public void TestInterfaceHierarchyPickler()
 		{
 			BaseClassWithInterface b = new BaseClassWithInterface();
