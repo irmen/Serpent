@@ -1,15 +1,5 @@
-﻿/// <summary>
-/// Serpent, a Python literal expression serializer/deserializer
-/// (a.k.a. Python's ast.literal_eval in .NET)
-///
-/// Copyright Irmen de Jong (irmen@razorvine.net)
-/// Software license: "MIT software license". See http://opensource.org/licenses/MIT
-/// </summary>
-
-using System;
-#if !(SILVERLIGHT || WINDOWS_PHONE || PORTABLE)
+﻿using System;
 using System.Collections;
-#endif
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -630,7 +620,6 @@ namespace Razorvine.Serpent
     	/// If it is something else, throw an ArgumentException
 		/// </summary>
 		public static byte[] ToBytes(object obj) {
-#if !(SILVERLIGHT || WINDOWS_PHONE || PORTABLE)
 			Hashtable hashtable  = obj as Hashtable;
 			if(hashtable!=null)
 			{
@@ -644,7 +633,6 @@ namespace Razorvine.Serpent
 				}
 				return Convert.FromBase64String(data);
 			}
-#endif
 			
 			IDictionary<string,string> dict = obj as IDictionary<string,string>;
 			if(dict!=null)
