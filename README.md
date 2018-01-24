@@ -33,6 +33,7 @@ C#/.NET
 Package is available on www.nuget.org as 'Razorvine.Serpent'.
 Full source code can be found in ./dotnet/ directory.
 Example usage can be found in ./dotnet/Serpent.Test/Example.cs
+The project is a dotnet core project targeting NetStandard 2.0.
 
 
 JAVA
