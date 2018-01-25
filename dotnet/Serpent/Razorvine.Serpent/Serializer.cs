@@ -45,7 +45,7 @@ namespace Razorvine.Serpent
 		/// Initialize the serializer.
 		/// </summary>
 		/// <param name="indent">indent the output over multiple lines (default=false)</param>
-		/// <param name="setLiterals">use set-literals or not (set to False if you need compatibility with Python < 3.2)</param>
+		/// <param name="setLiterals">use set-literals or not (set to False if you need compatibility with Python &lt; 3.2)</param>
 		/// <param name="namespaceInClassName">include namespace prefix for class names or only use the class name itself</param>
 		public Serializer(bool indent=false, bool setLiterals=true, bool namespaceInClassName=false)
 		{
@@ -418,7 +418,7 @@ namespace Razorvine.Serpent
 		protected void Serialize_exception(Exception exc, TextWriter tw, int level)
 		{
 			IDictionary dict;
-			Func<object, IDictionary> converter = null;
+			Func<object, IDictionary> converter;
 			classToDictRegistry.TryGetValue(exc.GetType(), out converter);
 			
 			if(converter!=null)
@@ -436,7 +436,7 @@ namespace Razorvine.Serpent
 				dict = new Dictionary<string, object> {
 					{"__class__", className},
 					{"__exception__", true},
-					{"args", new string[]{exc.Message} },
+					{"args", new []{exc.Message} },
 					{"attributes", exc.Data}
 				};
 			}
@@ -459,7 +459,7 @@ namespace Razorvine.Serpent
 			if(obj is float)
 			{
 				float f = (float)obj;
-				double d = (double)f;
+				double d = f;
 				Serialize_primitive(d, tw, level);
 			}
 			else if(obj is double)

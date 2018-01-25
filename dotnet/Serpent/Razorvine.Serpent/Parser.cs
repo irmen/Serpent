@@ -298,8 +298,12 @@ namespace Razorvine.Serpent
 			
 			// make sure it has dict semantics (remove duplicate keys)
 			Dictionary<Ast.INode, Ast.INode> fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
-			foreach(Ast.KeyValueNode kv in elts)
+			foreach(var node in elts)
+			{
+				var kv = (Ast.KeyValueNode) node;
 				fixedDict[kv.Key] = kv.Value;
+			}
+
 			foreach(var kv in fixedDict)
 			{
 				dict.Elements.Add(new Ast.KeyValueNode()
@@ -392,7 +396,7 @@ namespace Razorvine.Serpent
 			// little bit of a hack:
 			// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
 			// in that case, we need to reject it as a float.
-			if(numberstr.IndexOfAny(new char[] {'.','e','E'}) < 0)
+			if(numberstr.IndexOfAny(new [] {'.','e','E'}) < 0)
 				throw new ParseException("number is not a float (might be an integer though)");
 
 			try {

@@ -8,11 +8,7 @@ namespace Razorvine.Serpent
 	public class DebugVisitor: Ast.INodeVisitor
 	{
 		private StringBuilder result = new StringBuilder();
-		private int indent=0;
-		
-		public DebugVisitor()
-		{
-		}
+		private int indent;
 		
 		/// <summary>
 		/// Get the debug string representation result.
@@ -37,8 +33,9 @@ namespace Razorvine.Serpent
 		{
 			result.AppendLine("(dict");
 			indent++;
-			foreach(Ast.KeyValueNode kv in dict.Elements)
+			foreach(var node in dict.Elements)
 			{
+				var kv = (Ast.KeyValueNode) node;
 				Indent();
 				kv.Key.Accept(this);
 				result.Append(" = ");

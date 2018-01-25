@@ -44,18 +44,18 @@ namespace Razorvine.Serpent
 
 		public interface INodeVisitor
 		{
-			void Visit(Ast.ComplexNumberNode complex);
-			void Visit(Ast.DictNode dict);
-			void Visit(Ast.ListNode list);
-			void Visit(Ast.NoneNode none);
-			void Visit(Ast.IntegerNode value);
-			void Visit(Ast.LongNode value);
-			void Visit(Ast.DoubleNode value);
-			void Visit(Ast.BooleanNode value);
-			void Visit(Ast.StringNode value);
-			void Visit(Ast.DecimalNode value);
-			void Visit(Ast.SetNode setnode);
-			void Visit(Ast.TupleNode tuple);
+			void Visit(ComplexNumberNode complex);
+			void Visit(DictNode dict);
+			void Visit(ListNode list);
+			void Visit(NoneNode none);
+			void Visit(IntegerNode value);
+			void Visit(LongNode value);
+			void Visit(DoubleNode value);
+			void Visit(BooleanNode value);
+			void Visit(StringNode value);
+			void Visit(DecimalNode value);
+			void Visit(SetNode setnode);
+			void Visit(TupleNode tuple);
 		}
 
 		/// <summary>
@@ -75,8 +75,8 @@ namespace Razorvine.Serpent
 		
 		public abstract class PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
 		{
-			public T Value;
-			public PrimitiveNode(T value)
+			public readonly T Value;
+			protected PrimitiveNode(T value)
 			{
 				this.Value=value;
 			}
@@ -88,13 +88,13 @@ namespace Razorvine.Serpent
 			
 			public override bool Equals(object obj)
 			{
-				return (obj is Ast.PrimitiveNode<T>) &&
-					Equals(Value, ((Ast.PrimitiveNode<T>)obj).Value);
+				return (obj is PrimitiveNode<T>) &&
+					Equals(Value, ((PrimitiveNode<T>)obj).Value);
 			}
 
-			public bool Equals(Ast.PrimitiveNode<T> other)
+			public bool Equals(PrimitiveNode<T> other)
 			{
-				return object.Equals(this.Value, other.Value);
+				return Equals(this.Value, other.Value);
 			}
 			
 			public int CompareTo(PrimitiveNode<T> other)
@@ -150,14 +150,14 @@ namespace Razorvine.Serpent
 				else if(Value is double || Value is float)
 				{
 					string d = Convert.ToString(Value, CultureInfo.InvariantCulture);
-					if(d.IndexOfAny(new char[] {'.', 'e', 'E'})<=0)
+					if(d.IndexOfAny(new [] {'.', 'e', 'E'})<=0)
 						d+=".0";
 					return d;
 				}
 				else return Value.ToString();
 			}
 			
-			public abstract void Accept(Ast.INodeVisitor visitor);
+			public abstract void Accept(INodeVisitor visitor);
 		}
 		
 		public class IntegerNode: PrimitiveNode<int>
@@ -165,7 +165,7 @@ namespace Razorvine.Serpent
 			public IntegerNode(int value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -176,7 +176,7 @@ namespace Razorvine.Serpent
 			public LongNode(long value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -187,7 +187,7 @@ namespace Razorvine.Serpent
 			public DoubleNode(double value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -198,7 +198,7 @@ namespace Razorvine.Serpent
 			public StringNode(string value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -209,7 +209,7 @@ namespace Razorvine.Serpent
 			public DecimalNode(decimal value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -220,7 +220,7 @@ namespace Razorvine.Serpent
 			public BooleanNode(bool value) : base(value)
 			{
 			}
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -274,6 +274,7 @@ namespace Razorvine.Serpent
 			{
 				int hashCode = 0;
 				unchecked {
+					// ReSharper disable once NonReadonlyMemberInGetHashCode
 					foreach(INode elt in Elements)
 						hashCode += 1000000007 * elt.GetHashCode();
 				}
@@ -282,7 +283,7 @@ namespace Razorvine.Serpent
 
 			public override bool Equals(object obj)
 			{
-				Ast.SequenceNode other = obj as Ast.SequenceNode;
+				SequenceNode other = obj as SequenceNode;
 				if (other == null)
 					return false;
 				return Enumerable.SequenceEqual(Elements, other.Elements);
@@ -300,13 +301,14 @@ namespace Razorvine.Serpent
 						sb.Append(',');
 					}
 				}
+				// ReSharper disable once PossibleNullReferenceException
 				if(Elements.Count>0)
 					sb.Remove(sb.Length-1, 1);	// remove last comma
 				sb.Append(CloseChar);
 				return sb.ToString();
 			}
 			
-			public abstract void Accept(Ast.INodeVisitor visitor);
+			public abstract void Accept(INodeVisitor visitor);
 		}
 		
 		public class TupleNode : SequenceNode
@@ -322,14 +324,14 @@ namespace Razorvine.Serpent
 						sb.Append(elt.ToString());
 						sb.Append(",");
 					}
+					if(Elements.Count>1)
+						sb.Remove(sb.Length-1, 1);
 				}
-				if(Elements.Count>1)
-					sb.Remove(sb.Length-1, 1);
 				sb.Append(')');
 				return sb.ToString();
 			}
 			
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -339,7 +341,7 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '['; } }
 			public override char CloseChar { get { return ']'; } }
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -374,7 +376,7 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}
@@ -384,7 +386,7 @@ namespace Razorvine.Serpent
 		{
 			public override char OpenChar { get { return '{'; } }
 			public override char CloseChar { get { return '}'; } }
-			public override void Accept(Ast.INodeVisitor visitor)
+			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
 			}

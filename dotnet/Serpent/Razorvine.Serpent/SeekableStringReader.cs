@@ -9,6 +9,7 @@ namespace Razorvine.Serpent
 	/// </summary>
 	public class SeekableStringReader : IDisposable
 	{
+		// ReSharper disable RedundantDefaultMemberInitializer
 		private string str;
 		private int cursor = 0;
 		private int bookmark = -1;
@@ -165,9 +166,9 @@ namespace Razorvine.Serpent
 		/// <summary>
 		/// Flip back to previously set bookmark.
 		/// </summary>
-		public void FlipBack(int bookmark)
+		public void FlipBack(int towhichbookmark)
 		{
-			cursor = bookmark;
+			cursor = towhichbookmark;
 		}
 		
 		/// <summary>

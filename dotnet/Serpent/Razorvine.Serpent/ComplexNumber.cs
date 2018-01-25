@@ -9,8 +9,8 @@ namespace Razorvine.Serpent
 /// </summary>
 public class ComplexNumber {
 	
-	public double Real {get; private set;}
-	public double Imaginary {get; private set;}
+	public double Real {get; }
+	public double Imaginary {get; }
 	
 	public ComplexNumber(double r, double i) {
 		Real=r;
@@ -54,6 +54,7 @@ public class ComplexNumber {
 		if(!(obj is ComplexNumber))
 			return false;
 		ComplexNumber other = (ComplexNumber) obj;
+		// ReSharper disable CompareOfFloatsByEqualityOperator
 		return Real==other.Real && Imaginary==other.Imaginary;
 	}
 	

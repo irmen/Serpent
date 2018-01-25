@@ -10,7 +10,7 @@ namespace Razorvine.Serpent
 	public class ObjectifyVisitor: Ast.INodeVisitor
 	{
 		private Stack<object> generated = new Stack<object>();
-		private Func<IDictionary, object> dictToInstance = null;
+		private Func<IDictionary, object> dictToInstance;
 
 		/// <summary>
 		/// Create the visitor that converts AST in actual objects.
@@ -46,8 +46,9 @@ namespace Razorvine.Serpent
 		public void Visit(Ast.DictNode dict)
 		{
 			IDictionary obj = new Dictionary<object, object>(dict.Elements.Count);
-			foreach(Ast.KeyValueNode kv in dict.Elements)
+			foreach(var node in dict.Elements)
 			{
+				var kv = (Ast.KeyValueNode) node;
 				kv.Key.Accept(this);
 				object key = generated.Pop();
 				kv.Value.Accept(this);
