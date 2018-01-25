@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Razorvine.Serpent", "Razorvine.Serpent\Razorvine.Serpent.csproj", "{2FD56EEF-23E7-4CE8-94FA-92B0FC6E5CA4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{CF817063-FC62-4E9D-B6FC-9E90390BEC32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{10CAEE38-7E25-420D-AC29-98960E8785D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +14,9 @@ Global
 		{2FD56EEF-23E7-4CE8-94FA-92B0FC6E5CA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FD56EEF-23E7-4CE8-94FA-92B0FC6E5CA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FD56EEF-23E7-4CE8-94FA-92B0FC6E5CA4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CF817063-FC62-4E9D-B6FC-9E90390BEC32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CF817063-FC62-4E9D-B6FC-9E90390BEC32}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CF817063-FC62-4E9D-B6FC-9E90390BEC32}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CF817063-FC62-4E9D-B6FC-9E90390BEC32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10CAEE38-7E25-420D-AC29-98960E8785D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10CAEE38-7E25-420D-AC29-98960E8785D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10CAEE38-7E25-420D-AC29-98960E8785D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10CAEE38-7E25-420D-AC29-98960E8785D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,33 +1,24 @@
-﻿/// <summary>
-/// Serpent, a Python literal expression serializer/deserializer
-/// (a.k.a. Python's ast.literal_eval in .NET)
-///
-/// Copyright Irmen de Jong (irmen@razorvine.net)
-/// Software license: "MIT software license". See http://opensource.org/licenses/MIT
-/// </summary>
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Razorvine.Serpent.Test
 {
-	[TestClass]
 	public class ParserTest
 	{
-		[TestMethod]
+		[Fact]
 		public void TestBasic()
 		{
 			Parser p = new Parser();
-			Assert.IsNull(p.Parse((string)null).Root);
-			Assert.IsNull(p.Parse("").Root);
-			Assert.IsNotNull(p.Parse("# comment\n42\n").Root);
+			Assert.Null(p.Parse((string)null).Root);
+			Assert.Null(p.Parse("").Root);
+			Assert.NotNull(p.Parse("# comment\n42\n").Root);
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestComments()
 		{
 			Parser p = new Parser();
@@ -36,7 +27,7 @@ namespace Razorvine.Serpent.Test
 			var visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
 			Object obj = visitor.GetObject();
-			Assert.AreEqual(new int[] {1,2}, obj);
+			Assert.Equal(new int[] {1,2}, obj);
 
 			ast = p.Parse(@"# serpent utf-8 python2.7
 [ 1, 2,
@@ -47,97 +38,97 @@ namespace Razorvine.Serpent.Test
 			visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
 			obj = visitor.GetObject();
-			Assert.AreEqual(new int[] {1,2,3,4}, obj);
+			Assert.Equal(new int[] {1,2,3,4}, obj);
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestPrimitives()
 		{
 			Parser p = new Parser();
-			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse("42").Root);
-			Assert.AreEqual(new Ast.IntegerNode(-42), p.Parse("-42").Root);
-			Assert.AreEqual(new Ast.DoubleNode(42.331), p.Parse("42.331").Root);
-			Assert.AreEqual(new Ast.DoubleNode(-42.331), p.Parse("-42.331").Root);
-			Assert.AreEqual(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e+19").Root);
-			Assert.AreEqual(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e19").Root);
-			Assert.AreEqual(new Ast.DoubleNode(0.0004), p.Parse("4e-4").Root);
-			Assert.AreEqual(new Ast.DoubleNode(40000), p.Parse("4e4").Root);
-			Assert.AreEqual(new Ast.BooleanNode(true), p.Parse("True").Root);
-			Assert.AreEqual(new Ast.BooleanNode(false), p.Parse("False").Root);
-			Assert.AreEqual(Ast.NoneNode.Instance, p.Parse("None").Root);
+			Assert.Equal(new Ast.IntegerNode(42), p.Parse("42").Root);
+			Assert.Equal(new Ast.IntegerNode(-42), p.Parse("-42").Root);
+			Assert.Equal(new Ast.DoubleNode(42.331), p.Parse("42.331").Root);
+			Assert.Equal(new Ast.DoubleNode(-42.331), p.Parse("-42.331").Root);
+			Assert.Equal(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e+19").Root);
+			Assert.Equal(new Ast.DoubleNode(-1.2e19), p.Parse("-1.2e19").Root);
+			Assert.Equal(new Ast.DoubleNode(0.0004), p.Parse("4e-4").Root);
+			Assert.Equal(new Ast.DoubleNode(40000), p.Parse("4e4").Root);
+			Assert.Equal(new Ast.BooleanNode(true), p.Parse("True").Root);
+			Assert.Equal(new Ast.BooleanNode(false), p.Parse("False").Root);
+			Assert.Equal(Ast.NoneNode.Instance, p.Parse("None").Root);
 			
 			// long ints
-			Assert.AreEqual(new Ast.DecimalNode(123456789123456789123456789M), p.Parse("123456789123456789123456789").Root);
-			Assert.AreNotEqual(new Ast.LongNode(52), p.Parse("52").Root);
-			Assert.AreEqual(new Ast.LongNode(123456789123456789L), p.Parse("123456789123456789").Root);
-			Assert.ThrowsException<ParseException>(()=>p.Parse("123456789123456789123456789123456789")); // overflow
+			Assert.Equal(new Ast.DecimalNode(123456789123456789123456789M), p.Parse("123456789123456789123456789").Root);
+			Assert.NotEqual(new Ast.LongNode(52), p.Parse("52").Root);
+			Assert.Equal(new Ast.LongNode(123456789123456789L), p.Parse("123456789123456789").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("123456789123456789123456789123456789")); // overflow
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestWeirdFloats()
 		{
 			Parser p = new Parser();
 			var d = (Ast.DoubleNode) p.Parse("1e30000").Root;
-			Assert.IsTrue(double.IsPositiveInfinity(d.Value));
+			Assert.True(double.IsPositiveInfinity(d.Value));
 			d = (Ast.DoubleNode) p.Parse("-1e30000").Root;
-			Assert.IsTrue(double.IsNegativeInfinity(d.Value));
+			Assert.True(double.IsNegativeInfinity(d.Value));
 			
 			var tuple = (Ast.TupleNode) p.Parse("(1e30000,-1e30000,{'__class__':'float','value':'nan'})").Root;
-			Assert.AreEqual(3, tuple.Elements.Count);
+			Assert.Equal(3, tuple.Elements.Count);
 			d = (Ast.DoubleNode) tuple.Elements[0];
-			Assert.IsTrue(double.IsPositiveInfinity(d.Value));
+			Assert.True(double.IsPositiveInfinity(d.Value));
 			d = (Ast.DoubleNode) tuple.Elements[1];
-			Assert.IsTrue(double.IsNegativeInfinity(d.Value));
+			Assert.True(double.IsNegativeInfinity(d.Value));
 			d = (Ast.DoubleNode) tuple.Elements[2];
-			Assert.IsTrue(Double.IsNaN(d.Value));
+			Assert.True(Double.IsNaN(d.Value));
 			
 			var c = (Ast.ComplexNumberNode) p.Parse("(1e30000-1e30000j)").Root;
-			Assert.IsTrue(double.IsPositiveInfinity(c.Real));
-			Assert.IsTrue(double.IsNegativeInfinity(c.Imaginary));
+			Assert.True(double.IsPositiveInfinity(c.Real));
+			Assert.True(double.IsNegativeInfinity(c.Imaginary));
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestFloatPrecision()
 		{
 			Parser p = new Parser();
 			Serializer serpent = new Serializer();
 			var ser = serpent.Serialize(1.2345678987654321);
 			Ast.DoubleNode dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(1.2345678987654321.ToString(), dv.Value.ToString());
+			Assert.Equal(1.2345678987654321.ToString(), dv.Value.ToString());
 			
 			ser = serpent.Serialize(5555.12345678987656);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(5555.12345678987656.ToString(), dv.Value.ToString());
+			Assert.Equal(5555.12345678987656.ToString(), dv.Value.ToString());
 
 			ser = serpent.Serialize(98765432123456.12345678987656);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual(98765432123456.12345678987656.ToString(), dv.Value.ToString());
+			Assert.Equal(98765432123456.12345678987656.ToString(), dv.Value.ToString());
 
 			ser = serpent.Serialize(98765432123456.12345678987656e+44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual((98765432123456.12345678987656e+44).ToString(), dv.Value.ToString());
+			Assert.Equal((98765432123456.12345678987656e+44).ToString(), dv.Value.ToString());
 			
 			ser = serpent.Serialize(-98765432123456.12345678987656e-44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.AreEqual((-98765432123456.12345678987656e-44).ToString(), dv.Value.ToString());
+			Assert.Equal((-98765432123456.12345678987656e-44).ToString(), dv.Value.ToString());
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestEquality()
 		{
 			Ast.INode n1, n2;
 
 			n1 = new Ast.IntegerNode(42);
 			n2 = new Ast.IntegerNode(42);
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n2 = new Ast.IntegerNode(43);
-			Assert.AreNotEqual(n1, n2);
+			Assert.NotEqual(n1, n2);
 			
 			n1 = new Ast.StringNode("foo");
 			n2 = new Ast.StringNode("foo");
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n2 = new Ast.StringNode("bar");
-			Assert.AreNotEqual(n1, n2);
+			Assert.NotEqual(n1, n2);
 			
 			n1 = new Ast.ComplexNumberNode() {
 				Real=1.1,
@@ -147,12 +138,12 @@ namespace Razorvine.Serpent.Test
 				Real=1.1,
 				Imaginary=2.2
 			};
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n2 = new Ast.ComplexNumberNode() {
 				Real=1.1,
 				Imaginary=3.3
 			};
-			Assert.AreNotEqual(n1, n2);
+			Assert.NotEqual(n1, n2);
 			
 			n1=new Ast.KeyValueNode() {
 				Key=new Ast.IntegerNode(42),
@@ -162,18 +153,18 @@ namespace Razorvine.Serpent.Test
 				Key=new Ast.IntegerNode(42),
 				Value=new Ast.IntegerNode(42)
 			};
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n1=new Ast.KeyValueNode() {
 				Key=new Ast.IntegerNode(43),
 				Value=new Ast.IntegerNode(43)
 			};
-			Assert.AreNotEqual(n1,n2);
+			Assert.NotEqual(n1,n2);
 			
 			n1=Ast.NoneNode.Instance;
 			n2=Ast.NoneNode.Instance;
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n2=new Ast.IntegerNode(42);
-			Assert.AreNotEqual(n1, n2);
+			Assert.NotEqual(n1, n2);
 			
 			n1=new Ast.DictNode() {
 				Elements=new List<Ast.INode>() {
@@ -191,7 +182,7 @@ namespace Razorvine.Serpent.Test
 					}
 				}
 			};
-			Assert.AreEqual(n1, n2);
+			Assert.Equal(n1, n2);
 			n2=new Ast.DictNode() {
 				Elements=new List<Ast.INode>() {
 					new Ast.KeyValueNode() {
@@ -200,7 +191,7 @@ namespace Razorvine.Serpent.Test
 					}
 				}
 			};
-			Assert.AreNotEqual(n1, n2);
+			Assert.NotEqual(n1, n2);
 			
 			n1=new Ast.ListNode() {
 				Elements=new List<Ast.INode>() {
@@ -212,13 +203,13 @@ namespace Razorvine.Serpent.Test
 					new Ast.IntegerNode(42)
 				}
 			};
-			Assert.AreEqual(n1,n2);
+			Assert.Equal(n1,n2);
 			n2=new Ast.ListNode() {
 				Elements=new List<Ast.INode>() {
 					new Ast.IntegerNode(43)
 				}
 			};
-			Assert.AreNotEqual(n1,n2);
+			Assert.NotEqual(n1,n2);
 			
 			n1=new Ast.SetNode() {
 				Elements=new List<Ast.INode>() {
@@ -230,13 +221,13 @@ namespace Razorvine.Serpent.Test
 					new Ast.IntegerNode(42)
 				}
 			};
-			Assert.AreEqual(n1,n2);
+			Assert.Equal(n1,n2);
 			n2=new Ast.SetNode() {
 				Elements=new List<Ast.INode>() {
 					new Ast.IntegerNode(43)
 				}
 			};
-			Assert.AreNotEqual(n1,n2);
+			Assert.NotEqual(n1,n2);
 			
 			n1=new Ast.TupleNode() {
 				Elements=new List<Ast.INode>() {
@@ -248,17 +239,17 @@ namespace Razorvine.Serpent.Test
 					new Ast.IntegerNode(42)
 				}
 			};
-			Assert.AreEqual(n1,n2);
+			Assert.Equal(n1,n2);
 			n2=new Ast.TupleNode() {
 				Elements=new List<Ast.INode>() {
 					new Ast.IntegerNode(43)
 				}
 			};
-			Assert.AreNotEqual(n1,n2);
+			Assert.NotEqual(n1,n2);
 			
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestDictEquality()
 		{
 			Ast.DictNode dict1 = new Ast.DictNode();
@@ -295,16 +286,16 @@ namespace Razorvine.Serpent.Test
 			};
 			dict2.Elements.Add(kv);
 			
-			Assert.AreEqual(dict1, dict2);
+			Assert.Equal(dict1, dict2);
 			kv=new Ast.KeyValueNode() {
 				Key=new Ast.StringNode("key4"),
 				Value=new Ast.IntegerNode(45)
 			};
 			dict2.Elements.Add(kv);
-			Assert.AreNotEqual(dict1, dict2);
+			Assert.NotEqual(dict1, dict2);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestSetEquality()
 		{
 			Ast.SetNode set1 = new Ast.SetNode();
@@ -317,86 +308,86 @@ namespace Razorvine.Serpent.Test
 			set2.Elements.Add(new Ast.IntegerNode(3));
 			set2.Elements.Add(new Ast.IntegerNode(1));
 	
-			Assert.AreEqual(set1, set2);
+			Assert.Equal(set1, set2);
 			set2.Elements.Add(new Ast.IntegerNode(0));
-			Assert.AreNotEqual(set1, set2);
+			Assert.NotEqual(set1, set2);
 		}
 	
-		[TestMethod]
+		[Fact]
 		public void TestPrintSingle()
 		{
 			Parser p = new Parser();
 			
 			// primitives
-			Assert.AreEqual("42", p.Parse("42").Root.ToString());
-			Assert.AreEqual("-42.331", p.Parse("-42.331").Root.ToString());
-			Assert.AreEqual("-42.0", p.Parse("-42.0").Root.ToString());
-			Assert.AreEqual("-2E+20", p.Parse("-2E20").Root.ToString());
-			Assert.AreEqual("2.0", p.Parse("2.0").Root.ToString());
-			Assert.AreEqual("1.2E+19", p.Parse("1.2e19").Root.ToString());
-			Assert.AreEqual("True", p.Parse("True").Root.ToString());
-			Assert.AreEqual("'hello'", p.Parse("'hello'").Root.ToString());
-			Assert.AreEqual("'\\n'", p.Parse("'\n'").Root.ToString());
-			Assert.AreEqual("'\\''", p.Parse("'\\''").Root.ToString());
-			Assert.AreEqual("'\"'", p.Parse("'\\\"'").Root.ToString());
-			Assert.AreEqual("'\"'", p.Parse("'\"'").Root.ToString());
-			Assert.AreEqual("'\\\\'", p.Parse("'\\\\'").Root.ToString());
-			Assert.AreEqual("None", p.Parse("None").Root.ToString());
+			Assert.Equal("42", p.Parse("42").Root.ToString());
+			Assert.Equal("-42.331", p.Parse("-42.331").Root.ToString());
+			Assert.Equal("-42.0", p.Parse("-42.0").Root.ToString());
+			Assert.Equal("-2E+20", p.Parse("-2E20").Root.ToString());
+			Assert.Equal("2.0", p.Parse("2.0").Root.ToString());
+			Assert.Equal("1.2E+19", p.Parse("1.2e19").Root.ToString());
+			Assert.Equal("True", p.Parse("True").Root.ToString());
+			Assert.Equal("'hello'", p.Parse("'hello'").Root.ToString());
+			Assert.Equal("'\\n'", p.Parse("'\n'").Root.ToString());
+			Assert.Equal("'\\''", p.Parse("'\\''").Root.ToString());
+			Assert.Equal("'\"'", p.Parse("'\\\"'").Root.ToString());
+			Assert.Equal("'\"'", p.Parse("'\"'").Root.ToString());
+			Assert.Equal("'\\\\'", p.Parse("'\\\\'").Root.ToString());
+			Assert.Equal("None", p.Parse("None").Root.ToString());
 			string ustr = "'\u20ac\u2603'";
-			Assert.AreEqual(ustr, p.Parse(ustr).Root.ToString());
+			Assert.Equal(ustr, p.Parse(ustr).Root.ToString());
 			
 			// complex
-			Assert.AreEqual("(0+2j)", p.Parse("2j").Root.ToString());
-			Assert.AreEqual("(-1.1-2.2j)", p.Parse("(-1.1-2.2j)").Root.ToString());
-			Assert.AreEqual("(1.1+2.2j)", p.Parse("(1.1+2.2j)").Root.ToString());
+			Assert.Equal("(0+2j)", p.Parse("2j").Root.ToString());
+			Assert.Equal("(-1.1-2.2j)", p.Parse("(-1.1-2.2j)").Root.ToString());
+			Assert.Equal("(1.1+2.2j)", p.Parse("(1.1+2.2j)").Root.ToString());
 			
 			// long int
-			Assert.AreEqual("123456789123456789123456789", p.Parse("123456789123456789123456789").Root.ToString());
+			Assert.Equal("123456789123456789123456789", p.Parse("123456789123456789123456789").Root.ToString());
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestPrintSeq()
 		{
 			Parser p=new Parser();
 			
 			//tuple
-			Assert.AreEqual("()", p.Parse("()").Root.ToString());
-			Assert.AreEqual("(42,)", p.Parse("(42,)").Root.ToString());
-			Assert.AreEqual("(42,43)", p.Parse("(42,43)").Root.ToString());
+			Assert.Equal("()", p.Parse("()").Root.ToString());
+			Assert.Equal("(42,)", p.Parse("(42,)").Root.ToString());
+			Assert.Equal("(42,43)", p.Parse("(42,43)").Root.ToString());
 
 			// list			
-			Assert.AreEqual("[]", p.Parse("[]").Root.ToString());
-			Assert.AreEqual("[42]", p.Parse("[42]").Root.ToString());
-			Assert.AreEqual("[42,43]", p.Parse("[42,43]").Root.ToString());
+			Assert.Equal("[]", p.Parse("[]").Root.ToString());
+			Assert.Equal("[42]", p.Parse("[42]").Root.ToString());
+			Assert.Equal("[42,43]", p.Parse("[42,43]").Root.ToString());
 
 			// set			
-			Assert.AreEqual("{42}", p.Parse("{42}").Root.ToString());
-			Assert.AreEqual("{42,43}", p.Parse("{42,43,43,43}").Root.ToString());
+			Assert.Equal("{42}", p.Parse("{42}").Root.ToString());
+			Assert.Equal("{42,43}", p.Parse("{42,43,43,43}").Root.ToString());
 
 			// dict			
-			Assert.AreEqual("{}", p.Parse("{}").Root.ToString());
-			Assert.AreEqual("{'a':42}", p.Parse("{'a': 42}").Root.ToString());
-			Assert.AreEqual("{'a':42,'b':43}", p.Parse("{'a': 42, 'b': 43}").Root.ToString());
-			Assert.AreEqual("{'a':42,'b':45}", p.Parse("{'a': 42, 'b': 43, 'b': 44, 'b': 45}").Root.ToString());
+			Assert.Equal("{}", p.Parse("{}").Root.ToString());
+			Assert.Equal("{'a':42}", p.Parse("{'a': 42}").Root.ToString());
+			Assert.Equal("{'a':42,'b':43}", p.Parse("{'a': 42, 'b': 43}").Root.ToString());
+			Assert.Equal("{'a':42,'b':45}", p.Parse("{'a': 42, 'b': 43, 'b': 44, 'b': 45}").Root.ToString());
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestInvalidPrimitives()
 		{
 			Parser p = new Parser();
-			Assert.ThrowsException<ParseException>(()=>p.Parse("1+2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("1-2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("1.1+2.2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("1.1-2.2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("True+2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("False-2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("3j+2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("3j-2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("None+2"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("None-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1.1+2.2"));
+			Assert.Throws<ParseException>(()=>p.Parse("1.1-2.2"));
+			Assert.Throws<ParseException>(()=>p.Parse("True+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("False-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("3j+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("3j-2"));
+			Assert.Throws<ParseException>(()=>p.Parse("None+2"));
+			Assert.Throws<ParseException>(()=>p.Parse("None-2"));
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestComplex()
 		{
 			Parser p = new Parser();
@@ -408,105 +399,105 @@ namespace Razorvine.Serpent.Test
 				Real = 4.2,
 				Imaginary = 99
 			};
-			Assert.AreNotEqual(cplx, cplx2);
+			Assert.NotEqual(cplx, cplx2);
 			cplx2.Imaginary = 3.2;
-			Assert.AreEqual(cplx, cplx2);
+			Assert.Equal(cplx, cplx2);
 
-			Assert.AreEqual(cplx, p.Parse("(4.2+3.2j)").Root);
+			Assert.Equal(cplx, p.Parse("(4.2+3.2j)").Root);
 			cplx.Real = 0;
-			Assert.AreEqual(cplx, p.Parse("(0+3.2j)").Root);
-			Assert.AreEqual(cplx, p.Parse("3.2j").Root);
-			Assert.AreEqual(cplx, p.Parse("+3.2j").Root);
+			Assert.Equal(cplx, p.Parse("(0+3.2j)").Root);
+			Assert.Equal(cplx, p.Parse("3.2j").Root);
+			Assert.Equal(cplx, p.Parse("+3.2j").Root);
 			cplx.Imaginary = -3.2;
-			Assert.AreEqual(cplx, p.Parse("-3.2j").Root);
+			Assert.Equal(cplx, p.Parse("-3.2j").Root);
 			cplx.Real = -9.9;
-			Assert.AreEqual(cplx, p.Parse("(-9.9-3.2j)").Root);
+			Assert.Equal(cplx, p.Parse("(-9.9-3.2j)").Root);
 
 			cplx.Real = 2;
 			cplx.Imaginary = 3;
-			Assert.AreEqual(cplx, p.Parse("(2+3j)").Root);
+			Assert.Equal(cplx, p.Parse("(2+3j)").Root);
 			cplx.Imaginary = -3;
-			Assert.AreEqual(cplx, p.Parse("(2-3j)").Root);
+			Assert.Equal(cplx, p.Parse("(2-3j)").Root);
 			cplx.Real = 0;
-			Assert.AreEqual(cplx, p.Parse("-3j").Root);
+			Assert.Equal(cplx, p.Parse("-3j").Root);
 			
 			cplx.Real = -3.2e32;
 			cplx.Imaginary = -9.9e44;
-			Assert.AreEqual(cplx, p.Parse("(-3.2e32 -9.9e44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e+32 -9.9e+44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e32-9.9e44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e+32-9.9e+44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e32 -9.9e44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e+32 -9.9e+44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e32-9.9e44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e+32-9.9e+44j)").Root);
 			cplx.Imaginary = 9.9e44;
-			Assert.AreEqual(cplx, p.Parse("(-3.2e32+9.9e44j)").Root);
-			Assert.AreEqual(cplx, p.Parse("(-3.2e+32+9.9e+44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e32+9.9e44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e+32+9.9e+44j)").Root);
 			cplx.Real = -3.2e-32;
 			cplx.Imaginary = -9.9e-44;
-			Assert.AreEqual(cplx, p.Parse("(-3.2e-32-9.9e-44j)").Root);
+			Assert.Equal(cplx, p.Parse("(-3.2e-32-9.9e-44j)").Root);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestComplexPrecision()
 		{
 			Parser p = new Parser();
 			Ast.ComplexNumberNode cv = (Ast.ComplexNumberNode)p.Parse("(98765432123456.12345678987656+665544332211.9998877665544j)").Root;
-			Assert.AreEqual(98765432123456.12345678987656, cv.Real);
-			Assert.AreEqual(665544332211.9998877665544, cv.Imaginary);
+			Assert.Equal(98765432123456.12345678987656, cv.Real);
+			Assert.Equal(665544332211.9998877665544, cv.Imaginary);
 			cv = (Ast.ComplexNumberNode)p.Parse("(98765432123456.12345678987656-665544332211.9998877665544j)").Root;
-			Assert.AreEqual(98765432123456.12345678987656, cv.Real);
-			Assert.AreEqual(-665544332211.9998877665544, cv.Imaginary);
+			Assert.Equal(98765432123456.12345678987656, cv.Real);
+			Assert.Equal(-665544332211.9998877665544, cv.Imaginary);
 			cv = (Ast.ComplexNumberNode)p.Parse("(98765432123456.12345678987656e+33+665544332211.9998877665544e+44j)").Root;
-			Assert.AreEqual(98765432123456.12345678987656e+33, cv.Real);
-			Assert.AreEqual(665544332211.9998877665544e+44, cv.Imaginary);
+			Assert.Equal(98765432123456.12345678987656e+33, cv.Real);
+			Assert.Equal(665544332211.9998877665544e+44, cv.Imaginary);
 			cv = (Ast.ComplexNumberNode)p.Parse("(-98765432123456.12345678987656e+33-665544332211.9998877665544e+44j)").Root;
-			Assert.AreEqual(-98765432123456.12345678987656e+33, cv.Real);
-			Assert.AreEqual(-665544332211.9998877665544e+44, cv.Imaginary);
+			Assert.Equal(-98765432123456.12345678987656e+33, cv.Real);
+			Assert.Equal(-665544332211.9998877665544e+44, cv.Imaginary);
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestPrimitivesStuffAtEnd()
 		{
 			Parser p = new Parser();
-			Assert.AreEqual(new Ast.IntegerNode(42), p.ParseSingle(new SeekableStringReader("42@")));
-			Assert.AreEqual(new Ast.DoubleNode(42.331), p.ParseSingle(new SeekableStringReader("42.331@")));
-			Assert.AreEqual(new Ast.BooleanNode(true), p.ParseSingle(new SeekableStringReader("True@")));
-			Assert.AreEqual(Ast.NoneNode.Instance, p.ParseSingle(new SeekableStringReader("None@")));
+			Assert.Equal(new Ast.IntegerNode(42), p.ParseSingle(new SeekableStringReader("42@")));
+			Assert.Equal(new Ast.DoubleNode(42.331), p.ParseSingle(new SeekableStringReader("42.331@")));
+			Assert.Equal(new Ast.BooleanNode(true), p.ParseSingle(new SeekableStringReader("True@")));
+			Assert.Equal(Ast.NoneNode.Instance, p.ParseSingle(new SeekableStringReader("None@")));
 			var cplx = new Ast.ComplexNumberNode() {
 				Real = 4,
 				Imaginary = 3
 			};
-			Assert.AreEqual(cplx, p.ParseSingle(new SeekableStringReader("(4+3j)@")));
+			Assert.Equal(cplx, p.ParseSingle(new SeekableStringReader("(4+3j)@")));
 			cplx.Real=0;
-			Assert.AreEqual(cplx, p.ParseSingle(new SeekableStringReader("3j@")));
+			Assert.Equal(cplx, p.ParseSingle(new SeekableStringReader("3j@")));
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestStrings()
 		{
 			Parser p = new Parser();
-			Assert.AreEqual(new Ast.StringNode("hello"), p.Parse("'hello'").Root);
-			Assert.AreEqual(new Ast.StringNode("hello"), p.Parse("\"hello\"").Root);
-			Assert.AreEqual(new Ast.StringNode("\\"), p.Parse("'\\\\'").Root);
-			Assert.AreEqual(new Ast.StringNode("\\"), p.Parse("\"\\\\\"").Root);
-			Assert.AreEqual(new Ast.StringNode("'"), p.Parse("\"'\"").Root);
-			Assert.AreEqual(new Ast.StringNode("\""), p.Parse("'\"'").Root);
-			Assert.AreEqual(new Ast.StringNode("tab\tnewline\n."), p.Parse("'tab\\tnewline\\n.'").Root);
+			Assert.Equal(new Ast.StringNode("hello"), p.Parse("'hello'").Root);
+			Assert.Equal(new Ast.StringNode("hello"), p.Parse("\"hello\"").Root);
+			Assert.Equal(new Ast.StringNode("\\"), p.Parse("'\\\\'").Root);
+			Assert.Equal(new Ast.StringNode("\\"), p.Parse("\"\\\\\"").Root);
+			Assert.Equal(new Ast.StringNode("'"), p.Parse("\"'\"").Root);
+			Assert.Equal(new Ast.StringNode("\""), p.Parse("'\"'").Root);
+			Assert.Equal(new Ast.StringNode("tab\tnewline\n."), p.Parse("'tab\\tnewline\\n.'").Root);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestUnicode()
 		{
 			Parser p = new Parser();
 			string str = "'\u20ac\u2603'";
-			Assert.AreEqual(0x20ac, str[1]);
-			Assert.AreEqual(0x2603, str[2]);
+			Assert.Equal(0x20ac, str[1]);
+			Assert.Equal(0x2603, str[2]);
 			byte[] bytes = Encoding.UTF8.GetBytes(str);
 			
 			string value = "\u20ac\u2603";
-			Assert.AreEqual(new Ast.StringNode(value), p.Parse(str).Root);
-			Assert.AreEqual(new Ast.StringNode(value), p.Parse(bytes).Root);
+			Assert.Equal(new Ast.StringNode(value), p.Parse(str).Root);
+			Assert.Equal(new Ast.StringNode(value), p.Parse(bytes).Root);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestLongUnicodeRoundtrip()
 		{
 			Char[] chars64k = new Char[65536];
@@ -517,29 +508,29 @@ namespace Razorvine.Serpent.Test
 			
 			Serializer ser=new Serializer();
 			byte[] data = ser.Serialize(str64k);
-			Assert.IsTrue(data.Length > chars64k.Length);
+			Assert.True(data.Length > chars64k.Length);
 			
 			Parser p=new Parser();
 			String result = (String)p.Parse(data).GetData();
-			Assert.AreEqual(str64k, result);
+			Assert.Equal(str64k, result);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestWhitespace()
 		{
 			Parser p = new Parser();
-			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse(" 42 ").Root);
-			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse("  42  ").Root);
-			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse("\t42\r\n").Root);
-			Assert.AreEqual(new Ast.IntegerNode(42), p.Parse(" \t 42 \r \n ").Root);
-			Assert.AreEqual(new Ast.StringNode("   string value    "), p.Parse("  '   string value    '   ").Root);
-			Assert.ThrowsException<ParseException>(()=>p.Parse("     (  42  ,  ( 'x',   'y'  )   "));  // missing tuple close )
+			Assert.Equal(new Ast.IntegerNode(42), p.Parse(" 42 ").Root);
+			Assert.Equal(new Ast.IntegerNode(42), p.Parse("  42  ").Root);
+			Assert.Equal(new Ast.IntegerNode(42), p.Parse("\t42\r\n").Root);
+			Assert.Equal(new Ast.IntegerNode(42), p.Parse(" \t 42 \r \n ").Root);
+			Assert.Equal(new Ast.StringNode("   string value    "), p.Parse("  '   string value    '   ").Root);
+			Assert.Throws<ParseException>(()=>p.Parse("     (  42  ,  ( 'x',   'y'  )   "));  // missing tuple close )
 			Ast ast = p.Parse("     (  42  ,  ( 'x',   'y'  )  )  ");
 			Ast.TupleNode tuple = (Ast.TupleNode) ast.Root;
-			Assert.AreEqual(new Ast.IntegerNode(42), tuple.Elements[0]);
+			Assert.Equal(new Ast.IntegerNode(42), tuple.Elements[0]);
 			tuple = (Ast.TupleNode) tuple.Elements[1];
-			Assert.AreEqual(new Ast.StringNode("x"), tuple.Elements[0]);
-			Assert.AreEqual(new Ast.StringNode("y"), tuple.Elements[1]);
+			Assert.Equal(new Ast.StringNode("x"), tuple.Elements[0]);
+			Assert.Equal(new Ast.StringNode("y"), tuple.Elements[1]);
 			
 			p.Parse(" ( 52 , ) ");
 			p.Parse(" [ 52 ] ");
@@ -547,135 +538,135 @@ namespace Razorvine.Serpent.Test
 			p.Parse(" { 52 } ");
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestTuple()
 		{
 			Parser p = new Parser();
 			Ast.TupleNode tuple = new Ast.TupleNode();
 			Ast.TupleNode tuple2 = new Ast.TupleNode();
-			Assert.AreEqual(tuple, tuple2);
+			Assert.Equal(tuple, tuple2);
 			
 			tuple.Elements.Add(new Ast.IntegerNode(42));
 			tuple2.Elements.Add(new Ast.IntegerNode(99));
-			Assert.AreNotEqual(tuple, tuple2);
+			Assert.NotEqual(tuple, tuple2);
 			tuple2.Elements.Clear();
 			tuple2.Elements.Add(new Ast.IntegerNode(42));
-			Assert.AreEqual(tuple, tuple2);
+			Assert.Equal(tuple, tuple2);
 			tuple2.Elements.Add(new Ast.IntegerNode(43));
 			tuple2.Elements.Add(new Ast.IntegerNode(44));
-			Assert.AreNotEqual(tuple, tuple2);
+			Assert.NotEqual(tuple, tuple2);
 			
-			Assert.AreEqual(new Ast.TupleNode(), p.Parse("()").Root);
-			Assert.AreEqual(tuple, p.Parse("(42,)").Root);
-			Assert.AreEqual(tuple2, p.Parse("( 42,43, 44 )").Root);
+			Assert.Equal(new Ast.TupleNode(), p.Parse("()").Root);
+			Assert.Equal(tuple, p.Parse("(42,)").Root);
+			Assert.Equal(tuple2, p.Parse("( 42,43, 44 )").Root);
 
-			Assert.ThrowsException<ParseException>(()=>p.Parse("(42,43]"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("()@"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("(42,43)@"));
+			Assert.Throws<ParseException>(()=>p.Parse("(42,43]"));
+			Assert.Throws<ParseException>(()=>p.Parse("()@"));
+			Assert.Throws<ParseException>(()=>p.Parse("(42,43)@"));
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestList()
 		{
 			Parser p = new Parser();
 			Ast.ListNode list = new Ast.ListNode();
 			Ast.ListNode list2 = new Ast.ListNode();
-			Assert.AreEqual(list, list2);
+			Assert.Equal(list, list2);
 			
 			list.Elements.Add(new Ast.IntegerNode(42));
 			list2.Elements.Add(new Ast.IntegerNode(99));
-			Assert.AreNotEqual(list, list2);
+			Assert.NotEqual(list, list2);
 			list2.Elements.Clear();
 			list2.Elements.Add(new Ast.IntegerNode(42));
-			Assert.AreEqual(list, list2);
+			Assert.Equal(list, list2);
 			list2.Elements.Add(new Ast.IntegerNode(43));
 			list2.Elements.Add(new Ast.IntegerNode(44));
-			Assert.AreNotEqual(list, list2);
+			Assert.NotEqual(list, list2);
 			
-			Assert.AreEqual(new Ast.ListNode(), p.Parse("[]").Root);
-			Assert.AreEqual(list, p.Parse("[42]").Root);
-			Assert.AreEqual(list2, p.Parse("[ 42,43, 44 ]").Root);
+			Assert.Equal(new Ast.ListNode(), p.Parse("[]").Root);
+			Assert.Equal(list, p.Parse("[42]").Root);
+			Assert.Equal(list2, p.Parse("[ 42,43, 44 ]").Root);
 
-			Assert.ThrowsException<ParseException>(()=>p.Parse("[42,43}"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("[]@"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("[42,43]@"));
+			Assert.Throws<ParseException>(()=>p.Parse("[42,43}"));
+			Assert.Throws<ParseException>(()=>p.Parse("[]@"));
+			Assert.Throws<ParseException>(()=>p.Parse("[42,43]@"));
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestSet()
 		{
 			Parser p = new Parser();
 			Ast.SetNode set1 = new Ast.SetNode();
 			Ast.SetNode set2 = new Ast.SetNode();
-			Assert.AreEqual(set1, set2);
+			Assert.Equal(set1, set2);
 			
 			set1.Elements.Add(new Ast.IntegerNode(42));
 			set2.Elements.Add(new Ast.IntegerNode(99));
-			Assert.AreNotEqual(set1, set2);
+			Assert.NotEqual(set1, set2);
 			set2.Elements.Clear();
 			set2.Elements.Add(new Ast.IntegerNode(42));
-			Assert.AreEqual(set1, set2);
+			Assert.Equal(set1, set2);
 			
 			set2.Elements.Add(new Ast.IntegerNode(43));
 			set2.Elements.Add(new Ast.IntegerNode(44));
-			Assert.AreNotEqual(set1, set2);
+			Assert.NotEqual(set1, set2);
 			
-			Assert.AreEqual(set1, p.Parse("{42}").Root);
-			Assert.AreEqual(set2, p.Parse("{ 42,43, 44 }").Root);
+			Assert.Equal(set1, p.Parse("{42}").Root);
+			Assert.Equal(set2, p.Parse("{ 42,43, 44 }").Root);
 
-			Assert.ThrowsException<ParseException>(()=>p.Parse("{42,43]"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("{42,43}@"));
+			Assert.Throws<ParseException>(()=>p.Parse("{42,43]"));
+			Assert.Throws<ParseException>(()=>p.Parse("{42,43}@"));
 			
 			set1 = p.Parse("{'first','second','third','fourth','fifth','second', 'first', 'third', 'third' }").Root as Ast.SetNode;
-			Assert.AreEqual("'first'", set1.Elements[0].ToString());
-			Assert.AreEqual("'second'", set1.Elements[1].ToString());
-			Assert.AreEqual("'third'", set1.Elements[2].ToString());
-			Assert.AreEqual("'fourth'", set1.Elements[3].ToString());
-			Assert.AreEqual("'fifth'", set1.Elements[4].ToString());
-			Assert.AreEqual(5, set1.Elements.Count);
+			Assert.Equal("'first'", set1.Elements[0].ToString());
+			Assert.Equal("'second'", set1.Elements[1].ToString());
+			Assert.Equal("'third'", set1.Elements[2].ToString());
+			Assert.Equal("'fourth'", set1.Elements[3].ToString());
+			Assert.Equal("'fifth'", set1.Elements[4].ToString());
+			Assert.Equal(5, set1.Elements.Count);
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestDict()
 		{
 			Parser p = new Parser();
 			Ast.DictNode dict1 = new Ast.DictNode();
 			Ast.DictNode dict2 = new Ast.DictNode();
-			Assert.AreEqual(dict1, dict2);
+			Assert.Equal(dict1, dict2);
 			
 			Ast.KeyValueNode kv1 = new Ast.KeyValueNode { Key=new Ast.StringNode("key"), Value=new Ast.IntegerNode(42) };
 			Ast.KeyValueNode kv2 = new Ast.KeyValueNode { Key=new Ast.StringNode("key"), Value=new Ast.IntegerNode(99) };
-			Assert.AreNotEqual(kv1, kv2);
+			Assert.NotEqual(kv1, kv2);
 			kv2.Value = new Ast.IntegerNode(42);
-			Assert.AreEqual(kv1, kv2);
+			Assert.Equal(kv1, kv2);
 			
 			dict1.Elements.Add(new Ast.KeyValueNode { Key=new Ast.StringNode("key1"), Value=new Ast.IntegerNode(42) });
 			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.StringNode("key1"), Value=new Ast.IntegerNode(99) });
-			Assert.AreNotEqual(dict1, dict2);
+			Assert.NotEqual(dict1, dict2);
 			dict2.Elements.Clear();
 			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.StringNode("key1"), Value=new Ast.IntegerNode(42) });
-			Assert.AreEqual(dict1, dict2);
+			Assert.Equal(dict1, dict2);
 			
 			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.StringNode("key2"), Value=new Ast.IntegerNode(43) });
 			dict2.Elements.Add(new Ast.KeyValueNode { Key=new Ast.StringNode("key3"), Value=new Ast.IntegerNode(44) });
-			Assert.AreNotEqual(dict1, dict2);
+			Assert.NotEqual(dict1, dict2);
 			
-			Assert.AreEqual(new Ast.DictNode(), p.Parse("{}").Root);
-			Assert.AreEqual(dict1, p.Parse("{'key1': 42}").Root);
-			Assert.AreEqual(dict2, p.Parse("{'key1': 42, 'key2': 43, 'key3':44}").Root);
+			Assert.Equal(new Ast.DictNode(), p.Parse("{}").Root);
+			Assert.Equal(dict1, p.Parse("{'key1': 42}").Root);
+			Assert.Equal(dict2, p.Parse("{'key1': 42, 'key2': 43, 'key3':44}").Root);
 
-			Assert.ThrowsException<ParseException>(()=>p.Parse("{'key': 42]"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("{}@"));
-			Assert.ThrowsException<ParseException>(()=>p.Parse("{'key': 42}@"));
+			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42]"));
+			Assert.Throws<ParseException>(()=>p.Parse("{}@"));
+			Assert.Throws<ParseException>(()=>p.Parse("{'key': 42}@"));
 			
 			dict1 = p.Parse("{'a': 1, 'b': 2, 'c': 3, 'c': 4, 'c': 5, 'c': 6}").Root as Ast.DictNode;
-			Assert.AreEqual("'a':1", dict1.Elements[0].ToString());
-			Assert.AreEqual("'b':2", dict1.Elements[1].ToString());
-			Assert.AreEqual("'c':6", dict1.Elements[2].ToString());
-			Assert.AreEqual(3, dict1.Elements.Count);
+			Assert.Equal("'a':1", dict1.Elements[0].ToString());
+			Assert.Equal("'b':2", dict1.Elements[1].ToString());
+			Assert.Equal("'c':6", dict1.Elements[2].ToString());
+			Assert.Equal(3, dict1.Elements.Count);
 		}		
 		
-		[TestMethod]
+		[Fact]
 		public void TestFile()
 		{
 			Parser p = new Parser();
@@ -685,7 +676,7 @@ namespace Razorvine.Serpent.Test
 			string expr = ast.ToString();
 			Ast ast2 = p.Parse(expr);
 			string expr2 = ast2.ToString();
-			Assert.AreEqual(expr, expr2);
+			Assert.Equal(expr, expr2);
 			
 			StringBuilder sb= new StringBuilder();
 			Walk(ast.Root, sb);
@@ -693,22 +684,21 @@ namespace Razorvine.Serpent.Test
 			sb= new StringBuilder();
 			Walk(ast2.Root, sb);
 			string walk2 = sb.ToString();
-			Assert.AreEqual(walk1, walk2);
+			Assert.Equal(walk1, walk2);
 			
-			// @TODO Assert.AreEqual(ast.Root, ast2.Root);
+			// @TODO Assert.Equal(ast.Root, ast2.Root);
 			ast = p.Parse(expr2);
-			// @TODO Assert.AreEqual(ast.Root, ast2.Root);
+			// @TODO Assert.Equal(ast.Root, ast2.Root);
 		}
 
-		[TestMethod]
-		[Ignore("can't yet get the ast to compare equal on mono")]
+		[Fact]
 		public void TestAstEquals()
 		{
 			Parser p = new Parser ();
 			byte[] ser = File.ReadAllBytes ("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			Ast ast2 = p.Parse(ser);
-			Assert.AreEqual(ast.Root, ast2.Root);
+			Assert.Equal(ast.Root, ast2.Root);
 		}
 
 		public void Walk(Ast.INode node, StringBuilder sb)
@@ -725,7 +715,7 @@ namespace Razorvine.Serpent.Test
 				sb.AppendLine(string.Format("{0} = {1}", node.GetType(), node.ToString()));
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestTrailingCommas()
 		{
 			Parser p = new Parser();
@@ -733,11 +723,11 @@ namespace Razorvine.Serpent.Test
 	        result = p.Parse("[1,2,3,  ]").Root;
 	        result = p.Parse("[1,2,3  ,  ]").Root;
 	        result = p.Parse("[1,2,3,]").Root;
-	        Assert.AreEqual("[1,2,3]", result.ToString());
+	        Assert.Equal("[1,2,3]", result.ToString());
 	        result = p.Parse("(1,2,3,  )").Root;
 	        result = p.Parse("(1,2,3  ,  )").Root;
 	        result = p.Parse("(1,2,3,)").Root;
-	        Assert.AreEqual("(1,2,3)", result.ToString());
+	        Assert.Equal("(1,2,3)", result.ToString());
 	        
 	        // for dict and set the asserts are a bit more complex
             // we cannot simply convert to string because the order of elts is undefined.
@@ -747,25 +737,24 @@ namespace Razorvine.Serpent.Test
 	        result = p.Parse("{'a':1, 'b':2, 'c':3,}").Root;
 	        Ast.DictNode dict = (Ast.DictNode) result;
 	        var items = dict.ElementsAsSet();
-	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("a"), new Ast.IntegerNode(1))));
-	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("b"), new Ast.IntegerNode(2))));
-	        Assert.IsTrue(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("c"), new Ast.IntegerNode(3))));
+	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("a"), new Ast.IntegerNode(1))));
+	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("b"), new Ast.IntegerNode(2))));
+	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("c"), new Ast.IntegerNode(3))));
 	        result = p.Parse("{1,2,3,  }").Root;
 	        result = p.Parse("{1,2,3  ,  }").Root;
 	        result = p.Parse("{1,2,3,}").Root;
 	        Ast.SetNode set = (Ast.SetNode) result;
 	        items = set.ElementsAsSet();
-	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(1)));
-	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(2)));
-	        Assert.IsTrue(items.Contains(new Ast.IntegerNode(3)));
-	        Assert.IsFalse(items.Contains(new Ast.IntegerNode(4)));
+	        Assert.True(items.Contains(new Ast.IntegerNode(1)));
+	        Assert.True(items.Contains(new Ast.IntegerNode(2)));
+	        Assert.True(items.Contains(new Ast.IntegerNode(3)));
+	        Assert.False(items.Contains(new Ast.IntegerNode(4)));
 		}		
 	}
 
-	[TestClass]
 	public class VisitorTest
 	{
-		[TestMethod]
+		[Fact]
 		public void TestObjectify()
 		{
 			Parser p = new Parser();
@@ -776,17 +765,17 @@ namespace Razorvine.Serpent.Test
 			object thing = visitor.GetObject();
 			
 			IDictionary dict = (IDictionary) thing;
-			Assert.AreEqual(11, dict.Count);
+			Assert.Equal(11, dict.Count);
 			IList<object> list = dict["numbers"] as IList<object>;
-			Assert.AreEqual(4, list.Count);
-			Assert.AreEqual(999.1234, list[1]);
-			Assert.AreEqual(new ComplexNumber(-3, 8), list[3]);
+			Assert.Equal(4, list.Count);
+			Assert.Equal(999.1234, list[1]);
+			Assert.Equal(new ComplexNumber(-3, 8), list[3]);
 			string euro = dict["unicode"] as string;
-			Assert.AreEqual("\u20ac", euro);
+			Assert.Equal("\u20ac", euro);
 			IDictionary exc = (IDictionary)dict["exc"];
 			object[] args = (object[]) exc["args"];
-			Assert.AreEqual("fault", args[0]);
-			Assert.AreEqual("ZeroDivisionError", exc["__class__"]);
+			Assert.Equal("fault", args[0]);
+			Assert.Equal("ZeroDivisionError", exc["__class__"]);
 		}
 		
 		object ZerodivisionFromDict(IDictionary dict)
@@ -800,7 +789,7 @@ namespace Razorvine.Serpent.Test
 			return null;
 		}
 		
-		[TestMethod]
+		[Fact]
 		public void TestObjectifyDictToClass()
 		{
 			Parser p = new Parser();
@@ -812,15 +801,15 @@ namespace Razorvine.Serpent.Test
 			object thing = visitor.GetObject();
 			
 			IDictionary dict = (IDictionary) thing;
-			Assert.AreEqual(11, dict.Count);
+			Assert.Equal(11, dict.Count);
 			DivideByZeroException ex = (DivideByZeroException) dict["exc"];
-			Assert.AreEqual("fault", ex.Message);
+			Assert.Equal("fault", ex.Message);
 			
 			thing = ast.GetData(ZerodivisionFromDict);
 			dict = (IDictionary) thing;
-			Assert.AreEqual(11, dict.Count);
+			Assert.Equal(11, dict.Count);
 			ex = (DivideByZeroException) dict["exc"];
-			Assert.AreEqual("fault", ex.Message);
+			Assert.Equal("fault", ex.Message);
 		}
 	}
 }

@@ -4,19 +4,16 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Razorvine.Serpent;
+using Xunit;
 
 namespace Razorvine.Serpent.Test
 {
 	/// <summary>
 	/// Example usage.
 	/// </summary>
-	[TestClass]
-	[Ignore("example")]
 	public class Example
 	{
-		[TestMethod]
+		[Fact(Skip = "this is an example")]
 		public void ExampleUsage()
 		{
 			Console.WriteLine("using serpent library version {0}", LibraryVersion.Version);
