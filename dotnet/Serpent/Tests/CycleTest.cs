@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Xunit;
+// ReSharper disable CheckNamespace
 
 namespace Razorvine.Serpent.Test
 {
@@ -11,7 +12,7 @@ namespace Razorvine.Serpent.Test
 		public void testTupleOk()
 		{
 			var ser = new Serializer();
-			var t = new int[] {1,2,3};
+			var t = new [] {1,2,3};
 			var d = new object[] {t,t,t};
 			var data = ser.Serialize(d);
 			var parser = new Parser();
@@ -111,7 +112,7 @@ namespace Razorvine.Serpent.Test
 				ser.Serialize(array);
 				Assert.True(false, "should fail");
 			} catch(ArgumentException x) {
-				Assert.True(x.Message.Contains("too deep"));
+				Assert.Contains("too deep", x.Message);
 			}
 		}
 	}

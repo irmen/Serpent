@@ -4,6 +4,7 @@ using System.Text;
 using Xunit;
 using Hashtable = System.Collections.Hashtable;
 using IDictionary = System.Collections.IDictionary;
+// ReSharper disable CheckNamespace
 
 namespace Razorvine.Serpent.Test
 {
@@ -160,16 +161,16 @@ namespace Razorvine.Serpent.Test
 		public void TestNumbers()
 		{
 			Serializer serpent = new Serializer();
-			byte[] ser = serpent.Serialize((int)12345);
+			byte[] ser = serpent.Serialize(12345);
 			byte[] data = strip_header(ser);
 			Assert.Equal(B("12345"), data);
 			ser = serpent.Serialize((uint)12345);
 			data = strip_header(ser);
 			Assert.Equal(B("12345"), data);
-			ser = serpent.Serialize((long)1234567891234567891L);
+			ser = serpent.Serialize(-1234567891234567891L);
 	        data = strip_header(ser);
-	        Assert.Equal(B("1234567891234567891"), data);
-			ser = serpent.Serialize((ulong)12345678912345678912L);
+	        Assert.Equal(B("-1234567891234567891"), data);
+			ser = serpent.Serialize(12345678912345678912L);
 	        data = strip_header(ser);
 	        Assert.Equal(B("12345678912345678912"), data);
 	        ser = serpent.Serialize(99.1234);
@@ -319,10 +320,10 @@ namespace Razorvine.Serpent.Test
 			Assert.Equal((int)'\n', ser[ser.Length-2]);
 			Assert.NotEqual((int)',', ser[ser.Length-3]);
 			string ser_str = S(strip_header(ser));
-			Assert.True(ser_str.Contains("'name': 'Sally'"));
-			Assert.True(ser_str.Contains("'status': False"));
-			Assert.True(ser_str.Contains("42: 'fortytwo'"));
-			Assert.True(ser_str.Contains("'sixteen-and-half': 16.5"));
+			Assert.Contains("'name': 'Sally'", ser_str);
+			Assert.Contains("'status': False", ser_str);
+			Assert.Contains("42: 'fortytwo'", ser_str);
+			Assert.Contains("'sixteen-and-half': 16.5", ser_str);
 			parsed = p.Parse(ser).Root.ToString();
             Assert.Equal(69, parsed.Length);
             serpent.Indent=false;
@@ -395,17 +396,17 @@ namespace Razorvine.Serpent.Test
 			ser = strip_header(ser);
 			Assert.Equal("[42,43]", S(ser));
 			
-			ser=strip_header(serpent.Serialize(new int[] {42}));
+			ser=strip_header(serpent.Serialize(new [] {42}));
 			Assert.Equal("(42,)", S(ser));
-			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
+			ser=strip_header(serpent.Serialize(new [] {42, 43}));
 			Assert.Equal("(42,43)", S(ser));
 			
 			serpent.Indent=true;
 			ser = strip_header(serpent.Serialize(intlist));
 			Assert.Equal("[\n  42,\n  43\n]", S(ser));
-			ser=strip_header(serpent.Serialize(new int[] {42}));
+			ser=strip_header(serpent.Serialize(new [] {42}));
 			Assert.Equal("(\n  42,\n)", S(ser));
-			ser=strip_header(serpent.Serialize(new int[] {42, 43}));
+			ser=strip_header(serpent.Serialize(new [] {42, 43}));
 			Assert.Equal("(\n  42,\n  43\n)", S(ser));
 		}
 		
@@ -417,7 +418,7 @@ namespace Razorvine.Serpent.Test
 			var list = new List<object>() {
 				1,
 				2,
-				new string[] {"a", "b"}
+				new [] {"a", "b"}
 			};
 			dict.Add("first", list);
 			dict.Add("second", new Dictionary<int, bool> {
@@ -461,7 +462,7 @@ namespace Razorvine.Serpent.Test
 			object data = new List<int> { 3, 2, 1};
 			byte[] ser = strip_header(serpent.Serialize(data));
 			Assert.Equal("[3,2,1]", S(ser));
-			data = new int[] { 3,2,1 };
+			data = new [] { 3,2,1 };
 			ser = strip_header(serpent.Serialize(data));
 			Assert.Equal("(3,2,1)", S(ser));
 			
@@ -657,7 +658,6 @@ namespace Razorvine.Serpent.Test
 		}
 
 		enum FooType {
-			Foobar,
 			Jarjar
 		}
 
@@ -675,8 +675,6 @@ namespace Razorvine.Serpent.Test
 		interface ISubInterface : IBaseInterface {};
 		class BaseClassWithInterface : IBaseInterface {};
 		class SubClassWithInterface : BaseClassWithInterface, ISubInterface {};
-		class BaseClass {};
-		class SubClass : BaseClass {};
 		abstract class AbstractBaseClass {};
 		class ConcreteSubClass : AbstractBaseClass {};
 

@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Xunit;
+// ReSharper disable CheckNamespace
+// ReSharper disable SpecifyACultureInStringConversionExplicitly
+// ReSharper disable RedundantAssignment
+// ReSharper disable PossibleNullReferenceException
 
 namespace Razorvine.Serpent.Test
 {
@@ -27,7 +31,7 @@ namespace Razorvine.Serpent.Test
 			var visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
 			Object obj = visitor.GetObject();
-			Assert.Equal(new int[] {1,2}, obj);
+			Assert.Equal(new [] {1,2}, obj);
 
 			ast = p.Parse(@"# serpent utf-8 python2.7
 [ 1, 2,
@@ -38,7 +42,7 @@ namespace Razorvine.Serpent.Test
 			visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
 			obj = visitor.GetObject();
-			Assert.Equal(new int[] {1,2,3,4}, obj);
+			Assert.Equal(new [] {1,2,3,4}, obj);
 		}
 
 		[Fact]
@@ -686,9 +690,9 @@ namespace Razorvine.Serpent.Test
 			string walk2 = sb.ToString();
 			Assert.Equal(walk1, walk2);
 			
-			// @TODO Assert.Equal(ast.Root, ast2.Root);
+			Assert.Equal(ast.Root, ast2.Root);
 			ast = p.Parse(expr2);
-			// @TODO Assert.Equal(ast.Root, ast2.Root);
+			Assert.Equal(ast.Root, ast2.Root);
 		}
 
 		[Fact]
@@ -701,7 +705,7 @@ namespace Razorvine.Serpent.Test
 			Assert.Equal(ast.Root, ast2.Root);
 		}
 
-		public void Walk(Ast.INode node, StringBuilder sb)
+		private void Walk(Ast.INode node, StringBuilder sb)
 		{
 			if(node is Ast.SequenceNode)
 			{
@@ -737,18 +741,18 @@ namespace Razorvine.Serpent.Test
 	        result = p.Parse("{'a':1, 'b':2, 'c':3,}").Root;
 	        Ast.DictNode dict = (Ast.DictNode) result;
 	        var items = dict.ElementsAsSet();
-	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("a"), new Ast.IntegerNode(1))));
-	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("b"), new Ast.IntegerNode(2))));
-	        Assert.True(items.Contains(new Ast.KeyValueNode(new Ast.StringNode("c"), new Ast.IntegerNode(3))));
+			Assert.Contains(new Ast.KeyValueNode(new Ast.StringNode("a"), new Ast.IntegerNode(1)), items);
+			Assert.Contains(new Ast.KeyValueNode(new Ast.StringNode("b"), new Ast.IntegerNode(2)), items);
+			Assert.Contains(new Ast.KeyValueNode(new Ast.StringNode("c"), new Ast.IntegerNode(3)), items);
 	        result = p.Parse("{1,2,3,  }").Root;
 	        result = p.Parse("{1,2,3  ,  }").Root;
 	        result = p.Parse("{1,2,3,}").Root;
 	        Ast.SetNode set = (Ast.SetNode) result;
 	        items = set.ElementsAsSet();
-	        Assert.True(items.Contains(new Ast.IntegerNode(1)));
-	        Assert.True(items.Contains(new Ast.IntegerNode(2)));
-	        Assert.True(items.Contains(new Ast.IntegerNode(3)));
-	        Assert.False(items.Contains(new Ast.IntegerNode(4)));
+			Assert.Contains(new Ast.IntegerNode(1), items);
+			Assert.Contains(new Ast.IntegerNode(2), items);
+			Assert.Contains(new Ast.IntegerNode(3), items);
+			Assert.DoesNotContain(new Ast.IntegerNode(4), items);
 		}		
 	}
 

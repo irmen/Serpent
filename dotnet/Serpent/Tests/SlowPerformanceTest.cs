@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+// ReSharper disable CheckNamespace
 
 namespace Razorvine.Serpent.Test
 {

@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using System.IO;
 using Xunit;
+// ReSharper disable CheckNamespace
 
 namespace Razorvine.Serpent.Test
 {
@@ -19,7 +20,7 @@ namespace Razorvine.Serpent.Test
 			Console.WriteLine("using serpent library version {0}", LibraryVersion.Version);
 			
 			var data = new Dictionary<string, object> {
-				{"tuple", new int[] { 1,2,3 } },
+				{"tuple", new [] { 1,2,3 } },
 				{"date", DateTime.Now},
 				{"set", new HashSet<string> { "a", "b", "c" } },
 				{"class", new SampleClass() {
