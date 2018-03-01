@@ -19,8 +19,12 @@ import hashlib
 import traceback
 import threading
 import time
-import collections
 import types
+import collections
+if sys.version_info >= (3, 4):
+    from collections.abc import KeysView, ValuesView, ItemsView
+else:
+    from collections import KeysView, ValuesView, ItemsView
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -918,8 +922,11 @@ class Something(object):
     def __getstate__(self):
         return ("bogus", "state")
 
+
 class BaseClass(object):
     pass
+
+
 class SubClass(BaseClass):
     pass
 
@@ -978,9 +985,9 @@ class TestCustomClasses(unittest.TestCase):
         serpent.register_class(BaseClass, lambda: None)
         serpent.register_class(SubClass, lambda: None)
         classes = list(serpent._special_classes_registry)
-        self.assertEqual(collections.KeysView, classes.pop(0))
-        self.assertEqual(collections.ValuesView, classes.pop(0))
-        self.assertEqual(collections.ItemsView, classes.pop(0))
+        self.assertEqual(KeysView, classes.pop(0))
+        self.assertEqual(ValuesView, classes.pop(0))
+        self.assertEqual(ItemsView, classes.pop(0))
         if sys.version_info >= (2, 7):
             self.assertEqual(collections.OrderedDict, classes.pop(0))
         if sys.version_info >= (3, 4):

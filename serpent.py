@@ -66,7 +66,6 @@ import sys
 import types
 import os
 import gc
-import collections
 import decimal
 import datetime
 import uuid
@@ -74,8 +73,14 @@ import array
 import math
 import numbers
 import codecs
+import collections
+if sys.version_info >= (3, 4):
+    from collections.abc import KeysView, ValuesView, ItemsView
+else:
+    from collections import KeysView, ValuesView, ItemsView
 
-__version__ = "1.23"
+
+__version__ = "1.24"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -151,16 +156,18 @@ _special_classes_registry = collections.OrderedDict()   # must be insert-order p
 
 def _reset_special_classes_registry():
     _special_classes_registry.clear()
-    _special_classes_registry[collections.KeysView] = _ser_DictView
-    _special_classes_registry[collections.ValuesView] = _ser_DictView
-    _special_classes_registry[collections.ItemsView] = _ser_DictView
+    _special_classes_registry[KeysView] = _ser_DictView
+    _special_classes_registry[ValuesView] = _ser_DictView
+    _special_classes_registry[ItemsView] = _ser_DictView
     if sys.version_info >= (2, 7):
         _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
     if sys.version_info >= (3, 4):
         import enum
+
         def _ser_Enum(obj, serializer, outputstream, indentlevel):
             serializer._serialize(obj.value, outputstream, indentlevel)
         _special_classes_registry[enum.Enum] = _ser_Enum
+
 
 _reset_special_classes_registry()
 
@@ -284,7 +291,8 @@ class Serializer(object):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
-        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2). Serpent chooses a sensible default for you.
+        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2).
+        Serpent chooses a sensible default for you.
         module_in_classname = include module prefix for class names or only use the class name itself
         """
         self.indent = indent
@@ -301,7 +309,7 @@ class Serializer(object):
         if self.set_literals:
             header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
         else:
-            header += "python2.6\n"   # don't change this even though we don't support 2.6 any longer, otherwise we can't read older serpent strings
+            header += "python2.6\n"   # don't change this, otherwise we can't read older serpent strings
         out = [header]
         if os.name == "java" and type(obj) is buffer:
             obj = bytearray(obj)
@@ -455,8 +463,8 @@ class Serializer(object):
                     return
             elif sys.version_info < (3, 0) and t is unicode:
                 return
-            raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: "
-                        + str(t) + ". Use simple types as keys or use a list or tuple as container.")
+            raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: " +
+                            str(t) + ". Use simple types as keys or use a list or tuple as container.")
 
     def ser_builtins_dict(self, dict_obj, out, level):
         if id(dict_obj) in self.serialized_obj_ids:
@@ -544,11 +552,11 @@ class Serializer(object):
     def ser_datetime_datetime(self, datetime_obj, out, level):
         out.append(repr(datetime_obj.isoformat()))
     dispatch[datetime.datetime] = ser_datetime_datetime
-    
+
     def ser_datetime_date(self, date_obj, out, level):
         out.append(repr(date_obj.isoformat()))
     dispatch[datetime.date] = ser_datetime_date
-    
+
     if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
         def ser_datetime_timedelta(self, timedelta_obj, out, level):
             secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10 ** 6 + timedelta_obj.microseconds) / 10 ** 6
@@ -614,7 +622,8 @@ class Serializer(object):
                             value[slot] = getattr(obj, slot)
                         value["__class__"] = self.get_class_name(obj)
                     else:
-                        raise TypeError("don't know how to serialize class " + str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
+                        raise TypeError("don't know how to serialize class " +
+                                        str(obj.__class__) + ". Give it vars() or an appropriate __getstate__")
             self._serialize(value, out, level)
         finally:
             self.serialized_obj_ids.discard(id(obj))

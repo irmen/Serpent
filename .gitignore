@@ -18,6 +18,7 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+.idea/
 
 # Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
 [Bb]in/
