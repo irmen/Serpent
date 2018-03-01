@@ -16,8 +16,8 @@ install:
 test:
 	cd tests && (PYTHONPATH=.. python -s test_serpent.py)
 
-check:
-	flake8 --exclude .tox --ignore E501
+checkstyle:
+	pycodestyle
 
 clean:
 	@echo "Removing tox dirs, logfiles, .pyo/.pyc files..."
