@@ -80,7 +80,7 @@ else:
     from collections import KeysView, ValuesView, ItemsView
 
 
-__version__ = "1.24"
+__version__ = "1.25"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals

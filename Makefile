@@ -1,7 +1,7 @@
-.PHONY: all dist install upload clean test check
+.PHONY: all dist install upload clean test check lint
 
 all:
-	@echo "targets include sdist, wheel, upload, install, clean, test"
+	@echo "targets include dist, upload, install, clean, test, lint"
 
 dist:
 	python setup.py sdist bdist_wheel
@@ -16,7 +16,7 @@ install:
 test:
 	cd tests && (PYTHONPATH=.. python -s test_serpent.py)
 
-checkstyle:
+lint:
 	pycodestyle
 
 clean:
