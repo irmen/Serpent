@@ -87,7 +87,7 @@ namespace Razorvine.Serpent.Test
 			}
 			catch (ArgumentException x)
 			{
-				Assert.True(x.Message.Contains("nesting too deep"));
+				Assert.Contains("nesting too deep", x.Message);
 			}
 		}
 		
