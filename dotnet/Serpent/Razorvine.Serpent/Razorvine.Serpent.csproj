@@ -5,9 +5,9 @@
     <Authors>Irmen de Jong</Authors>
     <Product>Serpent Python literal expression serialization</Product>
     <PackageId>Razorvine.Serpent</PackageId>
-    <Version>1.20.0</Version>
-    <AssemblyVersion>1.20.0.0</AssemblyVersion>
-    <FileVersion>1.20.0.0</FileVersion>
+    <Version>1.25.0</Version>
+    <AssemblyVersion>1.25.0.0</AssemblyVersion>
+    <FileVersion>1.25.0.0</FileVersion>
     <Summary>Serpent provides Python ast.literal_eval() compatible object tree serialization.</Summary>
     <Description>Serpent provides Python ast.literal_eval() compatible object tree serialization.
 It serializes an object tree into bytes that can be transferred to Python and
