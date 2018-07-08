@@ -1,4 +1,5 @@
 ﻿using System;
+// ReSharper disable once UnusedMember.Global
 
 namespace Razorvine.Serpent
 {

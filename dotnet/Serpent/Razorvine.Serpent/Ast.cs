@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Linq;
+// ReSharper disable MemberCanBeProtected.Global
+// ReSharper disable UnusedParameter.Global
 
 namespace Razorvine.Serpent
 {
@@ -66,6 +69,7 @@ namespace Razorvine.Serpent
 			Root.Accept(visitor);
 		}
 
+		[SuppressMessage("ReSharper", "UnusedMember.Global")]
 		public interface INode
 		{
 			string ToString();
@@ -73,12 +77,13 @@ namespace Razorvine.Serpent
 			void Accept(INodeVisitor visitor);
 		}
 		
+		[SuppressMessage("ReSharper", "UnusedMember.Global")]
 		public abstract class PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
 		{
 			public readonly T Value;
 			protected PrimitiveNode(T value)
 			{
-				this.Value=value;
+				Value=value;
 			}
 			
 			public override int GetHashCode()
@@ -88,13 +93,13 @@ namespace Razorvine.Serpent
 			
 			public override bool Equals(object obj)
 			{
-				return (obj is PrimitiveNode<T>) &&
-					Equals(Value, ((PrimitiveNode<T>)obj).Value);
+				var node = obj as PrimitiveNode<T>;
+				return node != null && Equals(Value, node.Value);
 			}
 
 			public bool Equals(PrimitiveNode<T> other)
 			{
-				return Equals(this.Value, other.Value);
+				return Equals(Value, other.Value);
 			}
 			
 			public int CompareTo(PrimitiveNode<T> other)
@@ -104,11 +109,12 @@ namespace Razorvine.Serpent
 			
 			public override string ToString()
 			{
-				if(Value is string)
+				var s = Value as string;
+				if(s != null)
 				{
-					StringBuilder sb=new StringBuilder();
+					var sb=new StringBuilder();
 					sb.Append("'");
-					foreach(char c in (Value as string))
+					foreach(var c in s)
 					{
 						switch(c)
 						{
@@ -147,14 +153,17 @@ namespace Razorvine.Serpent
 					sb.Append("'");
 					return sb.ToString();
 				}
-				else if(Value is double || Value is float)
-				{
-					string d = Convert.ToString(Value, CultureInfo.InvariantCulture);
-					if(d.IndexOfAny(new [] {'.', 'e', 'E'})<=0)
-						d+=".0";
-					return d;
-				}
-				else return Value.ToString();
+
+				if (!(Value is double) && !(Value is float)) 
+					return Value.ToString();
+				
+				var d = Convert.ToString(Value, CultureInfo.InvariantCulture);
+				if (d == null)
+					throw new ParseException("ast value is null");
+
+				if(d.IndexOfAny(new [] {'.', 'e', 'E'})<=0)
+					d+=".0";
+				return d;
 			}
 			
 			public abstract void Accept(INodeVisitor visitor);
@@ -240,15 +249,13 @@ namespace Razorvine.Serpent
 			{
 				string strReal = Real.ToString(CultureInfo.InvariantCulture);
 				string strImag = Imaginary.ToString(CultureInfo.InvariantCulture);
-				if(Imaginary>=0)
-					return string.Format("({0}+{1}j)", strReal, strImag);
-				return string.Format("({0}{1}j)", strReal, strImag);
+				return string.Format(Imaginary>=0 ? "({0}+{1}j)" : "({0}{1}j)", strReal, strImag);
 			}
 		}
 		
 		public class NoneNode: INode
 		{
-			public static NoneNode Instance = new NoneNode();
+			public static readonly NoneNode Instance = new NoneNode();
 			private NoneNode()
 			{
 			}
@@ -267,15 +274,15 @@ namespace Razorvine.Serpent
 		public abstract class SequenceNode: INode
 		{
 			public List<INode> Elements = new List<INode>();
-			public virtual char OpenChar {get { return '?'; }}
-			public virtual char CloseChar {get { return '?'; }}
+			public virtual char OpenChar => '?';
+			public virtual char CloseChar => '?';
 
 			public override int GetHashCode()
 			{
 				int hashCode = 0;
 				unchecked {
 					// ReSharper disable once NonReadonlyMemberInGetHashCode
-					foreach(INode elt in Elements)
+					foreach(var elt in Elements)
 						hashCode += 1000000007 * elt.GetHashCode();
 				}
 				return hashCode;
@@ -283,15 +290,13 @@ namespace Razorvine.Serpent
 
 			public override bool Equals(object obj)
 			{
-				SequenceNode other = obj as SequenceNode;
-				if (other == null)
-					return false;
-				return Enumerable.SequenceEqual(Elements, other.Elements);
+				var other = obj as SequenceNode;
+				return other != null && Elements.SequenceEqual(other.Elements);
 			}
 
 			public override string ToString()
 			{
-				StringBuilder sb=new StringBuilder();
+				var sb=new StringBuilder();
 				sb.Append(OpenChar);
 				if(Elements != null)
 				{
@@ -315,7 +320,7 @@ namespace Razorvine.Serpent
 		{
 			public override string ToString()
 			{
-				StringBuilder sb=new StringBuilder();
+				var sb=new StringBuilder();
 				sb.Append('(');
 				if(Elements != null)
 				{
@@ -339,8 +344,9 @@ namespace Razorvine.Serpent
 
 		public class ListNode : SequenceNode
 		{
-			public override char OpenChar { get { return '['; } }
-			public override char CloseChar { get { return ']'; } }
+			public override char OpenChar => '[';
+			public override char CloseChar => ']';
+
 			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
@@ -354,7 +360,7 @@ namespace Razorvine.Serpent
 				if(!(obj is UnorderedSequenceNode))
 					return false;
 				var set1 = ElementsAsSet();
-				var set2 = (obj as UnorderedSequenceNode).ElementsAsSet();
+				var set2 = ((UnorderedSequenceNode) obj).ElementsAsSet();
 				return set1.SetEquals(set2);
 			}
 			
@@ -366,7 +372,7 @@ namespace Razorvine.Serpent
 			public HashSet<INode> ElementsAsSet()
 			{
 				var set = new HashSet<INode>();
-				foreach(INode kv in Elements)
+				foreach(var kv in Elements)
 					set.Add(kv);
 				return set;
 			}
@@ -374,8 +380,9 @@ namespace Razorvine.Serpent
 		
 		public class SetNode : UnorderedSequenceNode
 		{
-			public override char OpenChar { get { return '{'; } }
-			public override char CloseChar { get { return '}'; } }
+			public override char OpenChar => '{';
+			public override char CloseChar => '}';
+
 			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
@@ -384,8 +391,9 @@ namespace Razorvine.Serpent
 		
 		public class DictNode : UnorderedSequenceNode
 		{
-			public override char OpenChar { get { return '{'; } }
-			public override char CloseChar { get { return '}'; } }
+			public override char OpenChar => '{';
+			public override char CloseChar => '}';
+
 			public override void Accept(INodeVisitor visitor)
 			{
 				visitor.Visit(this);
@@ -399,13 +407,13 @@ namespace Razorvine.Serpent
 			
 			public KeyValueNode(INode key, INode value)
 			{
-				this.Key = key;
-				this.Value = value;
+				Key = key;
+				Value = value;
 			}
 			
 			public override string ToString()
 			{
-				return string.Format("{0}:{1}", Key, Value);
+				return $"{Key}:{Value}";
 			}
 			
 			public void Accept(INodeVisitor visitor)

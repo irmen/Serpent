@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -14,6 +14,10 @@ namespace Razorvine.Serpent
 	/// Serialize an object tree to a byte stream.
 	/// It is not thread-safe: make sure you're not making changes to the object tree that is being serialized.
 	/// </summary>
+	[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+	[SuppressMessage("ReSharper", "UnusedParameter.Global")]
+	[SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Global")]
+	[SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
 	public class Serializer
 	{
 		/// <summary>
@@ -38,7 +42,8 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public int MaximumLevel = 500;     // avoids stackoverflow errors
 		
-		private static IDictionary<Type, Func<object, IDictionary>> classToDictRegistry = new Dictionary<Type, Func<object, IDictionary>>();
+		private static readonly IDictionary<Type, Func<object, IDictionary>> ClassToDictRegistry 
+			= new Dictionary<Type, Func<object, IDictionary>>();
 		
 
 		/// <summary>
@@ -49,9 +54,9 @@ namespace Razorvine.Serpent
 		/// <param name="namespaceInClassName">include namespace prefix for class names or only use the class name itself</param>
 		public Serializer(bool indent=false, bool setLiterals=true, bool namespaceInClassName=false)
 		{
-			this.Indent = indent;
-			this.SetLiterals = setLiterals;
-			this.NamespaceInClassName = namespaceInClassName;
+			Indent = indent;
+			SetLiterals = setLiterals;
+			NamespaceInClassName = namespaceInClassName;
 		}
 		
 		/// <summary>
@@ -59,7 +64,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public static void RegisterClass(Type clazz, Func<object, IDictionary> converter)
 		{
-			classToDictRegistry[clazz] = converter;
+			ClassToDictRegistry[clazz] = converter;
 		}
 
 		/// <summary>
@@ -69,10 +74,7 @@ namespace Razorvine.Serpent
 		{
 			using(StringWriter tw = new StringWriter())
 			{
-				if(this.SetLiterals)
-					tw.Write("# serpent utf-8 python3.2\n");  //set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
-				else
-					tw.Write("# serpent utf-8 python2.6\n");
+				tw.Write(SetLiterals ? "# serpent utf-8 python3.2\n" : "# serpent utf-8 python2.6\n");
 				Serialize(obj, tw, 0);
 				tw.Flush();
 				return Encoding.UTF8.GetBytes(tw.ToString());
@@ -94,7 +96,7 @@ namespace Razorvine.Serpent
 			// random class --> public properties to dict
 			// primitive types --> simple mapping
 			
-			Type t = obj==null? null : obj.GetType();
+			Type t = obj?.GetType();
 			
 			if(obj==null)
 			{
@@ -120,13 +122,13 @@ namespace Razorvine.Serpent
 			{
 				Serialize_dict((IDictionary)obj, tw, level);
 			}
-			else if(t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(HashSet<>)))
+			else if(t.IsGenericType && t.GetGenericTypeDefinition() == typeof(HashSet<>))
 			{
 				IEnumerable x = (IEnumerable) obj;
-				List<object> list = new List<object>();
+				var list = new List<object>();
 				foreach(object elt in x)
 					list.Add(elt);
-				object[] setvalues = list.ToArray();
+				var setvalues = list.ToArray();
 				Serialize_set(setvalues, tw, level);
 			}
 			else if(obj is byte[])
@@ -176,7 +178,7 @@ namespace Razorvine.Serpent
 		{
 			tw.Write("(");
 			Serialize_sequence_elements(array, array.Count==1, tw, level+1);
-			if(this.Indent && array.Count>0)
+			if(Indent && array.Count>0)
 				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write(")");
 		}
@@ -185,7 +187,7 @@ namespace Razorvine.Serpent
 		{
 			tw.Write("[");
 			Serialize_sequence_elements(list, false, tw, level+1);
-			if(this.Indent && list.Count>0)
+			if(Indent && list.Count>0)
 				tw.Write(string.Join("  ", new string[level+1]));
 			tw.Write("]");
 		}
@@ -195,8 +197,7 @@ namespace Razorvine.Serpent
 			IComparable c1 = d1.Key as IComparable;
 			IComparable c2 = d2.Key as IComparable;
 			
-			if(c1==null) return 0;
-			return c1.CompareTo(c2);
+			return c1?.CompareTo(c2) ?? 0;
 		}
 
 		protected void Serialize_dict(IDictionary dict, TextWriter tw, int level)
@@ -207,11 +208,11 @@ namespace Razorvine.Serpent
 				return;
 			}
 			int counter=0;
-			if(this.Indent)
+			if(Indent)
 			{
 				string innerindent = string.Join("  ", new string[level+2]);
 				tw.Write("{\n");
-				DictionaryEntry[] entries = new DictionaryEntry[dict.Count];
+				var entries = new DictionaryEntry[dict.Count];
 				dict.CopyTo(entries, 0);
 				try {
 					Array.Sort(entries, DictentryCompare);
@@ -252,7 +253,7 @@ namespace Razorvine.Serpent
 		
 		protected void Serialize_set(object[] set, TextWriter tw, int level)
 		{
-			if(!this.SetLiterals)
+			if(!SetLiterals)
 			{
 				// output a tuple instead of a set-literal
 				Serialize_tuple(set, tw, level);
@@ -262,7 +263,7 @@ namespace Razorvine.Serpent
 			if(set.Length>0)
 			{
 				tw.Write("{");
-				if(this.Indent)
+				if(Indent)
 				{
 					try {
 						Array.Sort(set);
@@ -273,7 +274,7 @@ namespace Razorvine.Serpent
 					}
 				}
 				Serialize_sequence_elements(set, false, tw, level+1);
-				if(this.Indent)
+				if(Indent)
 					tw.Write(string.Join("  ", new string[level+1]));
 				tw.Write("}");
 			}
@@ -289,7 +290,7 @@ namespace Razorvine.Serpent
 			if(elements.Count==0)
 				return;
 			int count=0;
-			if(this.Indent)
+			if(Indent)
 			{
 				tw.Write("\n");
 				string innerindent = string.Join("  ", new string[level+1]);
@@ -325,7 +326,8 @@ namespace Razorvine.Serpent
 		{
 			// base-64 struct output
 			string str = Convert.ToBase64String(data);
-			var dict = new Dictionary<string,string>() {
+			var dict = new Dictionary<string,string>
+			{
 				{"data", str},	
 				{"encoding", "base64"}
 			};
@@ -334,29 +336,31 @@ namespace Razorvine.Serpent
 		
 		
 		// the repr translation table for characters 0x00-0xff
-		private static readonly string[] repr_255;
+		private static readonly string[] Repr255;
 		static Serializer() {
-			repr_255=new String[256];
+			Repr255=new string[256];
 			for(int c=0; c<32; ++c) {
-				repr_255[c] = "\\x"+c.ToString("x2");
+				Repr255[c] = "\\x"+c.ToString("x2");
 			}
 			for(int c=0x20; c<0x7f; ++c) {
-				repr_255[c] = Convert.ToString((char)c);
+				Repr255[c] = Convert.ToString((char)c);
 			}
 			for(int c=0x7f; c<=0xa0; ++c) {
-				repr_255[c] = "\\x"+c.ToString("x2");
+				Repr255[c] = "\\x"+c.ToString("x2");
 			}
 			for(int c=0xa1; c<=0xff; ++c) {
-				repr_255[c] = Convert.ToString((char)c);
+				Repr255[c] = Convert.ToString((char)c);
 			}
 			// odd ones out:
-			repr_255['\t'] = "\\t";
-			repr_255['\n'] = "\\n";
-			repr_255['\r'] = "\\r";
-			repr_255['\\'] = "\\\\";
-			repr_255[0xad] = "\\xad";
+			Repr255['\t'] = "\\t";
+			Repr255['\n'] = "\\n";
+			Repr255['\r'] = "\\r";
+			Repr255['\\'] = "\\\\";
+			Repr255[0xad] = "\\xad";
 		}
 	
+		// ReSharper disable once UnusedParameter.Global
+		// ReSharper disable once MemberCanBePrivate.Global
 		protected void Serialize_string(string str, TextWriter tw, int level)
 		{
 			// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
@@ -370,9 +374,9 @@ namespace Razorvine.Serpent
 				
 				if(c<256) {
 					// characters 0..255 via quick lookup table
-					b.Append(repr_255[c]);
+					b.Append(Repr255[c]);
 				} else {
-					if(Char.IsLetterOrDigit(c) || Char.IsNumber(c) || Char.IsPunctuation(c) || Char.IsSymbol(c)) {
+					if(char.IsLetterOrDigit(c) || char.IsNumber(c) || char.IsPunctuation(c) || char.IsSymbol(c)) {
 						b.Append(c);
 					} else {
 						b.Append("\\u");
@@ -390,7 +394,7 @@ namespace Razorvine.Serpent
 				b.Append('"');
 				tw.Write(b.ToString());
 			} else {
-				String str2 = b.ToString();
+				string str2 = b.ToString();
 	        	str2 = str2.Replace("'", "\\'");
 	        	tw.Write("'");
 	        	tw.Write(str2);
@@ -419,7 +423,7 @@ namespace Razorvine.Serpent
 		{
 			IDictionary dict;
 			Func<object, IDictionary> converter;
-			classToDictRegistry.TryGetValue(exc.GetType(), out converter);
+			ClassToDictRegistry.TryGetValue(exc.GetType(), out converter);
 			
 			if(converter!=null)
 			{
@@ -428,11 +432,7 @@ namespace Razorvine.Serpent
 			}
 			else
 			{
-				string className;
-				if(this.NamespaceInClassName)
-					className = exc.GetType().FullName;
-				else
-					className = exc.GetType().Name;
+				string className = NamespaceInClassName ? exc.GetType().FullName : exc.GetType().Name;
 				dict = new Dictionary<string, object> {
 					{"__class__", className},
 					{"__exception__", true},
@@ -497,10 +497,10 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_class(object obj, TextWriter tw, int level)
 		{
-			Type obj_type = obj.GetType();
+			Type objType = obj.GetType();
 			
 			IDictionary dict;
-			Func<object, IDictionary> converter = GetCustomConverter(obj_type);
+			var converter = GetCustomConverter(objType);
 			
 			if(converter!=null)
 			{
@@ -509,24 +509,23 @@ namespace Razorvine.Serpent
 			}
 			else
 			{
-				bool isAnonymousClass = obj_type.Name.StartsWith("<>");
+				bool isAnonymousClass = objType.Name.StartsWith("<>");
 				dict = new Dictionary<string,object>();
 				if(!isAnonymousClass) {
 					// only provide the class name when it is not an anonymous class
-					if(this.NamespaceInClassName)
-						dict["__class__"] = obj_type.FullName;
+					if(NamespaceInClassName)
+						dict["__class__"] = objType.FullName;
 					else
-						dict["__class__"] = obj_type.Name;
+						dict["__class__"] = objType.Name;
 				}
-				PropertyInfo[] properties=obj_type.GetProperties();
+				var properties=objType.GetProperties();
 				foreach(var propinfo in properties) {
-					if(propinfo.CanRead) {
-						string name=propinfo.Name;
-						try {
-							dict[name]=propinfo.GetValue(obj, null);
-						} catch (Exception x) {
-							throw new SerializationException("cannot serialize a property:",x);
-						}
+					if (!propinfo.CanRead) continue;
+					string name=propinfo.Name;
+					try {
+						dict[name]=propinfo.GetValue(obj, null);
+					} catch (Exception x) {
+						throw new SerializationException("cannot serialize a property:",x);
 					}
 				}
 			}
@@ -534,15 +533,18 @@ namespace Razorvine.Serpent
 			Serialize_dict(dict, tw, level);
 		}
 
+		// ReSharper disable once MemberCanBePrivate.Global
+		// ReSharper disable once MemberCanBeMadeStatic.Global
+		// ReSharper disable once InconsistentNaming
 		protected Func<object, IDictionary> GetCustomConverter(Type obj_type)
 		{
 			Func<object, IDictionary> converter;
-			if(classToDictRegistry.TryGetValue(obj_type, out converter))
+			if(ClassToDictRegistry.TryGetValue(obj_type, out converter))
 				return converter;  // exact match
 			
 			// check if there's a custom converter registered for an interface or abstract base class
 			// that this object implements or inherits from.
-			foreach(var x in classToDictRegistry) {
+			foreach(var x in ClassToDictRegistry) {
 				if(x.Key.IsAssignableFrom(obj_type)) {
 					return x.Value;
 				}

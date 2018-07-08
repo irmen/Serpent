@@ -8,6 +8,8 @@ using Xunit;
 // ReSharper disable SpecifyACultureInStringConversionExplicitly
 // ReSharper disable RedundantAssignment
 // ReSharper disable PossibleNullReferenceException
+// ReSharper disable InconsistentNaming
+// ReSharper disable MemberCanBeMadeStatic.Local
 
 namespace Razorvine.Serpent.Test
 {
@@ -30,7 +32,7 @@ namespace Razorvine.Serpent.Test
 			Ast ast = p.Parse("[ 1, 2 ]");  // no header whatsoever
 			var visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
-			Object obj = visitor.GetObject();
+			object obj = visitor.GetObject();
 			Assert.Equal(new [] {1,2}, obj);
 
 			ast = p.Parse(@"# serpent utf-8 python2.7
@@ -84,7 +86,7 @@ namespace Razorvine.Serpent.Test
 			d = (Ast.DoubleNode) tuple.Elements[1];
 			Assert.True(double.IsNegativeInfinity(d.Value));
 			d = (Ast.DoubleNode) tuple.Elements[2];
-			Assert.True(Double.IsNaN(d.Value));
+			Assert.True(double.IsNaN(d.Value));
 			
 			var c = (Ast.ComplexNumberNode) p.Parse("(1e30000-1e30000j)").Root;
 			Assert.True(double.IsPositiveInfinity(c.Real));
@@ -110,7 +112,7 @@ namespace Razorvine.Serpent.Test
 
 			ser = serpent.Serialize(98765432123456.12345678987656e+44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
-			Assert.Equal((98765432123456.12345678987656e+44).ToString(), dv.Value.ToString());
+			Assert.Equal(98765432123456.12345678987656e+44.ToString(), dv.Value.ToString());
 			
 			ser = serpent.Serialize(-98765432123456.12345678987656e-44);
 			dv = (Ast.DoubleNode) p.Parse(ser).Root;
@@ -120,10 +122,8 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestEquality()
 		{
-			Ast.INode n1, n2;
-
-			n1 = new Ast.IntegerNode(42);
-			n2 = new Ast.IntegerNode(42);
+			Ast.INode n1 = new Ast.IntegerNode(42);
+			Ast.INode n2 = new Ast.IntegerNode(42);
 			Assert.Equal(n1, n2);
 			n2 = new Ast.IntegerNode(43);
 			Assert.NotEqual(n1, n2);
@@ -134,31 +134,37 @@ namespace Razorvine.Serpent.Test
 			n2 = new Ast.StringNode("bar");
 			Assert.NotEqual(n1, n2);
 			
-			n1 = new Ast.ComplexNumberNode() {
+			n1 = new Ast.ComplexNumberNode
+			{
 				Real=1.1,
 				Imaginary=2.2
 			};
-			n2 = new Ast.ComplexNumberNode() {
+			n2 = new Ast.ComplexNumberNode
+			{
 				Real=1.1,
 				Imaginary=2.2
 			};
 			Assert.Equal(n1, n2);
-			n2 = new Ast.ComplexNumberNode() {
+			n2 = new Ast.ComplexNumberNode
+			{
 				Real=1.1,
 				Imaginary=3.3
 			};
 			Assert.NotEqual(n1, n2);
 			
-			n1=new Ast.KeyValueNode() {
+			n1=new Ast.KeyValueNode
+			{
 				Key=new Ast.IntegerNode(42),
 				Value=new Ast.IntegerNode(42)
 			};
-			n2=new Ast.KeyValueNode() {
+			n2=new Ast.KeyValueNode
+			{
 				Key=new Ast.IntegerNode(42),
 				Value=new Ast.IntegerNode(42)
 			};
 			Assert.Equal(n1, n2);
-			n1=new Ast.KeyValueNode() {
+			n1=new Ast.KeyValueNode
+			{
 				Key=new Ast.IntegerNode(43),
 				Value=new Ast.IntegerNode(43)
 			};
@@ -170,26 +176,35 @@ namespace Razorvine.Serpent.Test
 			n2=new Ast.IntegerNode(42);
 			Assert.NotEqual(n1, n2);
 			
-			n1=new Ast.DictNode() {
-				Elements=new List<Ast.INode>() {
-					new Ast.KeyValueNode() {
+			n1=new Ast.DictNode
+			{
+				Elements=new List<Ast.INode>
+				{
+					new Ast.KeyValueNode
+					{
 						Key=new Ast.IntegerNode(42),
 						Value=new Ast.IntegerNode(42)
 					}
 				}
 			};
-			n2=new Ast.DictNode() {
-				Elements=new List<Ast.INode>() {
-					new Ast.KeyValueNode() {
+			n2=new Ast.DictNode
+			{
+				Elements=new List<Ast.INode>
+				{
+					new Ast.KeyValueNode
+					{
 						Key=new Ast.IntegerNode(42),
 						Value=new Ast.IntegerNode(42)
 					}
 				}
 			};
 			Assert.Equal(n1, n2);
-			n2=new Ast.DictNode() {
-				Elements=new List<Ast.INode>() {
-					new Ast.KeyValueNode() {
+			n2=new Ast.DictNode
+			{
+				Elements=new List<Ast.INode>
+				{
+					new Ast.KeyValueNode
+					{
 						Key=new Ast.IntegerNode(42),
 						Value=new Ast.IntegerNode(43)
 					}
@@ -197,55 +212,73 @@ namespace Razorvine.Serpent.Test
 			};
 			Assert.NotEqual(n1, n2);
 			
-			n1=new Ast.ListNode() {
-				Elements=new List<Ast.INode>() {
+			n1=new Ast.ListNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
-			n2=new Ast.ListNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.ListNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
 			Assert.Equal(n1,n2);
-			n2=new Ast.ListNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.ListNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(43)
 				}
 			};
 			Assert.NotEqual(n1,n2);
 			
-			n1=new Ast.SetNode() {
-				Elements=new List<Ast.INode>() {
+			n1=new Ast.SetNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
-			n2=new Ast.SetNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.SetNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
 			Assert.Equal(n1,n2);
-			n2=new Ast.SetNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.SetNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(43)
 				}
 			};
 			Assert.NotEqual(n1,n2);
 			
-			n1=new Ast.TupleNode() {
-				Elements=new List<Ast.INode>() {
+			n1=new Ast.TupleNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
-			n2=new Ast.TupleNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.TupleNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(42)
 				}
 			};
 			Assert.Equal(n1,n2);
-			n2=new Ast.TupleNode() {
-				Elements=new List<Ast.INode>() {
+			n2=new Ast.TupleNode
+			{
+				Elements=new List<Ast.INode>
+				{
 					new Ast.IntegerNode(43)
 				}
 			};
@@ -257,41 +290,48 @@ namespace Razorvine.Serpent.Test
 		public void TestDictEquality()
 		{
 			Ast.DictNode dict1 = new Ast.DictNode();
-			Ast.KeyValueNode kv=new Ast.KeyValueNode() {
+			Ast.KeyValueNode kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key1"),
 				Value=new Ast.IntegerNode(42)
 			};
 			dict1.Elements.Add(kv);
-			kv=new Ast.KeyValueNode() {
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key2"),
 				Value=new Ast.IntegerNode(43)
 			};
 			dict1.Elements.Add(kv);
-			kv=new Ast.KeyValueNode() {
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key3"),
 				Value=new Ast.IntegerNode(44)
 			};
 			dict1.Elements.Add(kv);
 	
 			Ast.DictNode dict2 = new Ast.DictNode();
-			kv=new Ast.KeyValueNode(){
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key2"),
 				Value=new Ast.IntegerNode(43)
 			};
 			dict2.Elements.Add(kv);
-			kv=new Ast.KeyValueNode() {
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key3"),
 				Value=new Ast.IntegerNode(44)
 			};
 			dict2.Elements.Add(kv);
-			kv=new Ast.KeyValueNode() {
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key1"),
 				Value=new Ast.IntegerNode(42)
 			};
 			dict2.Elements.Add(kv);
 			
 			Assert.Equal(dict1, dict2);
-			kv=new Ast.KeyValueNode() {
+			kv=new Ast.KeyValueNode
+			{
 				Key=new Ast.StringNode("key4"),
 				Value=new Ast.IntegerNode(45)
 			};
@@ -337,7 +377,7 @@ namespace Razorvine.Serpent.Test
 			Assert.Equal("'\"'", p.Parse("'\"'").Root.ToString());
 			Assert.Equal("'\\\\'", p.Parse("'\\\\'").Root.ToString());
 			Assert.Equal("None", p.Parse("None").Root.ToString());
-			string ustr = "'\u20ac\u2603'";
+			const string ustr = "'\u20ac\u2603'";
 			Assert.Equal(ustr, p.Parse(ustr).Root.ToString());
 			
 			// complex
@@ -395,11 +435,13 @@ namespace Razorvine.Serpent.Test
 		public void TestComplex()
 		{
 			Parser p = new Parser();
-			var cplx = new Ast.ComplexNumberNode() {
+			var cplx = new Ast.ComplexNumberNode
+			{
 				Real = 4.2,
 				Imaginary = 3.2
 			};
-			var cplx2 = new Ast.ComplexNumberNode() {
+			var cplx2 = new Ast.ComplexNumberNode
+			{
 				Real = 4.2,
 				Imaginary = 99
 			};
@@ -465,7 +507,8 @@ namespace Razorvine.Serpent.Test
 			Assert.Equal(new Ast.DoubleNode(42.331), p.ParseSingle(new SeekableStringReader("42.331@")));
 			Assert.Equal(new Ast.BooleanNode(true), p.ParseSingle(new SeekableStringReader("True@")));
 			Assert.Equal(Ast.NoneNode.Instance, p.ParseSingle(new SeekableStringReader("None@")));
-			var cplx = new Ast.ComplexNumberNode() {
+			var cplx = new Ast.ComplexNumberNode
+			{
 				Real = 4,
 				Imaginary = 3
 			};
@@ -491,12 +534,12 @@ namespace Razorvine.Serpent.Test
 		public void TestUnicode()
 		{
 			Parser p = new Parser();
-			string str = "'\u20ac\u2603'";
+			const string str = "'\u20ac\u2603'";
 			Assert.Equal(0x20ac, str[1]);
 			Assert.Equal(0x2603, str[2]);
-			byte[] bytes = Encoding.UTF8.GetBytes(str);
+			var bytes = Encoding.UTF8.GetBytes(str);
 			
-			string value = "\u20ac\u2603";
+			const string value = "\u20ac\u2603";
 			Assert.Equal(new Ast.StringNode(value), p.Parse(str).Root);
 			Assert.Equal(new Ast.StringNode(value), p.Parse(bytes).Root);
 		}
@@ -504,18 +547,18 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestLongUnicodeRoundtrip()
 		{
-			Char[] chars64k = new Char[65536];
+			var chars64k = new char[65536];
 			for(int i=0; i<=65535; ++i)
-				chars64k[i]=(Char)i;
+				chars64k[i]=(char)i;
 	
-			String str64k= new String(chars64k);
+			string str64k= new string(chars64k);
 			
 			Serializer ser=new Serializer();
-			byte[] data = ser.Serialize(str64k);
+			var data = ser.Serialize(str64k);
 			Assert.True(data.Length > chars64k.Length);
 			
 			Parser p=new Parser();
-			String result = (String)p.Parse(data).GetData();
+			string result = (string)p.Parse(data).GetData();
 			Assert.Equal(str64k, result);
 		}
 		
@@ -674,7 +717,7 @@ namespace Razorvine.Serpent.Test
 		public void TestFile()
 		{
 			Parser p = new Parser();
-			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
+			var ser=File.ReadAllBytes("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			
 			string expr = ast.ToString();
@@ -699,7 +742,7 @@ namespace Razorvine.Serpent.Test
 		public void TestAstEquals()
 		{
 			Parser p = new Parser ();
-			byte[] ser = File.ReadAllBytes ("testserpent.utf8.bin");
+			var ser = File.ReadAllBytes ("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			Ast ast2 = p.Parse(ser);
 			Assert.Equal(ast.Root, ast2.Root);
@@ -707,11 +750,11 @@ namespace Razorvine.Serpent.Test
 
 		private void Walk(Ast.INode node, StringBuilder sb)
 		{
-			if(node is Ast.SequenceNode)
+			var seq = node as Ast.SequenceNode;
+			if(seq != null)
 			{
 				sb.AppendLine(string.Format("{0} (seq)", node.GetType()));
-				Ast.SequenceNode seq = (Ast.SequenceNode)node;
-				foreach(Ast.INode child in seq.Elements) {
+				foreach(var child in seq.Elements) {
 					Walk(child, sb);
 				}
 			}
@@ -723,8 +766,7 @@ namespace Razorvine.Serpent.Test
 		public void TestTrailingCommas()
 		{
 			Parser p = new Parser();
-			Ast.INode result;
-	        result = p.Parse("[1,2,3,  ]").Root;
+			var result = p.Parse("[1,2,3,  ]").Root;
 	        result = p.Parse("[1,2,3  ,  ]").Root;
 	        result = p.Parse("[1,2,3,]").Root;
 	        Assert.Equal("[1,2,3]", result.ToString());
@@ -762,7 +804,7 @@ namespace Razorvine.Serpent.Test
 		public void TestObjectify()
 		{
 			Parser p = new Parser();
-			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
+			var ser=File.ReadAllBytes("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			var visitor = new ObjectifyVisitor();
 			ast.Accept(visitor);
@@ -770,34 +812,31 @@ namespace Razorvine.Serpent.Test
 			
 			IDictionary dict = (IDictionary) thing;
 			Assert.Equal(11, dict.Count);
-			IList<object> list = dict["numbers"] as IList<object>;
+			var list = dict["numbers"] as IList<object>;
 			Assert.Equal(4, list.Count);
 			Assert.Equal(999.1234, list[1]);
 			Assert.Equal(new ComplexNumber(-3, 8), list[3]);
 			string euro = dict["unicode"] as string;
 			Assert.Equal("\u20ac", euro);
 			IDictionary exc = (IDictionary)dict["exc"];
-			object[] args = (object[]) exc["args"];
+			var args = (object[]) exc["args"];
 			Assert.Equal("fault", args[0]);
 			Assert.Equal("ZeroDivisionError", exc["__class__"]);
 		}
-		
-		object ZerodivisionFromDict(IDictionary dict)
+
+		private object ZerodivisionFromDict(IDictionary dict)
 		{
 			string classname = (string)dict["__class__"];
-			if(classname=="ZeroDivisionError")
-			{
-				object[] args = (object[]) dict["args"];
-				return new DivideByZeroException((string)args[0]);
-			}
-			return null;
+			if (classname != "ZeroDivisionError") return null;
+			var args = (object[]) dict["args"];
+			return new DivideByZeroException((string)args[0]);
 		}
 		
 		[Fact]
 		public void TestObjectifyDictToClass()
 		{
 			Parser p = new Parser();
-			byte[] ser=File.ReadAllBytes("testserpent.utf8.bin");
+			var ser=File.ReadAllBytes("testserpent.utf8.bin");
 			Ast ast = p.Parse(ser);
 			
 			var visitor = new ObjectifyVisitor(ZerodivisionFromDict);

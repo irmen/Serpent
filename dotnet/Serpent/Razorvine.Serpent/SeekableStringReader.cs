@@ -2,7 +2,6 @@
 
 namespace Razorvine.Serpent
 {
-	
 	/// <summary>
 	/// A special string reader that is suitable for the parser to read through
 	/// the expression string. You can rewind it, set bookmarks to flip back to, etc.
@@ -10,16 +9,16 @@ namespace Razorvine.Serpent
 	public class SeekableStringReader : IDisposable
 	{
 		// ReSharper disable RedundantDefaultMemberInitializer
-		private string str;
-		private int cursor = 0;
-		private int bookmark = -1;
+		private string _str;
+		private int _cursor = 0;
+		private int _bookmark = -1;
 	
 		public SeekableStringReader(string str)
 		{
 			if(str==null)
-				throw new ArgumentNullException("str");
+				throw new ArgumentNullException(nameof(str));
 	
-			this.str = str;	
+			_str = str;	
 		}
 		
 		/// <summary>
@@ -29,8 +28,8 @@ namespace Razorvine.Serpent
 		/// <param name="parent"></param>
 		public SeekableStringReader(SeekableStringReader parent)
 		{
-			str = parent.str;
-			cursor = parent.cursor;
+			_str = parent._str;
+			_cursor = parent._cursor;
 		}
 
 		/// <summary>
@@ -38,7 +37,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public bool HasMore()
 		{
-			return cursor<str.Length;
+			return _cursor<_str.Length;
 		}
 		
 		/// <summary>
@@ -46,7 +45,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public char Peek()
 		{
-			return str[cursor];
+			return _str[_cursor];
 		}
 
 		/// <summary>
@@ -54,7 +53,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public string Peek(int count)
 		{
-			return str.Substring(cursor, Math.Min(count, str.Length-cursor));
+			return _str.Substring(_cursor, Math.Min(count, _str.Length-_cursor));
 		}
 
 		/// <summary>
@@ -62,7 +61,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public char Read()
 		{
-			return str[cursor++];
+			return _str[_cursor++];
 		}
 		
 		/// <summary>
@@ -72,12 +71,12 @@ namespace Razorvine.Serpent
 		{
 			if(count<0)
 				throw new ParseException("use Rewind to seek back");
-			int safecount = Math.Min(count, str.Length-cursor);
+			int safecount = Math.Min(count, _str.Length-_cursor);
 			if(safecount==0 && count>0)
 				throw new ParseException("no more data");
 			
-			string result = str.Substring(cursor, safecount);
-			cursor += safecount;
+			string result = _str.Substring(_cursor, safecount);
+			_cursor += safecount;
 			return result;
 		}
 		
@@ -87,14 +86,11 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public string ReadUntil(params char[] sentinels)
 		{
-			int index = str.IndexOfAny(sentinels, cursor);
-			if(index>=0)
-			{
-				string result = str.Substring(cursor, index-cursor);
-				cursor = index+1;
-				return result;
-			}
-			throw new ParseException("terminator not found");
+			int index = _str.IndexOfAny(sentinels, _cursor);
+			if (index < 0) throw new ParseException("terminator not found");
+			string result = _str.Substring(_cursor, index-_cursor);
+			_cursor = index+1;
+			return result;
 		}
 		
 		/// <summary>
@@ -102,15 +98,15 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public string ReadWhile(string accepted)
 		{
-			int start = cursor;
-			while(cursor < str.Length)
+			int start = _cursor;
+			while(_cursor < _str.Length)
 			{
-				if(accepted.IndexOf(str[cursor])>=0)
-					++cursor;
+				if(accepted.IndexOf(_str[_cursor])>=0)
+					++_cursor;
 				else
 					break;
 			}
-			return str.Substring(start, cursor-start);
+			return _str.Substring(start, _cursor-start);
 		}
 		
 		/// <summary>
@@ -127,7 +123,7 @@ namespace Razorvine.Serpent
 					ReadUntil('\n');
 					return;
 				}
-				if(!Char.IsWhiteSpace(c))
+				if(!char.IsWhiteSpace(c))
 				{
 					Rewind(1);
 					return;
@@ -140,10 +136,10 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public string Rest()
 		{
-			if(cursor>=str.Length)
+			if(_cursor>=_str.Length)
 				throw new ParseException("no more data");
-			string result=str.Substring(cursor);
-			cursor = str.Length;
+			string result=_str.Substring(_cursor);
+			_cursor = _str.Length;
 			return result;
 		}
 		
@@ -152,7 +148,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public void Rewind(int count)
 		{
-			cursor = Math.Max(0, cursor-count);
+			_cursor = Math.Max(0, _cursor-count);
 		}
 
 		/// <summary>
@@ -160,7 +156,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public int Bookmark()
 		{
-			return cursor;
+			return _cursor;
 		}
 		
 		/// <summary>
@@ -168,7 +164,7 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public void FlipBack(int towhichbookmark)
 		{
-			cursor = towhichbookmark;
+			_cursor = towhichbookmark;
 		}
 		
 		/// <summary>
@@ -176,8 +172,8 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public void Sync(SeekableStringReader inner)
 		{
-			bookmark = inner.bookmark;
-			cursor = inner.cursor;
+			_bookmark = inner._bookmark;
+			_cursor = inner._cursor;
 		}
 		
 		/// <summary>
@@ -187,17 +183,17 @@ namespace Razorvine.Serpent
 		public void Context(int crsr, int width, out string left, out string right)
 		{
 			if(crsr<0)
-				crsr=this.cursor;
+				crsr=_cursor;
 			int leftStrt = Math.Max(0, crsr-width);
 			int leftLen = crsr-leftStrt;
-			int rightLen = Math.Min(width, str.Length-crsr);
-			left = str.Substring(leftStrt, leftLen);
-			right = str.Substring(crsr, rightLen);
+			int rightLen = Math.Min(width, _str.Length-crsr);
+			left = _str.Substring(leftStrt, leftLen);
+			right = _str.Substring(crsr, rightLen);
 		}
 	
 		public void Dispose()
 		{
-			this.str = null;
+			_str = null;
 		}
 	}
 }

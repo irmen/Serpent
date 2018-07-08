@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 using System.IO;
@@ -23,15 +24,16 @@ namespace Razorvine.Serpent.Test
 				{"tuple", new [] { 1,2,3 } },
 				{"date", DateTime.Now},
 				{"set", new HashSet<string> { "a", "b", "c" } },
-				{"class", new SampleClass() {
-						name = "Sally",
-						age = 26
+				{"class", new SampleClass
+				{
+						Name = "Sally",
+						Age = 26
 					}}
 			};
 			
 			// serialize data structure to bytes
-			Serializer serpent = new Serializer(indent: true);
-			byte[] ser = serpent.Serialize(data);
+			Serializer serpent = new Serializer(true);
+			var ser = serpent.Serialize(data);
 			// print it on the screen, but normally you'd store byte bytes in a file or transfer them across a network connection
 			Console.WriteLine("Serialized:");
 			Console.WriteLine(Encoding.UTF8.GetString(ser));  
@@ -58,11 +60,11 @@ namespace Razorvine.Serpent.Test
 			// print the results
 			Console.WriteLine("PARSED results:");
 			Console.Write("tuple items: ");
-			object[] tuple = (object[]) dict["tuple"];
+			var tuple = (object[]) dict["tuple"];
 			Console.WriteLine(string.Join(", ", tuple.Select(e=>e.ToString()).ToArray()));
 			Console.WriteLine("date: {0}", dict["date"]);
 			Console.Write("set items: ");
-			HashSet<object> set = (HashSet<object>) dict["set"];
+			var set = (HashSet<object>) dict["set"];
 			Console.WriteLine(string.Join(", ", set.Select(e=>e.ToString()).ToArray()));
 			Console.WriteLine("class attributes:");
 			var clazz = (IDictionary) dict["class"];	// custom classes are serialized as dicts
@@ -82,10 +84,11 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Serializable]
-		public class SampleClass
+		[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+		private class SampleClass
 		{
-			public int age {get;set;}
-			public string name {get;set;}
+			public int Age {get; set;}
+			public string Name {get; set;}
 		}
 	}
 }

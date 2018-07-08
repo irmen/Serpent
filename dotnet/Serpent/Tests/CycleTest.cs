@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Xunit;
 // ReSharper disable CheckNamespace
+// ReSharper disable InconsistentNaming
 
 namespace Razorvine.Serpent.Test
 {
@@ -23,14 +24,8 @@ namespace Razorvine.Serpent.Test
 		public void testListOk()
 		{
 			var ser = new Serializer();
-			var t = new List<int>();
-			t.Add(1);
-			t.Add(2);
-			t.Add(3);
-			var d = new List<Object>();
-			d.Add(t);
-			d.Add(t);
-			d.Add(t);
+			var t = new List<int> {1, 2, 3};
+			var d = new List<object> {t, t, t};
 			var data = ser.Serialize(d);
 			var parser = new Parser();
 	        parser.Parse(data);
@@ -40,12 +35,13 @@ namespace Razorvine.Serpent.Test
 		public void testDictOk()
 		{
 			var ser = new Serializer();
-			var t = new Hashtable();
-			t["a"] = 1;
-			var d = new Hashtable();
-			d["x"] = t;
-			d["y"] = t;
-			d["z"] = t;
+			var t = new Hashtable {["a"] = 1};
+			var d = new Hashtable
+			{
+				["x"] = t,
+				["y"] = t,
+				["z"] = t
+			};
 			var data = ser.Serialize(d);
 			var parser = new Parser();
 	        parser.Parse(data);
@@ -55,9 +51,7 @@ namespace Razorvine.Serpent.Test
 		public void testListCycle()
 		{
 			var ser = new Serializer();
-			var d = new List<Object>();
-			d.Add(1);
-			d.Add(2);
+			var d = new List<object> {1, 2};
 			d.Add(d);
 			Assert.Throws<ArgumentException>(() => ser.Serialize(d));
 		}
@@ -66,9 +60,11 @@ namespace Razorvine.Serpent.Test
 		public void testDictCycle()
 		{
 			var ser = new Serializer();
-			var d = new Hashtable();
-			d["x"] = 1;
-			d["y"] = 2;
+			var d = new Hashtable
+			{
+				["x"] = 1,
+				["y"] = 2
+			};
 			d["z"] = d;
 			Assert.Throws<ArgumentException>(() => ser.Serialize(d));
 		}
@@ -77,10 +73,12 @@ namespace Razorvine.Serpent.Test
 		public void testClassCycle()
 		{
 			var ser = new Serializer();
-			var d = new SerializeTestClass();
-			d.x = 42;
-			d.i = 99;
-			d.s = "hello";
+			var d = new SerializeTestClass
+			{
+				x = 42,
+				i = 99,
+				s = "hello"
+			};
 			d.obj = d;
 			Assert.Throws<ArgumentException>(() => ser.Serialize(d));
 		}
@@ -91,13 +89,13 @@ namespace Razorvine.Serpent.Test
 			Serializer ser = new Serializer();
 			Assert.Equal(500, ser.MaximumLevel);
 			
-			Object[] array = new Object[] {
+			object[] array = {
 				"level1",
-				new Object[] {
+				new object[] {
 					"level2",
-					new Object[] {
+					new object[] {
 						"level3",
-						new Object[] {
+						new object[] {
 							"level 4"
 						}
 					}

@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+// ReSharper disable UnusedMember.Global
 
 namespace Razorvine.Serpent
 {
@@ -60,7 +61,7 @@ public class ComplexNumber {
 	
 	public override int GetHashCode()
 	{
-		return (Real.GetHashCode()) ^ (Imaginary.GetHashCode());
+		return Real.GetHashCode() ^ Imaginary.GetHashCode();
 	}
 	
 	public static bool operator ==(ComplexNumber lhs, ComplexNumber rhs)

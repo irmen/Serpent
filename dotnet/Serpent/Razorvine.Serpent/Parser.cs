@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
@@ -9,6 +10,7 @@ namespace Razorvine.Serpent
 	/// <summary>
 	/// Parse a Python literal into an Ast (abstract syntax tree).
 	/// </summary>
+	[SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Local")]
 	public class Parser
 	{
 		
@@ -44,15 +46,15 @@ namespace Razorvine.Serpent
 				throw new ParseException(x.Message + " (at position "+sr.Bookmark()+"; '"+faultLocation+"')", x);
 			}
 		}
-		
-		string ExtractFaultLocation(SeekableStringReader sr)
+
+		private string ExtractFaultLocation(SeekableStringReader sr)
 		{
 			string left, right;
 			sr.Context(-1, 20, out left, out right);
-			return string.Format("...{0}>>><<<{1}...", left, right);
+			return $"...{left}>>><<<{right}...";
 		}
-		
-		Ast.INode ParseExpr(SeekableStringReader sr)
+
+		private Ast.INode ParseExpr(SeekableStringReader sr)
 		{
 			// expr =  [ <whitespace> ] single | compound [ <whitespace> ] .
 			sr.SkipWhitespace();
@@ -67,8 +69,8 @@ namespace Razorvine.Serpent
 			sr.SkipWhitespace();
 			return node;
 		}
-		
-		Ast.INode ParseCompound(SeekableStringReader sr)
+
+		private Ast.INode ParseCompound(SeekableStringReader sr)
 		{
 			// compound =  tuple | dict | list | set .
 			sr.SkipWhitespace();
@@ -91,7 +93,7 @@ namespace Razorvine.Serpent
 					// if the last character before the closing parenthesis is a 'j', it is a complex number
 					{
 						int bm = sr.Bookmark();
-						string betweenparens = sr.ReadUntil(new char[]{')','\n'}).TrimEnd();
+						string betweenparens = sr.ReadUntil(')', '\n').TrimEnd();
 						sr.FlipBack(bm);
 						return betweenparens.EndsWith("j") ? (Ast.INode) ParseComplex(sr) : ParseTuple(sr);
 					}
@@ -99,8 +101,8 @@ namespace Razorvine.Serpent
 					throw new ParseException("invalid sequencetype char");
 			}
 		}
-		
-		Ast.TupleNode ParseTuple(SeekableStringReader sr)
+
+		private Ast.TupleNode ParseTuple(SeekableStringReader sr)
 		{
 			//tuple           = tuple_empty | tuple_one | tuple_more
 			//tuple_empty     = '()' .
@@ -150,12 +152,11 @@ namespace Razorvine.Serpent
 				throw new ParseException("expected ')'");
 			return tuple;			
 		}
-		
-		List<Ast.INode> ParseExprList(SeekableStringReader sr)
+
+		private List<Ast.INode> ParseExprList(SeekableStringReader sr)
 		{
 			//expr_list       = expr { ',' expr } .
-			List<Ast.INode> exprList = new List<Ast.INode>();
-			exprList.Add(ParseExpr(sr));
+			var exprList = new List<Ast.INode> {ParseExpr(sr)};
 			while(sr.HasMore() && sr.Peek() == ',')
 			{
 				sr.Read();
@@ -169,12 +170,11 @@ namespace Razorvine.Serpent
 			}
 			return exprList;
 		}
-		
-		List<Ast.INode> ParseKeyValueList(SeekableStringReader sr)
+
+		private List<Ast.INode> ParseKeyValueList(SeekableStringReader sr)
 		{
 			//keyvalue_list   = keyvalue { ',' keyvalue } .
-			List<Ast.INode> kvs = new List<Ast.INode>();
-			kvs.Add(ParseKeyValue(sr));
+			var kvs = new List<Ast.INode> {ParseKeyValue(sr)};
 			while(sr.HasMore() && sr.Peek()==',')
 			{
 				sr.Read();
@@ -186,33 +186,30 @@ namespace Razorvine.Serpent
 				}
 			}
 			return kvs;
-		}		
-		
-		Ast.KeyValueNode ParseKeyValue(SeekableStringReader sr)
+		}
+
+		private Ast.KeyValueNode ParseKeyValue(SeekableStringReader sr)
 		{
 			//keyvalue        = expr ':' expr .
 			Ast.INode key = ParseExpr(sr);
-			if(sr.HasMore() && sr.Peek()==':')
+			if (!sr.HasMore() || sr.Peek() != ':') throw new ParseException("expected ':'");
+			sr.Read(); // :
+			Ast.INode value = ParseExpr(sr);
+			return new Ast.KeyValueNode
 			{
-				sr.Read(); // :
-				Ast.INode value = ParseExpr(sr);
-				return new Ast.KeyValueNode
-					{
-						Key = key,
-						Value = value
-					};
-			}
-			throw new ParseException("expected ':'");
+				Key = key,
+				Value = value
+			};
 		}
-		
-		Ast.SetNode ParseSet(SeekableStringReader sr)
+
+		private Ast.SetNode ParseSet(SeekableStringReader sr)
 		{
 			// set = '{' expr_list trailing_comma '}' .
 			// trailing_comma  = '' | ',' .			
 			sr.Read();	// {
 			sr.SkipWhitespace();
 			Ast.SetNode setnode = new Ast.SetNode();
-			List<Ast.INode> elts = ParseExprList(sr);
+			var elts = ParseExprList(sr);
 
 			// handle trailing comma if present
 			sr.SkipWhitespace();
@@ -228,12 +225,12 @@ namespace Razorvine.Serpent
 				throw new ParseException("expected '}'");
 
 			// make sure it has set semantics (remove duplicate elements)
-			HashSet<Ast.INode> h = new HashSet<Ast.INode>(elts);
+			var h = new HashSet<Ast.INode>(elts);
 			setnode.Elements = new List<Ast.INode>(h);
 			return setnode;
 		}
-		
-		Ast.ListNode ParseList(SeekableStringReader sr)
+
+		private Ast.ListNode ParseList(SeekableStringReader sr)
 		{
 			// list            = list_empty | list_nonempty .
 			// list_empty      = '[]' .
@@ -264,8 +261,8 @@ namespace Razorvine.Serpent
 				throw new ParseException("expected ']'");
 			return list;
 		}
-		
-		Ast.INode ParseDict(SeekableStringReader sr)
+
+		private Ast.INode ParseDict(SeekableStringReader sr)
 		{
 			//dict            = '{' keyvalue_list trailing_comma '}' .
 			//keyvalue_list   = keyvalue { ',' keyvalue } .
@@ -281,7 +278,7 @@ namespace Razorvine.Serpent
 				return dict;		// empty dict
 			}
 			
-			List<Ast.INode> elts = ParseKeyValueList(sr);
+			var elts = ParseKeyValueList(sr);
 
 			// handle trailing comma if present
 			sr.SkipWhitespace();
@@ -297,7 +294,7 @@ namespace Razorvine.Serpent
 				throw new ParseException("expected '}'");
 			
 			// make sure it has dict semantics (remove duplicate keys)
-			Dictionary<Ast.INode, Ast.INode> fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
+			var fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
 			foreach(var node in elts)
 			{
 				var kv = (Ast.KeyValueNode) node;
@@ -306,20 +303,19 @@ namespace Razorvine.Serpent
 
 			foreach(var kv in fixedDict)
 			{
-				dict.Elements.Add(new Ast.KeyValueNode()
-				                  {
+				dict.Elements.Add(new Ast.KeyValueNode
+				{
 				                  	Key=kv.Key,
 				                  	Value=kv.Value
 				                  });
 			}
 			
 			// SPECIAL CASE: {'__class__':'float','value':'nan'}  ---> Double.NaN
-			if(dict.Elements.Count==2) {
-				if(dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("__class__"), new Ast.StringNode("float")))) {
-					if(dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("value"), new Ast.StringNode("nan")))) {
-						return new Ast.DoubleNode(Double.NaN);
-					}	
-				}
+			if (dict.Elements.Count != 2) return dict;
+			if (!dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("__class__"),
+				new Ast.StringNode("float")))) return dict;
+			if(dict.Elements.Contains(new Ast.KeyValueNode(new Ast.StringNode("value"), new Ast.StringNode("nan")))) {
+				return new Ast.DoubleNode(double.NaN);
 			}
 
 			return dict;
@@ -354,13 +350,13 @@ namespace Razorvine.Serpent
 				}
 			}
 		}
-		
-		
-		const string IntegerChars = "-0123456789";
-		const string FloatChars = "-+.eE0123456789";
-		
-		
-		Ast.INode ParseInt(SeekableStringReader sr)
+
+
+		private const string IntegerChars = "-0123456789";
+		private const string FloatChars = "-+.eE0123456789";
+
+
+		private Ast.INode ParseInt(SeekableStringReader sr)
 		{
 			// int =  ['-'] digitnonzero {digit} .
 			string numberstr = sr.ReadWhile(IntegerChars);
@@ -387,7 +383,7 @@ namespace Razorvine.Serpent
 			}
 		}
 
-		Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
+		private Ast.PrimitiveNode<double> ParseFloat(SeekableStringReader sr)
 		{
 			string numberstr = sr.ReadWhile(FloatChars);
 			if(numberstr.Length==0)
@@ -400,13 +396,13 @@ namespace Razorvine.Serpent
 				throw new ParseException("number is not a float (might be an integer though)");
 
 			try {
-				return new Ast.DoubleNode(this.ParseDouble(numberstr));
+				return new Ast.DoubleNode(ParseDouble(numberstr));
 			} catch (FormatException x) {
 				throw new ParseException("invalid float format", x);
 			}
 		}
 
-		Ast.ComplexNumberNode ParseComplex(SeekableStringReader sr)
+		private Ast.ComplexNumberNode ParseComplex(SeekableStringReader sr)
 		{
 			//complex         = complextuple | imaginary .
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
@@ -419,11 +415,11 @@ namespace Razorvine.Serpent
 				if(sr.Peek()=='-' || sr.Peek()=='+')
 				{
 					// starts with a sign, read that first otherwise the readuntil will return immediately
-					numberstr = sr.Read(1) + sr.ReadUntil(new char[] {'+', '-'});
+					numberstr = sr.Read(1) + sr.ReadUntil('+', '-');
 				}
 				else
 				{
-					numberstr = sr.ReadUntil(new char[] {'+', '-'});
+					numberstr = sr.ReadUntil('+', '-');
 				}
 				sr.Rewind(1); // rewind the +/-
 				
@@ -440,32 +436,30 @@ namespace Razorvine.Serpent
 				sr.SkipWhitespace();
 				double realpart;
 				try {
-					realpart = this.ParseDouble(numberstr);
+					realpart = ParseDouble(numberstr);
 				} catch (FormatException x) {
 					throw new ParseException("invalid float format", x);
 				}
 				double imaginarypart = ParseImaginaryPart(sr);
 				if(sr.Read()!=')')
 					throw new ParseException("expected ) to end a complex number");
-				return new Ast.ComplexNumberNode()
-					{
+				return new Ast.ComplexNumberNode
+				{
 						Real = realpart,
 						Imaginary = imaginarypart
 					};
 			}
-			else
+
+			// imaginary
+			double imag = ParseImaginaryPart(sr);
+			return new Ast.ComplexNumberNode
 			{
-				// imaginary
-				double imag = ParseImaginaryPart(sr);
-				return new Ast.ComplexNumberNode()
-					{
-						Real=0,
-						Imaginary=imag
-					};
-			}
+				Real=0,
+				Imaginary=imag
+			};
 		}
-		
-		double ParseImaginaryPart(SeekableStringReader sr)
+
+		private double ParseImaginaryPart(SeekableStringReader sr)
 		{
 			//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
 //			string numberstr = sr.ReadUntil('j');
@@ -478,30 +472,29 @@ namespace Razorvine.Serpent
 			if(!sr.HasMore())
 				throw new ParseException("unexpected end of input string");
 				
-			char sign_or_digit = sr.Peek();
-			if(sign_or_digit=='+')
+			char signOrDigit = sr.Peek();
+			if(signOrDigit=='+')
 				sr.Read();   // skip the '+'
 			
 			// now an int or float follows.
-			double double_value;
+			double doubleValue;
 			int bookmark = sr.Bookmark();
 			try {
-				var float_part = ParseFloat(sr);
-				double_value = float_part.Value;
+				doubleValue = ParseFloat(sr).Value;
 			} catch (ParseException) {
 				sr.FlipBack(bookmark);
-				var integer_part = ParseInt(sr);
-				var integerNode = integer_part as Ast.IntegerNode;
+				var integerPart = ParseInt(sr);
+				var integerNode = integerPart as Ast.IntegerNode;
 				if (integerNode != null)
-					double_value = integerNode.Value;
+					doubleValue = integerNode.Value;
 				else {
-					var longNode = integer_part as Ast.LongNode;
+					var longNode = integerPart as Ast.LongNode;
 					if (longNode != null)
-						double_value = longNode.Value;
+						doubleValue = longNode.Value;
 					else {
-						var decimalNode = integer_part as Ast.DecimalNode;
+						var decimalNode = integerPart as Ast.DecimalNode;
 						if (decimalNode != null)
-							double_value = Convert.ToDouble(decimalNode.Value);
+							doubleValue = Convert.ToDouble(decimalNode.Value);
 						else
 							throw new ParseException("not an integer for the imaginary part");
 					}
@@ -511,17 +504,16 @@ namespace Razorvine.Serpent
 			// now a 'j' must follow!
 			sr.SkipWhitespace();
 			try {
-				char j_char = sr.Read();
-				if(j_char!='j')
+				if(sr.Read()!='j')
 					throw new ParseException("not an imaginary part");
 			} catch (IndexOutOfRangeException) {
 				throw new ParseException("not an imaginary part");
 			}
-			return double_value;
+			return doubleValue;
 
 		}
-		
-		Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)
+
+		private Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)
 		{
 			char quotechar = sr.Read();   // ' or "
 			StringBuilder sb = new StringBuilder(10);
@@ -587,19 +579,23 @@ namespace Razorvine.Serpent
 			}
 			throw new ParseException("unclosed string");
 		}
-		
-		Ast.PrimitiveNode<bool> ParseBool(SeekableStringReader sr)
+
+		private Ast.PrimitiveNode<bool> ParseBool(SeekableStringReader sr)
 		{
 			// True,False
 			string b = sr.ReadUntil('e');
-			if(b=="Tru")
-				return new Ast.BooleanNode(true);
-			if(b=="Fals")
-				return new Ast.BooleanNode(false);
+			switch (b)
+			{
+				case "Tru":
+					return new Ast.BooleanNode(true);
+				case "Fals":
+					return new Ast.BooleanNode(false);
+			}
+
 			throw new ParseException("expected bool, True or False");
 		}
-		
-		Ast.NoneNode ParseNone(SeekableStringReader sr)
+
+		private Ast.NoneNode ParseNone(SeekableStringReader sr)
 		{
 			// None
 			string n = sr.ReadUntil('e');
@@ -607,12 +603,18 @@ namespace Razorvine.Serpent
 				return Ast.NoneNode.Instance;
 			throw new ParseException("expected None");
 		}
-		
-		double ParseDouble(string numberstr)
+
+		private double ParseDouble(string numberstr)
 		{
-			// the number is possibly +Inf/-Inf, these are encoded as "1e30000" and "-1e30000"
-			if(numberstr=="1e30000") return double.PositiveInfinity;
-			if(numberstr=="-1e30000") return double.NegativeInfinity;
+			switch (numberstr)
+			{
+				// the number is possibly +Inf/-Inf, these are encoded as "1e30000" and "-1e30000"
+				case "1e30000":
+					return double.PositiveInfinity;
+				case "-1e30000":
+					return double.NegativeInfinity;
+			}
+
 			return double.Parse(numberstr, CultureInfo.InvariantCulture);
 		}
 
@@ -638,7 +640,7 @@ namespace Razorvine.Serpent
 				return Convert.FromBase64String(data);
 			}
 			
-			IDictionary<string,string> dict = obj as IDictionary<string,string>;
+			var dict = obj as IDictionary<string,string>;
 			if(dict!=null)
 			{
 				string data;
@@ -651,7 +653,7 @@ namespace Razorvine.Serpent
 				}
 				return Convert.FromBase64String(data);
 			}
-			IDictionary<object,object> dict2 = obj as IDictionary<object,object>;
+			var dict2 = obj as IDictionary<object,object>;
 			if(dict2!=null)
 			{
 				object dataobj;
@@ -666,7 +668,7 @@ namespace Razorvine.Serpent
 				}
 				return Convert.FromBase64String(data);
 			}			
-			byte[] bytearray = obj as byte[];
+			var bytearray = obj as byte[];
 			if(bytearray!=null)
 			{
 				return bytearray;
