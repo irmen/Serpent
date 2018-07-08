@@ -734,7 +734,23 @@ namespace Razorvine.Serpent.Test
 		public string s {get; set;}
 		public int i {get; set;}
 		public object obj {get; set;}
-		
+
+		protected bool Equals(SerializeTestClass other)
+		{
+			return x == other.x && string.Equals(s, other.s) && i == other.i && Equals(obj, other.obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hashCode = x;
+				hashCode = (hashCode * 397) ^ (s != null ? s.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ i;
+				hashCode = (hashCode * 397) ^ (obj != null ? obj.GetHashCode() : 0);
+				return hashCode;
+			}
+		}
 	}
 	
 	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
@@ -745,5 +761,21 @@ namespace Razorvine.Serpent.Test
 		public int x;
 		public string s {get; set;}
 		public int i {get; set;}
+
+		public bool Equals(SerializeTestStruct other)
+		{
+			return x == other.x && string.Equals(s, other.s) && i == other.i;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hashCode = x;
+				hashCode = (hashCode * 397) ^ (s != null ? s.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ i;
+				return hashCode;
+			}
+		}
 	}
 }
