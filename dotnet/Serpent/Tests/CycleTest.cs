@@ -80,7 +80,15 @@ namespace Razorvine.Serpent.Test
 				s = "hello"
 			};
 			d.obj = d;
-			Assert.Throws<ArgumentException>(() => ser.Serialize(d));
+			try
+			{
+				ser.Serialize(d);
+				throw new Exception("should not reach this");
+			}
+			catch (ArgumentException x)
+			{
+				Assert.True(x.Message.Contains("nesting too deep"));
+			}
 		}
 		
 		[Fact]
