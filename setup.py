@@ -173,5 +173,5 @@ When you run this (with python 3.2+) it prints:
         "Programming Language :: Python :: 3.7",
         "Topic :: Software Development"
     ],
-
+    tests_require=['enum34; python_version < "3.4"']
 )

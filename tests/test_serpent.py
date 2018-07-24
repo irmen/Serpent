@@ -21,6 +21,7 @@ import threading
 import time
 import types
 import collections
+import enum
 if sys.version_info >= (3, 4):
     from collections.abc import KeysView, ValuesView, ItemsView
 else:
@@ -617,19 +618,23 @@ class TestBasics(unittest.TestCase):
             serpent.dumps({1, 2, 3, pp})     # can only serialize simple typles as set elements (hashable)
         self.assertTrue("hashable type" in str(x.exception))
 
-    @unittest.skipIf(sys.version_info < (3, 4), reason="python 3.4 introduced enums")
     def test_enum_hashable(self):
-        import enum
         class Color(enum.Enum):
             RED = 1
             GREEN = 2
             BLUE = 3
         data = serpent.dumps({"abc", Color.RED, Color.GREEN, Color.BLUE})
         orig = serpent.loads(data)
-        self.assertEqual({"abc", 1, 2, 3}, orig)
+        if sys.version_info < (3, 4):
+            self.assertEqual([1, 2, 3, u"abc"], sorted(orig))
+        else:
+            self.assertEqual({"abc", 1, 2, 3}, orig)
         data = serpent.dumps({"abc": 1, Color.RED: 1, Color.GREEN: 1, Color.BLUE: 1})
         orig = serpent.loads(data)
-        self.assertEqual({"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
+        if sys.version_info < (3, 4):
+            self.assertEqual({u"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
+        else:
+            self.assertEqual({"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
 
     def test_array(self):
         ser = serpent.dumps(array.array('u', unicode("unicode")))
@@ -714,16 +719,19 @@ class TestBasics(unittest.TestCase):
         v = serpent.loads(serpent.dumps((-98765432123456.12345678987656e+44 -665544332211.9998877665544e+33j)))
         self.assertEqual((-98765432123456.12345678987656e+44 -665544332211.9998877665544e+33j), v)
 
-    @unittest.skipIf(sys.version_info < (3, 4), "needs python 3.4 to test enum type")
     def test_enums(self):
-        import enum
         class Animal(enum.Enum):
             BEE = 1
             CAT = 2
             DOG = 3
         v = serpent.loads(serpent.dumps(Animal.CAT))
         self.assertEqual(2, v)
-        Animal2 = enum.Enum("Animals2", "BEE CAT DOG HORSE RABBIT")
+        class Animal2(enum.Enum):
+            BEE = 1
+            CAT = 2
+            DOG = 3
+            HORSE = 4
+            RABBIT = 5
         v = serpent.loads(serpent.dumps(Animal2.HORSE))
         self.assertEqual(4, v)
 
@@ -990,9 +998,7 @@ class TestCustomClasses(unittest.TestCase):
         self.assertEqual(ItemsView, classes.pop(0))
         if sys.version_info >= (2, 7):
             self.assertEqual(collections.OrderedDict, classes.pop(0))
-        if sys.version_info >= (3, 4):
-            import enum
-            self.assertEqual(enum.Enum, classes.pop(0))
+        self.assertEqual(enum.Enum, classes.pop(0))
         self.assertEqual(BaseClass, classes.pop(0))
         self.assertEqual(SubClass, classes.pop(0))
         self.assertEqual(0, len(classes))

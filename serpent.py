@@ -76,11 +76,16 @@ import codecs
 import collections
 if sys.version_info >= (3, 4):
     from collections.abc import KeysView, ValuesView, ItemsView
+    import enum
 else:
     from collections import KeysView, ValuesView, ItemsView
+    try:
+        import enum
+    except ImportError:
+        enum = None
 
 
-__version__ = "1.25"
+__version__ = "1.26"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
@@ -161,9 +166,7 @@ def _reset_special_classes_registry():
     _special_classes_registry[ItemsView] = _ser_DictView
     if sys.version_info >= (2, 7):
         _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
-    if sys.version_info >= (3, 4):
-        import enum
-
+    if enum is not None:
         def _ser_Enum(obj, serializer, outputstream, indentlevel):
             serializer._serialize(obj.value, outputstream, indentlevel)
         _special_classes_registry[enum.Enum] = _ser_Enum
@@ -457,8 +460,7 @@ class Serializer(object):
 
     def _check_hashable_type(self, t):
         if t not in (bool, bytes, str, tuple) and not issubclass(t, numbers.Number):
-            if sys.version_info >= (3, 4):
-                import enum
+            if enum is not None:
                 if issubclass(t, enum.Enum):
                     return
             elif sys.version_info < (3, 0) and t is unicode:
