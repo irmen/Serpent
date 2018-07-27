@@ -7,8 +7,9 @@ dist:
 	python setup.py sdist bdist_wheel
 	@echo "Look in the dist/ directory"
 
-upload:
-	python setup.py sdist bdist_wheel upload
+upload: dist
+	@echo "Uploading to Pypi using twine...."
+	twine upload dist/*
 
 install:
 	python setup.py install
