@@ -414,6 +414,16 @@ class TestBasics(unittest.TestCase):
             self.assertEqual(ord("{"), data[0])
             self.assertEqual(ord("}"), data[-1])
 
+    def test_dict_unicode(self):
+        data = {"key": unicode("value")}
+        ser = serpent.dumps(data)
+        data2 = serpent.loads(ser)
+        self.assertEqual(unicode("value"), data2["key"])
+        data = {unicode("key"): 123}
+        ser = serpent.dumps(data)
+        data2 = serpent.loads(ser)
+        self.assertEqual(123, data2[unicode("key")])
+
     def test_dict_iters(self):
         data = {"john": 22, "sophie": 34, "bob": 26}
         ser = serpent.loads(serpent.dumps(data.keys()))
@@ -494,6 +504,14 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(myset, set_literals=False)
         data = strip_header(ser)
         self.assertTrue(data == b"(42,'Sally')" or data == b"('Sally',42)")    # must output a tuple instead of a set-literal
+
+        # unicode elements
+        data = set([unicode("text1"), unicode("text2")])
+        ser = serpent.dumps(data)
+        data2 = serpent.loads(ser)
+        self.assertEqual(2, len(data2))
+        self.assertIn(unicode("text1"), data2)
+        self.assertIn(unicode("text2"), data2)
 
     def test_bytes(self):
         if sys.version_info >= (3, 0):
