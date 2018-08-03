@@ -61,7 +61,9 @@ Serpent handles several special Python types to make life easier:
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict
  - enums --> the value of the enum (Python 3.4+ or enum34 library)
- - all other types  --> dict with the ``__getstate__`` or ``vars()`` of the object
+ - namedtuple --> treated as just a tuple
+ - attr dataclasses and python 3.7 native dataclasses: treated as just a class, so will become a dict
+ - all other types  --> dict with the ``__getstate__`` or ``vars()`` of the object, and a ``__class__`` element with the name of the class 
 
 Notes:
 

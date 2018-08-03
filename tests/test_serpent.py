@@ -22,6 +22,7 @@ import time
 import types
 import collections
 import enum
+import attr
 if sys.version_info >= (3, 4):
     from collections.abc import KeysView, ValuesView, ItemsView
 else:
@@ -1239,6 +1240,36 @@ class TestCollections(unittest.TestCase):
         d = serpent.dumps(obj)
         obj2 = serpent.loads(d)
         self.assertEqual("test", obj2)
+
+
+class DataclassesTests(unittest.TestCase):
+
+    # unfortunately, python 3.7 dataclasses are a syntax error in older python versions
+    # def testDataclasses(self):
+    #     @dataclass
+    #     class InventoryItem:
+    #         name: str
+    #         unit_price: float
+    #         untyped: str
+    #         quantity_on_hand: int = 0
+    #     item = InventoryItem("television", 1899.95, untyped="untyped", quantity_on_hand=5)
+    #     ser = serpent.dumps(item)
+    #     item2 = serpent.loads(ser)
+    #     self.assertDictEqual({"__class__": "InventoryItem", "name": "television", "quantity_on_hand": 5,
+    #                           "unit_price": 1899.95, "untyped": "untyped"}, item2)
+
+    def testAttr(self):
+        @attr.s
+        class InventoryItem(object):
+            name = attr.ib(type=str)
+            unit_price = attr.ib(type=float)
+            quantity_on_hand = attr.ib(type=int)
+            untyped = attr.ib()
+        item = InventoryItem("television", 1899.95, untyped="untyped", quantity_on_hand=5)
+        ser = serpent.dumps(item)
+        item2 = serpent.loads(ser)
+        self.assertDictEqual({"__class__": "InventoryItem", "name": "television", "quantity_on_hand": 5,
+                              "unit_price": 1899.95, "untyped": "untyped"}, item2)
 
 
 if __name__ == '__main__':
