@@ -14,7 +14,7 @@ dist: trusty
 
 # Installation installs dependencies
 install:
-  - pip install pytz 'enum34;python_version<"3.4"' .
+  - pip install pytz 'enum34;python_version<"3.4"' attrs .
 
 script:
   - if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then cd tests && python -E -Wall -tt -bb test_serpent.py; fi
