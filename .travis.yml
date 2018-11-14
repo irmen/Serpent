@@ -4,13 +4,13 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
+  - "3.7"
   - "pypy"
   - "pypy3"
 
 # Use fast travis build infrastructure explicitly
 sudo: false
-dist: trusty
+dist: xenial
 
 # Installation installs dependencies
 install:
