@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Base64;
 import java.util.Map.Entry;
 
 
@@ -31,34 +30,34 @@ public class Serializer
 	/**
 	 * The maximum nesting level of the object graphs that you want to serialize.
 	 * This limit has been set to avoid troublesome stack overflow errors.
-	 * (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
+	 * (If it is reached, an IllegalArgumentException is thrown instead with a clear message)
 	 */
 	public int maximumLevel = 500;		// to avoid stack overflow errors
-	
+
 	/**
 	 * Indent the resulting serpent serialization text?
 	 */
 	public boolean indent = false;
-	
+
 	/**
 	 * Use set literals?
 	 */
 	public boolean setliterals = true;
-	
+
 	/**
 	 * Include package name in class name, for classes that are serialized to dicts?
 	 */
 	public boolean packageInClassName = false;
 
 	private static Map<Class<?>, IClassSerializer> classToDictRegistry = new HashMap<Class<?>, IClassSerializer>();
-	
+
 	/**
 	 * Create a Serpent serializer with default options.
 	 */
 	public Serializer()
 	{
 	}
-	
+
 	/**
 	 * Create a Serpent serializer with custom options.
 	 * @param indent should the output be indented to make it more readable?
@@ -71,15 +70,15 @@ public class Serializer
 		this.setliterals = setliterals;
 		this.packageInClassName = packageInClassName;
 	}
-	
+
 	/**
 	 * Register a custom class serializer, if you want to tweak the serialization of classes that Serpent doesn't know about yet.
 	 */
 	public static void registerClass(Class<?> clazz, IClassSerializer converter)
 	{
 		classToDictRegistry.put(clazz, converter);
-	} 
-	
+	}
+
 	/**
 	 * Serialize an object graph to a serpent serialized form.
 	 */
@@ -92,7 +91,7 @@ public class Serializer
 		else
 			sw.write("# serpent utf-8 python2.6\n");
 		serialize(obj, sw, 0);
-		
+
 		sw.flush();
 		final String ser = sw.toString();
 		try {
@@ -102,7 +101,7 @@ public class Serializer
 			throw new IllegalArgumentException("error creating output bytes: "+x);
 		}
 	}
-	
+
 	protected void serialize(Object obj, StringWriter sw, int level)
 	{
 		if(level>maximumLevel)
@@ -120,10 +119,10 @@ public class Serializer
 		// date//uuid/exception -> custom mapping
 		// random class --> public javabean properties to dictionary
 		// primitive types --> simple mapping
-		
+
 		Class<?> type = obj==null? null : obj.getClass();
 		Class<?> componentType = type==null? null : type.getComponentType();
-		
+
 		// primitive array?
 		if(componentType!=null)
 		{
@@ -139,7 +138,7 @@ public class Serializer
 			}
 			return;
 		}
-		
+
 		if(obj==null)
 		{
 			sw.write("None");
@@ -205,7 +204,7 @@ public class Serializer
 			throw new IllegalArgumentException("cannot serialize object of type "+type);
 		}
 	}
-	
+
 	/**
 	 * When used from Jython directly, it sometimes passes some Jython specific
 	 * classes to the serializer (such as org.python.core.PyComplex for a complex number).
@@ -217,27 +216,25 @@ public class Serializer
 	{
 		final Class<? extends Object> clazz = obj.getClass();
 		final String classname = clazz.getName();
-		
+
 		try
 		{
-			// use reflection because I don't want to have a compiler dependency on Jython. 
-			if(classname.equals("org.python.core.PyTuple")) {
-				return clazz.getMethod("toArray").invoke(obj);
-			}
-			else if(classname.equals("org.python.core.PyComplex")) {
-				Object pyImag = clazz.getMethod("getImag").invoke(obj);
-				Object pyReal = clazz.getMethod("getReal").invoke(obj);
-				Double imag = (Double) pyImag.getClass().getMethod("getValue").invoke(pyImag); 
-				Double real = (Double) pyReal.getClass().getMethod("getValue").invoke(pyReal); 
-				return new ComplexNumber(real, imag);
-			}
-			else if(classname.equals("org.python.core.PyByteArray")) {
-				Object pyStr = clazz.getMethod("__str__").invoke(obj);
-				return pyStr.getClass().getMethod("toBytes").invoke(pyStr);
-			}
-			else if(classname.equals("org.python.core.PyMemoryView")) {
-				Object pyBytes = clazz.getMethod("tobytes").invoke(obj);
-				return pyBytes.getClass().getMethod("toBytes").invoke(pyBytes);
+			// use reflection because I don't want to have a compiler dependency on Jython.
+			switch (classname) {
+				case "org.python.core.PyTuple":
+					return clazz.getMethod("toArray").invoke(obj);
+				case "org.python.core.PyComplex":
+					Object pyImag = clazz.getMethod("getImag").invoke(obj);
+					Object pyReal = clazz.getMethod("getReal").invoke(obj);
+					Double imag = (Double) pyImag.getClass().getMethod("getValue").invoke(pyImag);
+					Double real = (Double) pyReal.getClass().getMethod("getValue").invoke(pyReal);
+					return new ComplexNumber(real, imag);
+				case "org.python.core.PyByteArray":
+					Object pyStr = clazz.getMethod("__str__").invoke(obj);
+					return pyStr.getClass().getMethod("toBytes").invoke(pyStr);
+				case "org.python.core.PyMemoryView":
+					Object pyBytes = clazz.getMethod("tobytes").invoke(obj);
+					return pyBytes.getClass().getMethod("toBytes").invoke(pyBytes);
 			}
 		} catch (ReflectiveOperationException e) {
 			throw new IllegalArgumentException("cannot serialize Jython object of type "+clazz, e);
@@ -246,11 +243,11 @@ public class Serializer
 		} catch (SecurityException e) {
 			throw new IllegalArgumentException("cannot serialize Jython object of type "+clazz, e);
 		}
-		
+
 		// instead of an endless nesting loop, report a proper exception
 		throw new IllegalArgumentException("cannot serialize Jython object of type "+obj.getClass());
 	}
-	
+
 	protected void serialize_collection(Collection<?> collection, StringWriter sw, int level)
 	{
 		// output a list
@@ -311,7 +308,7 @@ public class Serializer
 			serialize_tuple(set, sw, level);
 			return;
 		}
-		
+
 		if(set.size()>0)
 		{
 			sw.write("{");
@@ -328,7 +325,7 @@ public class Serializer
 				output = outputset;
 			}
 			serialize_sequence_elements(output, false, sw, level+1);
-	
+
 			if(this.indent)
 			{
 				for(int i=0; i<level; ++i)
@@ -390,7 +387,7 @@ public class Serializer
 			for(int i=0; i<level; ++i)
 				innerindent += "  ";
 			sw.write("{\n");
-			
+
 			// try to sort the dictionary keys
 			Map<?,?> outputdict = dict;
 			try {
@@ -398,7 +395,7 @@ public class Serializer
 			} catch (ClassCastException x) {
 				// ignore unsortable keys
 			}
-			
+
 			for(Map.Entry<?,?> e: outputdict.entrySet())
 			{
 				sw.write(innerindent);
@@ -439,7 +436,7 @@ public class Serializer
 			// UTC, GMT+0, output simple time zone string 'Z'
 			tzformat = "'Z'";
 		}
-		
+
 		if(cal.get(Calendar.MILLISECOND)>0) {
 			// we have millis
 			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"+tzformat);
@@ -454,7 +451,7 @@ public class Serializer
 	protected void serialize_date(Date date, StringWriter sw, int level)
 	{
 		DateFormat df;
-		
+
 		if((date.getTime() % 1000) != 0) {
 			// we have millis
 			df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -497,14 +494,14 @@ public class Serializer
 		boxedTypes.add(Long.class);
 		boxedTypes.add(Float.class);
 		boxedTypes.add(Double.class);
-	};
+	}
 
 	protected boolean isBoxed(Class<?> type)
 	{
 		return boxedTypes.contains(type);
 	}
 
-	protected void serialize_class(Object obj, StringWriter sw, int level) 
+	protected void serialize_class(Object obj, StringWriter sw, int level)
 	{
 		Map<String,Object> map;
 		IClassSerializer converter=getCustomConverter(obj.getClass());
@@ -556,7 +553,7 @@ public class Serializer
 		if(converter!=null) {
 			return converter; // exact match
 		}
-		
+
 		// check if there's a custom pickler registered for an interface or abstract base class
 		// that this object implements or inherits from.
 		for(Entry<Class<?>, IClassSerializer> x: classToDictRegistry.entrySet()) {
@@ -564,11 +561,11 @@ public class Serializer
 				return x.getValue();
 			}
 		}
-		
+
 		return null;
 	}
 
-	protected void serialize_primitive(Object obj, StringWriter sw, int level) 
+	protected void serialize_primitive(Object obj, StringWriter sw, int level)
 	{
 		if(obj instanceof Boolean || obj.getClass()==Boolean.TYPE)
 		{
@@ -602,7 +599,7 @@ public class Serializer
 			sw.write(obj.toString());
 		}
 	}
-	
+
 	// the repr translation table for characters 0x00-0xff
 	private final static String[] repr_255;
 	static {
@@ -638,7 +635,7 @@ public class Serializer
 			final char c = str.charAt(i);
 			containsSingleQuote |= c=='\'';
 			containsQuote |= c=='"';
-			
+
 			if(c<256) {
 				// characters 0..255 via quick lookup table
 				b.append(repr_255[c]);
@@ -667,7 +664,7 @@ public class Serializer
         	sw.write("'");
 		}
 	}
-	
+
 	protected void serialize_exception(Exception ex, StringWriter sw, int level)
 	{
 		Map<String, Object> dict;

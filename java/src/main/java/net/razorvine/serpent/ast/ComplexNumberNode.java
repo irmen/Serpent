@@ -4,10 +4,10 @@ public class ComplexNumberNode implements INode
 {
 	public double real;
 	public double imaginary;
-	
+
 	public ComplexNumberNode()
 	{}
-	
+
 	public ComplexNumberNode(double real, double imaginary)
 	{
 		this.real=real;
@@ -28,7 +28,7 @@ public class ComplexNumberNode implements INode
 			return String.format("(%s+%sj)", strReal, strImag);
 		return String.format("(%s%sj)", strReal, strImag);
 	}
-	
+
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -36,5 +36,10 @@ public class ComplexNumberNode implements INode
 			return false;
 		ComplexNumberNode other = (ComplexNumberNode) obj;
 		return real==other.real && imaginary==other.imaginary;
+	}
+
+	@Override
+	public int hashCode() {
+		return new Double(real).hashCode() ^ new Double(imaginary).hashCode();
 	}
 }

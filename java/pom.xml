@@ -24,9 +24,11 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.3</version>
+					<version>3.8.0</version>
 					<configuration>
-						<compilerArgument>-Xlint:deprecation</compilerArgument>
+						<compilerArgs>
+							<arg>-Xlint:all</arg>
+						</compilerArgs>
 						<source>1.8</source>
 						<target>1.8</target>
 					</configuration>
@@ -45,7 +47,7 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
 					<configuration>
-						<additionalparam>-Xdoclint:none</additionalparam>
+						<doclint>none</doclint>
 					</configuration>
 				</plugin>
 			</plugins>

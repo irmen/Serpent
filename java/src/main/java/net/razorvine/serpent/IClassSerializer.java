@@ -13,5 +13,5 @@ import java.util.Map;
  * Customization interface for serializing objects into dicts.
  */
 public interface IClassSerializer {
-	public Map<String,Object> convert(Object obj);
+	Map<String,Object> convert(Object obj);
 }

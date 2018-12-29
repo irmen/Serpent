@@ -52,7 +52,7 @@ public class SerializeTest {
 			return null;
 		}
 	}
-	
+
 	public String S(byte[] b)
 	{
 		try {
@@ -72,7 +72,7 @@ public class SerializeTest {
 		assertEquals(35, data[0]);
 		String strdata = S(data);
 		assertEquals("# serpent utf-8 python3.2", strdata.split("\n")[0]);
-		
+
 		ser.setliterals=false;
 		data = ser.serialize(null);
 		strdata = S(data);
@@ -82,7 +82,7 @@ public class SerializeTest {
 		data = strip_header(data);
 		assertEquals("first-line", S(data));
 	}
-	
+
 
 	@Test
 	public void testException()
@@ -132,7 +132,7 @@ public class SerializeTest {
 		assertEquals("None", S(data));
 	}
 
-	
+
 	@Test
 	public void testStrings()
 	{
@@ -147,12 +147,12 @@ public class SerializeTest {
 	  	data = strip_header(ser);
 	  	assertEquals("\"quotes2'\"", S(data));
 	}
-	
+
 	@Test
 	public void testUnicodeEscapes()
 	{
 		Serializer serpent=new Serializer();
-		
+
 		// regular escaped chars first
 	  	byte[] ser = serpent.serialize("\b\r\n\f\t \\");
 	  	byte[] data = strip_header(ser);
@@ -166,7 +166,7 @@ public class SerializeTest {
 	  			32,
 	  			92, 92,
 	  			39}, data);
-	  	
+
 		// simple cases  (chars < 0x80)
 	  	ser = serpent.serialize("\u0000\u0001\u001f\u007f");
 	    data = strip_header(ser);
@@ -193,13 +193,13 @@ public class SerializeTest {
 	  	data = strip_header(ser);
 	  	// '\xc4\x80\xe2\x82\xac\xe8\xa2\x99'   (has some utf-8 encoded chars in it)
 	  	assertArrayEquals(new byte[] {39, -60, -128, -30, -126, -84, -24, -94, -103, 39}, data);
-	  	
+
 	  	// some random high chars that are all printable in python and not escaped
 	  	ser = serpent.serialize("\u0377\u082d\u10c5\u135d\uac00");
 	  	data = strip_header(ser);
 	  	// '\xcd\xb7\xe0\xa0\xad\xe1\x83\x85\xe1\x8d\x9d\xea\xb0\x80'   (only a bunch of utf-8 encoded chars)
 	  	assertArrayEquals(new byte[] {39, -51, -73, -32, -96, -83, -31, -125, -123, -31, -115, -99, -22, -80, -128, 39}, data);
-	  	
+
 	  	// some random high chars that are all non-printable in python and that are escaped
 	  	ser = serpent.serialize("\u0378\u082e\u10c6\u135c\uabff");
 	  	data = strip_header(ser);
@@ -212,7 +212,7 @@ public class SerializeTest {
 	  			92, 117, 97, 98, 102, 102,
 	  			39}, data);
 	}
-	
+
 	@Test
 	public void testNullByte()
 	{
@@ -225,7 +225,7 @@ public class SerializeTest {
 				fail("serialized data may not contain 0-bytes");
 		}
 	}
-	
+
 	@Test
 	public void testBool()
 	{
@@ -257,7 +257,7 @@ public class SerializeTest {
 
         byte[] bytes2 = Parser.toBytes(dict);
         assertArrayEquals(bytes, bytes2);
-        
+
         dict.put("encoding", "base99");
         try {
         	Parser.toBytes(dict);
@@ -302,7 +302,7 @@ public class SerializeTest {
         	//
         }
 	}
-	
+
 
 	@Test
 	public void testDateTime()
@@ -311,17 +311,17 @@ public class SerializeTest {
 		Calendar cal = new GregorianCalendar(2013, 0, 20, 23, 59, 45);
 		cal.set(Calendar.MILLISECOND, 999);
 		cal.setTimeZone(TimeZone.getTimeZone("GMT+0"));
-		
+
 		byte[] ser = strip_header(serpent.serialize(cal));
 		assertEquals("'2013-01-20T23:59:45.999Z'", S(ser));
 
 		Date date = cal.getTime();
 		ser = strip_header(serpent.serialize(date));
 		assertEquals("'2013-01-20T23:59:45.999Z'", S(ser));
-		
+
 		ser = strip_header(serpent.serialize(date));
 		assertEquals("'2013-01-20T23:59:45.999Z'", S(ser));
-		
+
 		cal.set(Calendar.MILLISECOND, 0);
 		ser = strip_header(serpent.serialize(cal));
 		assertEquals("'2013-01-20T23:59:45Z'", S(ser));
@@ -329,7 +329,7 @@ public class SerializeTest {
 		date = cal.getTime();
 		ser = strip_header(serpent.serialize(date));
 		assertEquals("'2013-01-20T23:59:45Z'", S(ser));
-	}	
+	}
 
 	@Test
 	public void testDateTimeWithTimezone()
@@ -338,21 +338,21 @@ public class SerializeTest {
 		Calendar cal = new GregorianCalendar(2013, 0, 20, 23, 59, 45);
 		cal.set(Calendar.MILLISECOND, 999);
 		cal.setTimeZone(TimeZone.getTimeZone("Europe/Amsterdam"));
-		
+
 		byte[] ser = strip_header(serpent.serialize(cal));
 		assertEquals("'2013-01-20T23:59:45.999+0100'", S(ser));		// normal time
-		
+
 		cal = new GregorianCalendar(2013, 4, 10, 13, 59, 45);
 		cal.set(Calendar.MILLISECOND, 999);
 		cal.setTimeZone(TimeZone.getTimeZone("Europe/Amsterdam"));
-		
+
 		ser = strip_header(serpent.serialize(cal));
 		assertEquals("'2013-05-10T13:59:45.999+0200'", S(ser));		// daylight saving time
 
 		Date date=cal.getTime();
 		ser = strip_header(serpent.serialize(date));
 		assertEquals("'2013-05-10T11:59:45.999Z'", S(ser));		  // the date and time in UTC
-		
+
 		cal.set(Calendar.MILLISECOND, 0);
 		date=cal.getTime();
 		ser = strip_header(serpent.serialize(date));
@@ -363,10 +363,10 @@ public class SerializeTest {
 	public void testNumbers()
 	{
 		Serializer serpent = new Serializer();
-		byte[] ser = serpent.serialize((int)12345);
+		byte[] ser = serpent.serialize(12345);
 		byte[] data = strip_header(ser);
 		assertEquals("12345", S(data));
-		ser = serpent.serialize((long)1234567891234567891L);
+		ser = serpent.serialize(1234567891234567891L);
         data = strip_header(ser);
         assertEquals("1234567891234567891", S(data));
         ser = serpent.serialize(99.1234);
@@ -395,7 +395,7 @@ public class SerializeTest {
         data = strip_header(ser);
         assertEquals("(-2.5-3.9j)", S(data));
 	}
-	
+
 	@Test
 	public void testDoubleNanInf()
 	{
@@ -407,13 +407,13 @@ public class SerializeTest {
 		byte[] data = strip_header(ser);
 		assertEquals("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.3j))", S(data));
 	}
-	
+
 	@Test
 	public void testList()
 	{
 		Serializer serpent = new Serializer();
 		List<Object> list = new LinkedList<Object>();
-		
+
 		// test empty list
 		byte[] ser = strip_header(serpent.serialize(list));
 		assertEquals("[]", S(ser));
@@ -421,7 +421,7 @@ public class SerializeTest {
 		ser = strip_header(serpent.serialize(list));
 		assertEquals("[]", S(ser));
 		serpent.indent=false;
-		
+
 		// test nonempty list
 		list.add(42);
 		list.add("Sally");
@@ -436,7 +436,7 @@ public class SerializeTest {
 	public class UnserializableClass
 	{
 	}
-	
+
 	@Test(expected = IllegalArgumentException.class)
 	public void testClassFail()
 	{
@@ -444,7 +444,7 @@ public class SerializeTest {
 		Object obj = new UnserializableClass();
 		serpent.serialize(obj);
 	}
-	
+
 	@Test
 	public void testClassOk()
 	{
@@ -457,7 +457,7 @@ public class SerializeTest {
 		byte[] ser = strip_header(serpent.serialize(obj));
 		assertEquals("{\n  'NUMBER': 42,\n  '__class__': 'SerializationHelperClass',\n  'object': None,\n  'theInteger': 99,\n  'theString': 'hi',\n  'thingy': True,\n  'x': 'X'\n}", S(ser));
 	}
-	
+
 	@Test
 	public void testClassPackageOk()
 	{
@@ -481,7 +481,7 @@ public class SerializeTest {
 		    result.put("i@", o.i);
 		    result.put("s@", o.s);
 		    result.put("x@", o.x);
-		    return result; 
+		    return result;
 		}
 	}
 
@@ -493,16 +493,16 @@ public class SerializeTest {
 		    Map<String, Object> result = new HashMap<String, Object>();
 		    result.put("__class@__", e.getClass().getSimpleName());
 		    result.put("msg@", e.getMessage());
-		    return result; 
+		    return result;
 		}
 	}
-	
+
 	@Test
 	public void testCustomClassDict()
 	{
 		Serializer.registerClass(SerializationHelperClass.class, new TestclassConverter());
 	    Serializer serpent = new Serializer(true, true, false);
-	      
+
 		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
@@ -510,25 +510,25 @@ public class SerializeTest {
 
 		byte[] ser = strip_header(serpent.serialize(obj));
 	    assertEquals("{\n  '__class@__': 'SerializationHelperClass@',\n  'i@': 99,\n  's@': 'hi',\n  'x@': 42\n}", S(ser));
-	} 
-	
+	}
+
 	@Test
 	public void testCustomExceptionDict()
 	{
 		Serializer.registerClass(IllegalArgumentException.class, new ExceptionConverter());
 	    Serializer serpent = new Serializer(true, true, false);
-	      
+
 		Exception x = new IllegalArgumentException("errormessage");
 		byte[] ser = strip_header(serpent.serialize(x));
 		assertEquals("{\n  '__class@__': 'IllegalArgumentException',\n  'msg@': 'errormessage'\n}", S(ser));
-	} 
-	
+	}
+
 	@Test
 	public void testSet()
 	{
 		Serializer serpent = new Serializer();
 		Set<Object> set = new HashSet<Object>();
-		
+
 		// test empty set
 		byte[] ser = strip_header(serpent.serialize(set));
 		assertEquals("()", S(ser));  // empty set is serialized as a tuple.
@@ -536,7 +536,7 @@ public class SerializeTest {
 		ser = strip_header(serpent.serialize(set));
 		assertEquals("()", S(ser));  // empty set is serialized as a tuple.
 		serpent.indent=false;
-		
+
 		// test nonempty set
 		set.add("X");
 		set.add("Sally");
@@ -549,7 +549,7 @@ public class SerializeTest {
 		serpent.indent=true;
 		ser = strip_header(serpent.serialize(set));
 		assertEquals("{\n  'Sally',\n  'X',\n  'Y'\n}", S(ser));
-		
+
 		// test no set literals
 		serpent.indent=false;
 		serpent.setliterals=false;
@@ -561,7 +561,7 @@ public class SerializeTest {
 		assertTrue(ser[0]=='(');
 		assertTrue(ser[ser.length-1]==')');
 	}
-	
+
 	@Test
 	public void testCollection()
 	{
@@ -572,12 +572,12 @@ public class SerializeTest {
 		byte[] ser = serpent.serialize(intlist);
 		ser = strip_header(ser);
 		assertEquals("[42,43]", S(ser));
-		
+
 		ser=strip_header(serpent.serialize(new int[] {42}));
 		assertEquals("(42,)", S(ser));
 		ser=strip_header(serpent.serialize(new int[] {42, 43}));
 		assertEquals("(42,43)", S(ser));
-		
+
 		serpent.indent=true;
 		ser = strip_header(serpent.serialize(intlist));
 		assertEquals("[\n  42,\n  43\n]", S(ser));
@@ -585,7 +585,7 @@ public class SerializeTest {
 		assertEquals("(\n  42,\n)", S(ser));
 		ser=strip_header(serpent.serialize(new int[] {42, 43}));
 		assertEquals("(\n  42,\n  43\n)", S(ser));
-	}	
+	}
 
 
 	@Test
@@ -593,23 +593,23 @@ public class SerializeTest {
 	{
 		Serializer serpent = new Serializer();
 		Parser p = new Parser();
-		
+
 		// test empty dict
 		Hashtable<Object, Object> ht = new Hashtable<Object, Object>();
 		byte[] ser = serpent.serialize(ht);
 		assertEquals("{}", S(strip_header(ser)));
-		
+
 		String parsed = p.parse(ser).root.toString();
 		assertEquals("{}", parsed);
-		
+
 		//empty dict with indentation
 	    serpent.indent=true;
 		ser = serpent.serialize(ht);
 		assertEquals("{}", S(strip_header(ser)));
-		
+
 		parsed = p.parse(ser).root.toString();
         assertEquals("{}", parsed);
-		
+
 		// test dict with values
 		serpent.indent=false;
 		ht = new Hashtable<Object, Object>();
@@ -617,14 +617,14 @@ public class SerializeTest {
 		ht.put("sixteen-and-half", 16.5);
 		ht.put("name", "Sally");
 		ht.put("status", false);
-		
+
 		ser = serpent.serialize(ht);
 		assertEquals('}', ser[ser.length-1]);
 		assertTrue(ser[ser.length-2]!=',');
-		
+
 		parsed = p.parse(ser).root.toString();
 		assertEquals(69, parsed.length());
-      
+
         // test indentation
         serpent.indent=true;
         ser = serpent.serialize(ht);
@@ -636,12 +636,12 @@ public class SerializeTest {
 		assertTrue(ser_str.contains("'status': False"));
 		assertTrue(ser_str.contains("42: 'fortytwo'"));
 		assertTrue(ser_str.contains("'sixteen-and-half': 16.5"));
-		
+
 		parsed = p.parse(ser).root.toString();
         assertEquals(69, parsed.length());
-		
+
         serpent.indent=false;
-      
+
         // generic Dictionary test
         Map<Integer, String> mydict = new HashMap<Integer, String>();
         mydict.put(1, "one");
@@ -651,7 +651,7 @@ public class SerializeTest {
         assertTrue(ser_str.equals("{2:'two',1:'one'}") || ser_str.equals("{1:'one',2:'two'}"));
 	}
 
-	
+
 	@Test
 	public void testIndentation()
 	{
@@ -661,36 +661,36 @@ public class SerializeTest {
 		list.add(2);
 		list.add(new String[] {"a", "b"});
 		dict.put("first", list);
-		
+
 		Map<Integer, Boolean> subdict = new HashMap<Integer, Boolean>();
 		subdict.put(1, false);
 		dict.put("second", subdict);
-		
+
 		Set<Integer> subset = new HashSet<Integer>();
 		subset.add(3);
 		subset.add(4);
 		dict.put("third", subset);
-		
+
 		Serializer serpent = new Serializer();
 		serpent.indent=true;
 		byte[] ser = strip_header(serpent.serialize(dict));
 		assertEquals("{\n"+
 "  'first': [\n"+
-"    1,\n"+				
-"    2,\n"+				
-"    (\n"+				
-"      'a',\n"+				
-"      'b'\n"+				
-"    )\n"+				
-"  ],\n"+				
-"  'second': {\n"+				
-"    1: False\n"+				
-"  },\n"+				
-"  'third': {\n"+				
-"    3,\n"+				
-"    4\n"+				
-"  }\n"+				
-"}", S(ser));				
+"    1,\n"+
+"    2,\n"+
+"    (\n"+
+"      'a',\n"+
+"      'b'\n"+
+"    )\n"+
+"  ],\n"+
+"  'second': {\n"+
+"    1: False\n"+
+"  },\n"+
+"  'third': {\n"+
+"    3,\n"+
+"    4\n"+
+"  }\n"+
+"}", S(ser));
 	}
 
 	@Test
@@ -706,7 +706,7 @@ public class SerializeTest {
 		int[] data2 = new int[] { 3,2,1 };
 		ser = strip_header(serpent.serialize(data2));
 		assertEquals("(3,2,1)", S(ser));
-		
+
 		Set<Object> data3 = new HashSet<Object>();
 		data3.add(42);
 		data3.add("hi");
@@ -723,7 +723,7 @@ public class SerializeTest {
 		serpent.indent=true;
 		ser = strip_header(serpent.serialize(data4));
 		assertEquals("{\n  1: 'one',\n  2: 'two',\n  3: 'three',\n  4: 'four',\n  5: 'five'\n}", S(ser));
-		
+
 		Set<String> data5 = new HashSet<String>();
 		data5.add("x");
 		data5.add("y");
@@ -735,15 +735,15 @@ public class SerializeTest {
 		ser = strip_header(serpent.serialize(data5));
 		assertEquals("{\n  'a',\n  'b',\n  'c',\n  'x',\n  'y',\n  'z'\n}", S(ser));
 	}
-	
-	interface IBaseInterface {};
-	interface ISubInterface extends IBaseInterface {};
-	class BaseClassWithInterface implements IBaseInterface, Serializable {};
-	class SubClassWithInterface extends BaseClassWithInterface implements ISubInterface, Serializable {};
-	class BaseClass implements Serializable {};
-	class SubClass extends BaseClass implements Serializable {};
-	abstract class AbstractBaseClass {};
-	class ConcreteSubClass extends AbstractBaseClass implements Serializable {};
+
+	interface IBaseInterface {}
+	interface ISubInterface extends IBaseInterface {}
+	class BaseClassWithInterface implements IBaseInterface, Serializable {}
+	class SubClassWithInterface extends BaseClassWithInterface implements ISubInterface, Serializable {}
+	class BaseClass implements Serializable {}
+	class SubClass extends BaseClass implements Serializable {}
+	abstract class AbstractBaseClass {}
+	class ConcreteSubClass extends AbstractBaseClass implements Serializable {}
 
 	class AnyClassConverter implements IClassSerializer
 	{
@@ -751,23 +751,23 @@ public class SerializeTest {
 		public Map<String, Object> convert(Object obj) {
 		    Map<String, Object> result = new HashMap<String, Object>();
 		    result.put("(SUB)CLASS", obj.getClass().getSimpleName());
-		    return result; 
+		    return result;
 		}
 	}
 
 	@Test
-	public void testAbstractBaseClassHierarchyPickler() 
+	public void testAbstractBaseClassHierarchyPickler()
 	{
 		ConcreteSubClass c = new ConcreteSubClass();
 		Serializer serpent=new Serializer();
 		byte[] data = serpent.serialize(c);
 		assertEquals("{'__class__':'ConcreteSubClass'}", S(strip_header(data)));  // the default serializer
-		
+
 		Serializer.registerClass(AbstractBaseClass.class, new AnyClassConverter());
 		data = serpent.serialize(c);
 		assertEquals("{'(SUB)CLASS':'ConcreteSubClass'}", S(strip_header(data)));  // custom serializer
 	}
-	
+
 	@Test
 	public void testInterfaceHierarchyPickler()
 	{

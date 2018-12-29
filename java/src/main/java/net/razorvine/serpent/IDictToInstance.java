@@ -18,5 +18,5 @@ public interface IDictToInstance {
 	 * Convert the given dictionary to a specific object.
 	 * Can return null to use the default behavior.
 	 */
-	public Object convert(Map<Object,Object> dict) throws IOException;
+	Object convert(Map<Object,Object> dict) throws IOException;
 }
