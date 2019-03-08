@@ -15,7 +15,7 @@ install:
 	python setup.py install
 
 test:
-	cd tests && (PYTHONPATH=.. python -s test_serpent.py)
+	python setup.py test
 
 lint:
 	pycodestyle
