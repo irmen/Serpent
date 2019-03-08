@@ -10,11 +10,20 @@ except ImportError:
     from distutils.core import setup
     using_setuptools = False
 
-import serpent
+import unittest
+import re
+serpent_version = re.search(r'^__version__\s*=\s*"(.+)"', open("serpent.py", "rt").read(), re.MULTILINE).groups()[0]
+
+
+def serpent_test_suite():
+    testloader = unittest.TestLoader()
+    testsuite = testloader.discover("tests", pattern="test*.py")
+    return testsuite
+
 
 setup(
     name='serpent',
-    version=serpent.__version__,
+    version=serpent_version,
     py_modules=["serpent"],
     license='MIT',
     author='Irmen de Jong',
@@ -173,5 +182,6 @@ When you run this (with python 3.2+) it prints:
         "Programming Language :: Python :: 3.7",
         "Topic :: Software Development"
     ],
-    tests_require=['enum34; python_version < "3.4"']
+    tests_require=['enum34; python_version < "3.4"'],
+    test_suite="setup.serpent_test_suite"
 )

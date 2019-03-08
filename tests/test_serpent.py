@@ -907,8 +907,12 @@ class TestFiledump(unittest.TestCase):
     def testFile(self):
         if sys.version_info < (3, 2):
             self.skipTest("testdatafile contains stuff that is not supported by ast.literal_eval on Python < 3.2")
-        with open("testserpent.utf8.bin", "rb") as file:
-            data = file.read()
+        datafile = "testserpent.utf8.bin"
+        if not os.path.exists(datafile):
+            mypath = os.path.split(__file__)[0]
+            datafile = os.path.join(mypath, datafile)
+        with open(datafile, "rb") as dfile:
+            data = dfile.read()
         obj = serpent.loads(data)
         self.assertEqual(-3 + 8j, obj["numbers"][3])
 
