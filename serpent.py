@@ -85,7 +85,7 @@ else:
         enum = None
 
 
-__version__ = "1.28.dev0"
+__version__ = "1.28"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
