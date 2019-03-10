@@ -2,3 +2,13 @@ include LICENSE
 include README.md
 include tox.ini
 recursive-include tests *
+global-exclude */.svn/*
+global-exclude */.idea/*
+global-exclude *.class
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.coverage
+global-exclude .git
+global-exclude .gitignore
+global-exclude .tox
+global-exclude __pycache__
