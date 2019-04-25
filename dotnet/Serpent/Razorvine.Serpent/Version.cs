@@ -9,6 +9,6 @@ namespace Razorvine.Serpent
 {
 	public static class LibraryVersion
 	{
-		public const string Version = "1.25";
+		public const string Version = "1.29";
 	}
 }

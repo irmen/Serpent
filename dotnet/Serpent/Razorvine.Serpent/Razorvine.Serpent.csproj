@@ -5,9 +5,12 @@
     <Authors>Irmen de Jong</Authors>
     <Product>Serpent Python literal expression serialization</Product>
     <PackageId>Razorvine.Serpent</PackageId>
-    <Version>1.25.0</Version>
-    <AssemblyVersion>1.25.0.0</AssemblyVersion>
-    <FileVersion>1.25.0.0</FileVersion>
+    <Version>1.29.0</Version>
+    <AssemblyVersion>1.29.0.0</AssemblyVersion>
+    <FileVersion>1.29.0.0</FileVersion>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>Serpent.snk</AssemblyOriginatorKeyFile>
     <Summary>Serpent provides Python ast.literal_eval() compatible object tree serialization.</Summary>
     <Description>Serpent provides Python ast.literal_eval() compatible object tree serialization.
 It serializes an object tree into bytes that can be transferred to Python and
@@ -15,11 +18,15 @@ decoded there (using ast.literal_eval()). It can ofcourse also deserialize
 such a Python expression itself, back into the equivalent .NET datatypes.
 More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</Description>
     <Copyright>Copyright Irmen de Jong</Copyright>
+    <!--
+    <PackageLicenseExpression>MIT</PackageLicenseExpression> 
+    <PackageLicenseFile>../LICENSE</PackageLicenseFile>
+    -->
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/irmen/serpent</PackageProjectUrl>
     <RepositoryUrl>https://github.com/irmen/Serpent.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>serialization python pyro</PackageTags>
-    <PackageReleaseNotes>Migrated to dotnet core and NetStandard 2.0</PackageReleaseNotes>
+    <PackageReleaseNotes>assembly is now strong-name signed (so other strong-named assemblies can reference it, most notably, Razorvine.Pyrolite)</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
