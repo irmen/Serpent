@@ -1,6 +1,7 @@
 # Use fast travis build infrastructure explicitly
 sudo: false
 dist: xenial
+language: python
 
 matrix:
   include:
