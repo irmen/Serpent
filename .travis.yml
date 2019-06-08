@@ -7,6 +7,7 @@ matrix:
         - "3.5"
         - "3.6"
         - "3.7"
+        - "3.8-dev"
         - "pypy3.5"
 
       # Use fast travis build infrastructure explicitly
@@ -21,7 +22,7 @@ matrix:
         - if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then cd tests && python -E -Wall -tt -bb test_serpent.py; fi
         - if [[ $TRAVIS_PYTHON_VERSION == pypy* ]]; then cd tests && python -E -Wall -bb test_serpent.py; fi
       # pypy doesn't like -tt option
-      
+
     - language: java
       # jdk:
       #  - oraclejdk8
@@ -37,4 +38,4 @@ matrix:
       dist: xenial
       dotnet: 2.2
       script: dotnet test dotnet/Serpent/Tests
-    
+
