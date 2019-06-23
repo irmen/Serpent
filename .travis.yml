@@ -49,4 +49,5 @@ matrix:
 
     - language: csharp
       dotnet: 2.2
+      mono: none
       script: dotnet test dotnet/Serpent/Tests
