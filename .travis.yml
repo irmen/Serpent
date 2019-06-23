@@ -48,6 +48,5 @@ matrix:
           - '$HOME/.m2/repository'
 
     - language: csharp
-      mono: none
       dotnet: 2.2
       script: dotnet test dotnet/Serpent/Tests

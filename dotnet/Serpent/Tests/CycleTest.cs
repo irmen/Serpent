@@ -79,7 +79,8 @@ namespace Razorvine.Serpent.Test
 				i = 99,
 				s = "hello"
 			};
-			d.obj = d;
+			d.obj = d;	// make cycle
+			
 			try
 			{
 				ser.Serialize(d);
