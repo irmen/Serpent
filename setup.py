@@ -28,6 +28,7 @@ setup(
     license='MIT',
     author='Irmen de Jong',
     author_email='irmen@razorvine.net',
+    url='https://github.com/irmen/Serpent',
     description='Serialization based on ast.literal_eval',
     long_description="""
 Serpent is a simple serialization library based on ast.literal_eval.
