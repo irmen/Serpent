@@ -1,11 +1,9 @@
-# Use fast travis build infrastructure explicitly
-sudo: false
-dist: xenial
+# dist: bionic
 
 matrix:
   include:
     - language: python
-      python: 3.8-dev
+      python: 3.8
       install: pip install pytz attrs .
       script: cd tests && python -E -Wall -tt -bb test_serpent.py
 
@@ -30,7 +28,7 @@ matrix:
       script: cd tests && python -E -Wall -tt -bb test_serpent.py
 
     - language: python
-      python: pypy3.5
+      python: pypy3
       install: pip install pytz attrs .
       script: cd tests && python -E -Wall -bb test_serpent.py
 
@@ -45,4 +43,6 @@ matrix:
     - language: csharp
       dotnet: 2.2
       mono: none
-      script: dotnet test dotnet/Serpent/Tests
+      script: 
+       - dotnet restore
+       - dotnet test dotnet/Serpent/Tests
