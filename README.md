@@ -56,7 +56,7 @@ Serpent handles several special Python types to make life easier:
    (you'll have to manually un-base64 them though. Can use serpent.tobytes function)
  - uuid.UUID, datetime.{datetime, date, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
- - array.array typecode 'c'/'u' --> string/unicode
+ - array.array typecode 'u' --> string
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict

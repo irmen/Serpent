@@ -16,7 +16,7 @@ Serpent handles several special Python types to make life easier:
    (you'll have to manually un-base64 them though)
  - uuid.UUID, datetime.{datetime, date, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
- - array.array typecode 'c'/'u' --> string/unicode
+ - array.array typecode 'u' --> string
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict
@@ -475,9 +475,7 @@ class Serializer(object):
     dispatch[BaseException] = ser_exception_class
 
     def ser_array_array(self, array_obj, out, level):
-        if array_obj.typecode == 'c':
-            self._serialize(array_obj.tostring(), out, level)
-        elif array_obj.typecode == 'u':
+        if array_obj.typecode == 'u':
             self._serialize(array_obj.tounicode(), out, level)
         else:
             self._serialize(array_obj.tolist(), out, level)
