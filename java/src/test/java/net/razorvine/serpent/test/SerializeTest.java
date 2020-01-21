@@ -73,11 +73,6 @@ public class SerializeTest {
 		String strdata = S(data);
 		assertEquals("# serpent utf-8 python3.2", strdata.split("\n")[0]);
 
-		ser.setliterals=false;
-		data = ser.serialize(null);
-		strdata = S(data);
-		assertEquals("# serpent utf-8 python2.6", strdata.split("\n")[0]);
-
 		data = B("# header\nfirst-line");
 		data = strip_header(data);
 		assertEquals("first-line", S(data));
@@ -89,7 +84,7 @@ public class SerializeTest {
 	{
 		Serializer.registerClass(IllegalArgumentException.class, null);
 		Exception x = new IllegalArgumentException("errormessage");
-		Serializer serpent = new Serializer(true, true, false);
+		Serializer serpent = new Serializer(true, false);
 		byte[] ser = strip_header(serpent.serialize(x));
 		assertEquals("{\n  '__class__': 'IllegalArgumentException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 	}
@@ -99,7 +94,7 @@ public class SerializeTest {
 	{
 		Serializer.registerClass(IllegalArgumentException.class, null);
 		Exception x = new IllegalArgumentException("errormessage");
-		Serializer serpent = new Serializer(true, true, true);
+		Serializer serpent = new Serializer(true, true);
 		byte[] ser = strip_header(serpent.serialize(x));
 		assertEquals("{\n  '__class__': 'java.lang.IllegalArgumentException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 	}
@@ -242,7 +237,7 @@ public class SerializeTest {
 	@Test
 	public void testBytes()
 	{
-		Serializer serpent = new Serializer(true, true, false);
+		Serializer serpent = new Serializer(true, false);
 		byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
 		byte[] ser = serpent.serialize(bytes);
 		assertEquals("{\n  'data': 'YWJjZGVm',\n  'encoding': 'base64'\n}", S(strip_header(ser)));
@@ -440,7 +435,7 @@ public class SerializeTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testClassFail()
 	{
-		Serializer serpent = new Serializer(true, true, false);
+		Serializer serpent = new Serializer(true, false);
 		Object obj = new UnserializableClass();
 		serpent.serialize(obj);
 	}
@@ -449,7 +444,7 @@ public class SerializeTest {
 	public void testClassOk()
 	{
 		Serializer.registerClass(SerializationHelperClass.class, null);
-		Serializer serpent = new Serializer(true, true, false);
+		Serializer serpent = new Serializer(true, false);
 		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
@@ -462,7 +457,7 @@ public class SerializeTest {
 	public void testClassPackageOk()
 	{
 		Serializer.registerClass(SerializationHelperClass.class, null);
-		Serializer serpent = new Serializer(true, true, true);
+		Serializer serpent = new Serializer(true, true);
 		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
 		obj.s="hi";
@@ -501,7 +496,7 @@ public class SerializeTest {
 	public void testCustomClassDict()
 	{
 		Serializer.registerClass(SerializationHelperClass.class, new TestclassConverter());
-	    Serializer serpent = new Serializer(true, true, false);
+	    Serializer serpent = new Serializer(true, false);
 
 		SerializationHelperClass obj = new SerializationHelperClass();
 		obj.i=99;
@@ -516,7 +511,7 @@ public class SerializeTest {
 	public void testCustomExceptionDict()
 	{
 		Serializer.registerClass(IllegalArgumentException.class, new ExceptionConverter());
-	    Serializer serpent = new Serializer(true, true, false);
+	    Serializer serpent = new Serializer(true, false);
 
 		Exception x = new IllegalArgumentException("errormessage");
 		byte[] ser = strip_header(serpent.serialize(x));
@@ -549,17 +544,6 @@ public class SerializeTest {
 		serpent.indent=true;
 		ser = strip_header(serpent.serialize(set));
 		assertEquals("{\n  'Sally',\n  'X',\n  'Y'\n}", S(ser));
-
-		// test no set literals
-		serpent.indent=false;
-		serpent.setliterals=false;
-		ser = strip_header(serpent.serialize(set));
-		assertEquals(17, ser.length);
-		assertTrue(S(ser).contains("'Sally'"));
-		assertTrue(S(ser).contains("'X'"));
-		assertTrue(S(ser).contains("'Y'"));
-		assertTrue(ser[0]=='(');
-		assertTrue(ser[ser.length-1]==')');
 	}
 
 	@Test

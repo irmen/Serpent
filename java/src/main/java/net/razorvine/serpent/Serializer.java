@@ -40,11 +40,6 @@ public class Serializer
 	public boolean indent = false;
 
 	/**
-	 * Use set literals?
-	 */
-	public boolean setliterals = true;
-
-	/**
 	 * Include package name in class name, for classes that are serialized to dicts?
 	 */
 	public boolean packageInClassName = false;
@@ -61,13 +56,11 @@ public class Serializer
 	/**
 	 * Create a Serpent serializer with custom options.
 	 * @param indent should the output be indented to make it more readable?
-	 * @param setliterals should set literals be used (recommended if you use newer Python versions to parse this)
 	 * @param packageInClassName should the package name be included with the class name for classes that are serialized to dict?
 	 */
-	public Serializer(boolean indent, boolean setliterals, boolean packageInClassName)
+	public Serializer(boolean indent, boolean packageInClassName)
 	{
 		this.indent = indent;
-		this.setliterals = setliterals;
 		this.packageInClassName = packageInClassName;
 	}
 
@@ -85,11 +78,7 @@ public class Serializer
 	public byte[] serialize(Object obj)
 	{
 		StringWriter sw = new StringWriter();
-
-		if(this.setliterals)
-			sw.write("# serpent utf-8 python3.2\n");  // set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
-		else
-			sw.write("# serpent utf-8 python2.6\n");
+		sw.write("# serpent utf-8 python3.2\n");
 		serialize(obj, sw, 0);
 
 		sw.flush();
@@ -302,13 +291,6 @@ public class Serializer
 
 	protected void serialize_set(Set<?> set, StringWriter sw, int level)
 	{
-		if(!this.setliterals)
-		{
-			// output a tuple instead of a set-literal
-			serialize_tuple(set, sw, level);
-			return;
-		}
-
 		if(set.size()>0)
 		{
 			sw.write("{");

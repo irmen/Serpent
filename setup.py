@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Serpent: ast.literal_eval() compatible object tree serialization.
-# Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 # Software license: "MIT software license". See http://opensource.org/licenses/MIT
 
 try:
@@ -45,7 +44,7 @@ and the .NET assembly can be obtained from Nuget.org (package ``Razorvine.Serpen
 
 **API**
 
-- ``ser_bytes = serpent.dumps(obj, indent=False, set_literals=True, module_in_classname=False):``      # serialize obj tree to bytes
+- ``ser_bytes = serpent.dumps(obj, indent=False, module_in_classname=False):``      # serialize obj tree to bytes
 - ``obj = serpent.loads(ser_bytes)``     # deserialize bytes back into object tree
 - You can use ``ast.literal_eval`` yourself to deserialize, but ``serpent.deserialize``
   works around a few corner cases. See source for details.
@@ -65,7 +64,7 @@ Serpent is more sophisticated than a simple repr() + literal_eval():
 Serpent allows comments in the serialized data (because it is just Python source code).
 Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a ValueError pointing out the problem.
 
-Works with Python 2.7+ / 3.5+, IronPython 2.7+, Jython 2.7+.
+Works with Python 3.5+
 
 **FAQ**
 
@@ -87,9 +86,7 @@ Works with Python 2.7+ / 3.5+, IronPython 2.7+, Jython 2.7+.
 
 .. code:: python
 
- # This demo script is written for Python 3.2+
  # -*- coding: utf-8 -*-
- from __future__ import print_function
  import ast
  import uuid
  import datetime
@@ -131,7 +128,7 @@ Works with Python 2.7+ / 3.5+, IronPython 2.7+, Jython 2.7+.
  assert data2==data
 
 
-When you run this (with python 3.2+) it prints:
+When you run this it prints:
 
 .. code:: python
 
@@ -176,13 +173,11 @@ When you run this (with python 3.2+) it prints:
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Topic :: Software Development"
     ],
-    tests_require=['enum34; python_version < "3.4"'],
     test_suite="setup.serpent_test_suite"
 )

@@ -26,11 +26,6 @@ namespace Razorvine.Serpent
 		public bool Indent;
 		
 		/// <summary>
-		/// use set literals?
-		/// </summary>
-		public bool SetLiterals;
-		
-		/// <summary>
 		/// include namespace prefix for classes that are serialized to dict?
 		/// </summary>
 		public bool NamespaceInClassName;
@@ -50,12 +45,10 @@ namespace Razorvine.Serpent
 		/// Initialize the serializer.
 		/// </summary>
 		/// <param name="indent">indent the output over multiple lines (default=false)</param>
-		/// <param name="setLiterals">use set-literals or not (set to False if you need compatibility with Python &lt; 3.2)</param>
 		/// <param name="namespaceInClassName">include namespace prefix for class names or only use the class name itself</param>
-		public Serializer(bool indent=false, bool setLiterals=true, bool namespaceInClassName=false)
+		public Serializer(bool indent=false, bool namespaceInClassName=false)
 		{
 			Indent = indent;
-			SetLiterals = setLiterals;
 			NamespaceInClassName = namespaceInClassName;
 		}
 		
@@ -74,7 +67,7 @@ namespace Razorvine.Serpent
 		{
 			using(StringWriter tw = new StringWriter())
 			{
-				tw.Write(SetLiterals ? "# serpent utf-8 python3.2\n" : "# serpent utf-8 python2.6\n");
+				tw.Write("# serpent utf-8 python3.2\n");
 				Serialize(obj, tw, 0);
 				tw.Flush();
 				return Encoding.UTF8.GetBytes(tw.ToString());
@@ -253,13 +246,6 @@ namespace Razorvine.Serpent
 		
 		protected void Serialize_set(object[] set, TextWriter tw, int level)
 		{
-			if(!SetLiterals)
-			{
-				// output a tuple instead of a set-literal
-				Serialize_tuple(set, tw, level);
-				return;
-			}
-
 			if(set.Length>0)
 			{
 				tw.Write("{");

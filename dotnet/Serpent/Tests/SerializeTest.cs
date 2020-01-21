@@ -43,12 +43,6 @@ namespace Razorvine.Serpent.Test
 			Assert.Equal(35, data[0]);
 			string strdata = S(data);
 			Assert.Equal("# serpent utf-8 python3.2", strdata.Split('\n')[0]);
-			
-			ser.SetLiterals=false;
-			data = ser.Serialize(null);
-			strdata = S(data);
-			Assert.Equal("# serpent utf-8 python2.6", strdata.Split('\n')[0]);
-
 			data = B("# header\nfirst-line");
 			data = strip_header(data);
 			Assert.Equal(B("first-line"), data);
@@ -252,7 +246,7 @@ namespace Razorvine.Serpent.Test
 		public void TestSet()
 		{
 			// test with set literals
-			Serializer serpent = new Serializer {SetLiterals = true};
+			Serializer serpent = new Serializer();
 			var set = new HashSet<object>();
 			
 			// test empty set
@@ -272,12 +266,6 @@ namespace Razorvine.Serpent.Test
 			serpent.Indent=true;
 			ser = strip_header(serpent.Serialize(set));
 			Assert.Equal("{\n  42,\n  'Sally',\n  16.5\n}", S(ser));
-			
-			// test no set literals
-			serpent.Indent=false;
-			serpent.SetLiterals=false;
-			ser = strip_header(serpent.Serialize(set));
-			Assert.Equal("(42,'Sally',16.5)", S(ser));	// needs to be tuple now
 		}
 
 		[Fact]

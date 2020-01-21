@@ -47,7 +47,7 @@ Version 1.23 and later require Java 8 (JDK 1.8) at a minimum to compile and run.
 
 SOME MORE DETAILS
 -----------------
-Compatible with Python 2.7+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+Compatible with Python 3.5+ (use a serpent version before 1.30 for Python 2.7 support)
 
 Serpent handles several special Python types to make life easier:
 
@@ -60,10 +60,10 @@ Serpent handles several special Python types to make life easier:
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict
- - enums --> the value of the enum (Python 3.4+ or enum34 library)
+ - enums --> the value of the enum
  - namedtuple --> treated as just a tuple
  - attr dataclasses and python 3.7 native dataclasses: treated as just a class, so will become a dict
- - all other types  --> dict with the ``__getstate__`` or ``vars()`` of the object, and a ``__class__`` element with the name of the class 
+ - all other types  --> dict with the ``__getstate__`` or ``vars()`` of the object, and a ``__class__`` element with the name of the class
 
 Notes:
 
@@ -80,19 +80,7 @@ Because the serialized format is just valid Python source code, it can
 contain comments. Serpent does not add comments by itself apart from the
 single header line.
 
-Set literals are not supported on python <3.2 (``ast.literal_eval``
-limitation). If you need Python < 3.2 compatibility, you'll have to use
-``set_literals=False`` when serializing. Since version 1.6 serpent chooses
-this wisely for you by default, but you can still override it if needed.
-
 Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
 and is represented by the special value:  ``{'__class__':'float','value':'nan'}``
 We chose not to encode it as just the string 'NaN' because that could cause
 memory issues when used in multiplications.
-
-Jython's ast module cannot properly parse some literal reprs of unicode strings.
-This is a known bug http://bugs.jython.org/issue2008
-It seems to work when your server is Python 2.x but safest is perhaps to make
-sure your data to parse contains only ascii strings when dealing with Jython.
-Serpent checks for possible problems and will raise an error if it finds one,
-rather than continuing with string data that might be incorrect.

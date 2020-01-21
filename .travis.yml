@@ -23,11 +23,6 @@ matrix:
       script: cd tests && python -E -Wall -tt -bb test_serpent.py
 
     - language: python
-      python: 2.7
-      install: pip install pytz attrs enum34 .
-      script: cd tests && python -E -Wall -tt -bb test_serpent.py
-
-    - language: python
       python: pypy3
       install: pip install pytz attrs .
       script: cd tests && python -E -Wall -bb test_serpent.py
@@ -43,6 +38,6 @@ matrix:
     - language: csharp
       dotnet: 2.2
       mono: none
-      script: 
+      script:
        - dotnet restore
        - dotnet test dotnet/Serpent/Tests

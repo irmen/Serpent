@@ -13,12 +13,12 @@ import java.io.Serializable;
  * A complex number.
  */
 public class ComplexNumber implements Serializable {
-	
+
 	private static final long serialVersionUID = 5396759273405612137L;
-	
+
 	public double real;
 	public double imaginary;
-	
+
 	public ComplexNumber(double r, double i) {
 		real=r;
 		imaginary=i;
@@ -33,7 +33,7 @@ public class ComplexNumber implements Serializable {
 			sb.append('+');
 		return sb.append(imaginary).append('i').toString();
 	}
-	
+
 	public double Magnitude() {
 		return Math.sqrt(real * real + imaginary * imaginary);
 	}
@@ -65,7 +65,7 @@ public class ComplexNumber implements Serializable {
 		real = new_real;
 		imaginary = new_imaginary;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -76,7 +76,7 @@ public class ComplexNumber implements Serializable {
 		ComplexNumber other = (ComplexNumber) obj;
 		return real==other.real && imaginary==other.imaginary;
 	}
-	
+
 	@Override
 	public int hashCode()
 	{

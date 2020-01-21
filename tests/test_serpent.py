@@ -1,11 +1,7 @@
 """
 Serpent: ast.literal_eval() compatible object tree serialization.
-
-Copyright 2013, Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
-from __future__ import print_function, division
-import __future__
 import sys
 import ast
 import timeit
@@ -19,33 +15,16 @@ import hashlib
 import traceback
 import threading
 import time
-import types
 import collections
 import enum
 import attr
-if sys.version_info >= (3, 4):
-    from collections.abc import KeysView, ValuesView, ItemsView
-else:
-    from collections import KeysView, ValuesView, ItemsView
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
-
+import unittest
+from collections.abc import KeysView, ValuesView, ItemsView
 import serpent
 
 
-if sys.version_info >= (3, 0):
-    unicode = str
-    unichr = chr
-
-
 def strip_header(ser):
-    if sys.platform == "cli":
-        _, _, data = ser.partition("\n")
-    else:
-        _, _, data = ser.partition(b"\n")
+    _, _, data = ser.partition(b"\n")
     return data
 
 
@@ -54,13 +33,12 @@ class TestDeserialize(unittest.TestCase):
         data = serpent.loads(b"555")
         self.assertEqual(555, data)
 
-    def test_deserialize_unichr(self):
+    def test_deserialize_chr(self):
         unicodestring = u"euro\u20ac"
         encoded = repr(unicodestring).encode("utf-8")
         data = serpent.loads(encoded)
         self.assertEqual(unicodestring, data)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "Python 2.x ast can't parse complex")
     def test_weird_complex(self):
         c1 = complex(float('inf'), 4)
         ser = serpent.dumps(c1)
@@ -77,10 +55,9 @@ class TestDeserialize(unittest.TestCase):
         v = serpent.loads(b"{'a':1, 'b':2, 'c':3,}")
         self.assertEqual({'a': 1, 'b': 2, 'c': 3}, v)
 
-    @unittest.skipIf(sys.version_info < (3, 2), "needs python 3.3+ to parse set literals")
     def test_trailing_comma_set(self):
         v = serpent.loads(b"{1,2,3,}")
-        self.assertEqual(set([1, 2, 3]), v)
+        self.assertEqual({1, 2, 3}, v)
 
     def test_unicode_escapes(self):
         v = serpent.loads(b"'\\u20ac'")
@@ -95,9 +72,6 @@ class TestDeserialize(unittest.TestCase):
         self.assertEqual("text", serpent.loads(bytes_input))
         self.assertEqual("text", serpent.loads(bytearray_input))
         self.assertEqual("text", serpent.loads(memview_input))
-        if sys.version_info < (3, 0):
-            buffer_input = buffer(bytes_input)
-            self.assertEqual("text", serpent.loads(buffer_input))
 
 
 class TestBasics(unittest.TestCase):
@@ -109,35 +83,19 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(data, result, "must understand python 2.x repr form of unicode string")
         py3repr = b"# serpent utf-8 python3.2\n'hello\xe2\x82\xac'"
         try:
-            result = serpent.loads(py3repr)   # jython fails this test.
-            if os.name != "java":
-                self.assertEqual(data, result, "must understand python 3.x repr form of unicode string")
-        except ValueError as x:
-            if os.name == "java":
-                self.assertIn("issue2008", str(x))
-            else:
-                self.fail("non-jython must parse it correctly")
+            result = serpent.loads(py3repr)
+            self.assertEqual(data, result, "must understand python 3.x repr form of unicode string")
+        except ValueError:
+            self.fail("must parse it correctly")
 
     def test_header(self):
-        ser = serpent.dumps(None, set_literals=True)
-        if sys.platform == "cli":
-            header, _, rest = ser.partition("\n")
-        else:
-            self.assertTrue(type(ser) is bytes)
-            header, _, rest = ser.partition(b"\n")
+        ser = serpent.dumps(None)
+        header, _, rest = ser.partition(b"\n")
         hdr = "# serpent utf-8 python3.2".encode("utf-8")
-        self.assertEqual(hdr, header)
-        ser = serpent.dumps(None, set_literals=False)
-        if sys.platform == "cli":
-            header, _, rest = ser.partition("\n")
-        else:
-            self.assertTrue(type(ser) is bytes)
-            header, _, rest = ser.partition(b"\n")
-        hdr = "# serpent utf-8 python2.6".encode("utf-8")    # don't change the 2.6 here even though we don't support python 2.6 any longer
         self.assertEqual(hdr, header)
 
     def test_comments(self):
-        ser = b"""# serpent utf-8 python2.7
+        ser = b"""# serpent utf-8 python3.2
 [ 1, 2,
    # some comments here
    3, 4]    # more here
@@ -163,32 +121,32 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(obj)
         data = strip_header(ser)
         self.assertEqual(36, len(data))
-        obj = set([3, 4, 2, 1, 6, 5])
+        obj = {3, 4, 2, 1, 6, 5}
         ser = serpent.dumps(obj)
         data = strip_header(ser)
         self.assertEqual(13, len(data))
-        ser = serpent.dumps(obj, indent=True, set_literals=True)
+        ser = serpent.dumps(obj, indent=True)
         data = strip_header(ser)
         self.assertEqual(b"{\n  1,\n  2,\n  3,\n  4,\n  5,\n  6\n}", data)      # sorted
 
-        obj = set([3, "something"])
-        ser = serpent.dumps(obj, indent=False, set_literals=True)
+        obj = {3, "something"}
+        ser = serpent.dumps(obj, indent=False)
         data = strip_header(ser)
         self.assertTrue(data == b"{3,'something'}" or data == b"{'something',3}")
-        ser = serpent.dumps(obj, indent=True, set_literals=True)
+        ser = serpent.dumps(obj, indent=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  3,\n  'something'\n}" or data == b"{\n  'something',\n  3\n}")
 
         obj = {3: "three", "something": 99}
-        ser = serpent.dumps(obj, indent=False, set_literals=True)
+        ser = serpent.dumps(obj, indent=False)
         data = strip_header(ser)
         self.assertTrue(data == b"{'something':99,3:'three'}" or data == b"{3:'three','something':99}")
-        ser = serpent.dumps(obj, indent=True, set_literals=True)
+        ser = serpent.dumps(obj, indent=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  'something': 99,\n  3: 'three'\n}" or data == b"{\n  3: 'three',\n  'something': 99\n}")
 
         obj = {3: "three", 4: "four", 5: "five", 2: "two", 1: "one"}
-        ser = serpent.dumps(obj, indent=True, set_literals=True)
+        ser = serpent.dumps(obj, indent=True)
         data = strip_header(ser)
         self.assertEqual(b"{\n  1: 'one',\n  2: 'two',\n  3: 'three',\n  4: 'four',\n  5: 'five'\n}", data)   # sorted
 
@@ -239,8 +197,8 @@ class TestBasics(unittest.TestCase):
         data = serpent.loads(ser)
         self.assertEqual(" ", data)
 
-    def test_nullbytesunicode(self):
-        line = unichr(0) + "null"
+    def test_nullbytesstr(self):
+        line = chr(0) + "null"
         ser = serpent.dumps(line)
         data = strip_header(ser)
         self.assertEqual(b"'\\x00null'", data, "must escape 0-byte")
@@ -263,10 +221,9 @@ class TestBasics(unittest.TestCase):
         serpent.loads(bytearray(b"'contains no nullbyte'"))
         serpent.loads(memoryview(b"'contains no nullbyte'"))
 
-    @unittest.skipIf(os.name == "java", "jython can't parse unicode U's")
     def test_unicode_U(self):
-        u = "euro" + unichr(0x20ac)+"\U00022001"
-        self.assertTrue(type(u) is unicode)
+        u = "euro" + chr(0x20ac)+"\U00022001"
+        self.assertTrue(type(u) is str)
         ser = serpent.dumps(u)
         data = serpent.loads(ser)
         self.assertEqual(u, data)
@@ -275,34 +232,22 @@ class TestBasics(unittest.TestCase):
         # this checks for all 0x0000-0xffff chars that they will be serialized
         # into a proper repr form and when processed back by ast.literal_parse directly
         # will get turned back into the chars 0x0000-0xffff again
-        # For Jython we take the range upto 0x4100 because after that it starts
-        # complaining about surrogates or "mark invalid" (an utf-8 parsing bug it seems)
-        highest_char = 0x4100 if os.name == "java" else 0xffff
-        all_chars = u"".join(unichr(c) for c in range(highest_char+1))
+        highest_char = 0xffff
+        all_chars = u"".join(chr(c) for c in range(highest_char+1))
         ser = serpent.dumps(all_chars)
         self.assertGreater(len(ser), len(all_chars))
         ser = ser.decode("utf-8")
-        if sys.version_info < (3, 0):
-            ser = compile(ser, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
-            if os.name == "java":
-                # The ast module in Jython will not have parsed this correctly into unicode literals.
-                # So we have to patch up the ast tree ourselves and decode Str nodes to unicode manually.
-                # (this is the same what Serpent does internally so we replicate it here)
-                # See http://bugs.jython.org/issue2008
-                for node in ast.walk(ser):
-                    if isinstance(node, ast.Str):
-                        node.s = node.s.decode("unicode-escape")
         data = ast.literal_eval(ser)
         self.assertEqual(highest_char+1, len(data))
         for i, c in enumerate(data):
-            if unichr(i) != c:
+            if chr(i) != c:
                 self.fail("char different for "+str(i))
 
     def test_unicode_quotes(self):
-        ser = serpent.dumps(unicode("quotes'\""))
+        ser = serpent.dumps(str("quotes'\""))
         data = strip_header(ser)
         self.assertEqual(b"'quotes\\'\"'", data)
-        ser = serpent.dumps(unicode("quotes2'"))
+        ser = serpent.dumps(str("quotes2'"))
         data = strip_header(ser)
         self.assertEqual(b"\"quotes2'\"", data)
 
@@ -310,44 +255,22 @@ class TestBasics(unittest.TestCase):
         u = u"\x00\x01\x80\x81\xfe\xffabcdef\u20ac"
         utf_8_correct = repr(u).encode("utf-8")
         if utf_8_correct.startswith(b"u"):
-            utf_8_correct=utf_8_correct[1:]
+            utf_8_correct = utf_8_correct[1:]
         ser = serpent.dumps(u)
         d = strip_header(ser)
         self.assertEqual(utf_8_correct, d)
 
-    @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
-    def test_unicode_with_escapes_py2(self):
-        ser = serpent.dumps(unicode("\n"))
-        d = strip_header(ser)
-        self.assertEqual(b"'\\n'", d)
-        ser = serpent.dumps(unicode("\a"))
-        d = strip_header(ser)
-        self.assertEqual(b"'\\x07'", d)
-
-    @unittest.skipIf(sys.version_info >= (3, 0), "py2 escaping tested")
-    def test_unicode_with_escapes_unichrs(self):
-        ser = serpent.dumps("\a"+unichr(0x20ac))
-        d = strip_header(ser)
-        self.assertEqual(b"'\\x07\\u20ac'", d)
-        line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
-        ser = serpent.dumps(line)
-        d = strip_header(ser)
-        self.assertEqual(b"\"'euro\\u20ac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
-        data = serpent.loads(ser)
-        self.assertEqual(line, data)
-
-    @unittest.skipIf(sys.version_info < (3, 0), "py3 escaping tested")
     def test_unicode_with_escapes_py3(self):
-        ser = serpent.dumps(unicode("\n"))
+        ser = serpent.dumps(str("\n"))
         d = strip_header(ser)
         self.assertEqual(b"'\\n'", d)
-        ser = serpent.dumps(unicode("\a"))
+        ser = serpent.dumps(str("\a"))
         d = strip_header(ser)
         self.assertEqual(b"'\\x07'", d)
-        ser = serpent.dumps("\a"+unichr(0x20ac))
+        ser = serpent.dumps("\a"+chr(0x20ac))
         d = strip_header(ser)
         self.assertEqual(b"'\\x07\xe2\x82\xac'", d)
-        line = "'euro" + unichr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
+        line = "'euro" + chr(0x20ac) + "\nlastline\ttab\\@slash\a\b\f\n\r\t\v'"
         ser = serpent.dumps(line)
         d = strip_header(ser)
         self.assertEqual(b"\"'euro\xe2\x82\xac\\nlastline\\ttab\\\\@slash\\x07\\x08\\x0c\\n\\r\\t\\x0b'\"", d)
@@ -399,31 +322,23 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(mydict)
         data = strip_header(ser)
         self.assertEqual(69, len(data))
-        if sys.version_info < (3, 0):
-            self.assertEqual(b"{", data[0])
-            self.assertEqual(b"}", data[-1])
-        else:
-            self.assertEqual(ord("{"), data[0])
-            self.assertEqual(ord("}"), data[-1])
+        self.assertEqual(ord("{"), data[0])
+        self.assertEqual(ord("}"), data[-1])
         ser = serpent.dumps(mydict, indent=True)
         data = strip_header(ser)
         self.assertEqual(86, len(data))
-        if sys.version_info < (3, 0):
-            self.assertEqual(b"{", data[0])
-            self.assertEqual(b"}", data[-1])
-        else:
-            self.assertEqual(ord("{"), data[0])
-            self.assertEqual(ord("}"), data[-1])
+        self.assertEqual(ord("{"), data[0])
+        self.assertEqual(ord("}"), data[-1])
 
-    def test_dict_unicode(self):
-        data = {"key": unicode("value")}
+    def test_dict_str(self):
+        data = {"key": str("value")}
         ser = serpent.dumps(data)
         data2 = serpent.loads(ser)
-        self.assertEqual(unicode("value"), data2["key"])
-        data = {unicode("key"): 123}
+        self.assertEqual(str("value"), data2["key"])
+        data = {str("key"): 123}
         ser = serpent.dumps(data)
         data2 = serpent.loads(ser)
-        self.assertEqual(123, data2[unicode("key")])
+        self.assertEqual(123, data2[str("key")])
 
     def test_dict_iters(self):
         data = {"john": 22, "sophie": 34, "bob": 26}
@@ -493,43 +408,31 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(b"()", data)
 
         # test set-literals
-        myset = set([42, "Sally"])
-        ser = serpent.dumps(myset, set_literals=True)
+        myset = {42, "Sally"}
+        ser = serpent.dumps(myset)
         data = strip_header(ser)
         self.assertTrue(data == b"{42,'Sally'}" or data == b"{'Sally',42}")
-        ser = serpent.dumps(myset, indent=True, set_literals=True)
+        ser = serpent.dumps(myset, indent=True)
         data = strip_header(ser)
         self.assertTrue(data == b"{\n  42,\n  'Sally'\n}" or data == b"{\n  'Sally',\n  42\n}")
-
-        # test no set-literals
-        ser = serpent.dumps(myset, set_literals=False)
-        data = strip_header(ser)
-        self.assertTrue(data == b"(42,'Sally')" or data == b"('Sally',42)")    # must output a tuple instead of a set-literal
-
         # unicode elements
-        data = set([unicode("text1"), unicode("text2")])
+        data = {str("text1"), str("text2")}
         ser = serpent.dumps(data)
         data2 = serpent.loads(ser)
         self.assertEqual(2, len(data2))
-        self.assertIn(unicode("text1"), data2)
-        self.assertIn(unicode("text2"), data2)
+        self.assertIn(str("text1"), data2)
+        self.assertIn(str("text2"), data2)
 
     def test_bytes(self):
-        if sys.version_info >= (3, 0):
-            ser = serpent.dumps(bytes(b"abcdef"))
-            data = serpent.loads(ser)
-            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
+        ser = serpent.dumps(bytes(b"abcdef"))
+        data = serpent.loads(ser)
+        self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
         ser = serpent.dumps(bytearray(b"abcdef"))
         data = serpent.loads(ser)
         self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
-        if sys.version_info >= (2, 7):
-            ser = serpent.dumps(memoryview(b"abcdef"))
-            data = serpent.loads(ser)
-            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
-        if sys.version_info < (3, 0):
-            ser = serpent.dumps(buffer(b"abcdef"))
-            data = serpent.loads(ser)
-            self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
+        ser = serpent.dumps(memoryview(b"abcdef"))
+        data = serpent.loads(ser)
+        self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
 
     def test_exception(self):
         x = ZeroDivisionError("wrong")
@@ -564,12 +467,8 @@ class TestBasics(unittest.TestCase):
         x = ZeroDivisionError("wrong")
         ser = serpent.dumps(x, module_in_classname=True)
         data = serpent.loads(ser)
-        if sys.version_info < (3, 0):
-            expected_classname = "exceptions.ZeroDivisionError"
-        else:
-            expected_classname = "builtins.ZeroDivisionError"
         self.assertEqual({
-            '__class__': expected_classname,
+            '__class__': "builtins.ZeroDivisionError",
             '__exception__': True,
             'args': ('wrong',),
             'attributes': {}
@@ -626,7 +525,6 @@ class TestBasics(unittest.TestCase):
             serpent.dumps({1: 1, 2: 1, 3: 1, pp: 1})    # can only serialize simple types as dict keys (hashable)
         self.assertTrue("hashable type" in str(x.exception))
 
-    @unittest.skipIf(not serpent.can_use_set_literals, reason="no problem if serpent doesn't serializes set literals")
     def test_class_hashable_set_element_check(self):
         import pprint
         pp = pprint.PrettyPrinter(stream="dummy", width=42)
@@ -644,28 +542,21 @@ class TestBasics(unittest.TestCase):
             BLUE = 3
         data = serpent.dumps({"abc", Color.RED, Color.GREEN, Color.BLUE})
         orig = serpent.loads(data)
-        if sys.version_info < (3, 4):
-            self.assertEqual([1, 2, 3, u"abc"], sorted(orig))
-        else:
-            self.assertEqual({"abc", 1, 2, 3}, orig)
+        self.assertEqual({"abc", 1, 2, 3}, orig)
         data = serpent.dumps({"abc": 1, Color.RED: 1, Color.GREEN: 1, Color.BLUE: 1})
         orig = serpent.loads(data)
-        if sys.version_info < (3, 4):
-            self.assertEqual({u"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
-        else:
-            self.assertEqual({"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
+        self.assertEqual({"abc": 1, 1: 1, 2: 1, 3: 1}, orig)
 
     def test_array(self):
-        ser = serpent.dumps(array.array('u', unicode("unicode")))
+        ser = serpent.dumps(array.array('u', str("unicode")))
         data = strip_header(ser)
         self.assertEqual(b"'unicode'", data)
         ser = serpent.dumps(array.array('i', [44, 45, 46]))
         data = strip_header(ser)
         self.assertEqual(b"[44,45,46]", data)
-        if sys.version_info < (3, 0):
-            ser = serpent.dumps(array.array('c', "normal"))
-            data = strip_header(ser)
-            self.assertEqual(b"'normal'", data)
+        ser = serpent.dumps(array.array('u', "normal"))
+        data = strip_header(ser)
+        self.assertEqual(b"'normal'", data)
 
     def test_time(self):
         ser = serpent.dumps(datetime.datetime(2013, 1, 20, 23, 59, 45, 999888))
@@ -707,7 +598,7 @@ class TestBasics(unittest.TestCase):
         serpent.loads(ser)
         tmpfn = tempfile.mktemp()
         with open(tmpfn, "wb") as outf:
-            serpent.dump([1, 2, 3], outf, indent=True, set_literals=True)
+            serpent.dump([1, 2, 3], outf, indent=True)
         with open(tmpfn, "rb") as inf:
             data = serpent.load(inf)
             self.assertEqual([1, 2, 3], data)
@@ -719,7 +610,7 @@ class TestBasics(unittest.TestCase):
         ser = strip_header(serpent.dumps(values))
         self.assertEqual(b"[1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+4.0j)]", ser)
         values2 = serpent.loads(ser)
-        self.assertEqual([float('inf'), float('-inf'), {'__class__':'float','value':'nan'}, (float('inf')+4j)], values2)
+        self.assertEqual([float('inf'), float('-inf'), {'__class__': 'float', 'value': 'nan'}, (float('inf')+4j)], values2)
         values2 = serpent.loads(b"[1e30000,-1e30000]")
         self.assertEqual([float('inf'), float('-inf')], values2)
 
@@ -761,16 +652,10 @@ class TestBasics(unittest.TestCase):
         self.assertIs(obj, serpent.tobytes(obj))
         obj = bytearray(b"test")
         self.assertIs(obj, serpent.tobytes(obj))
-        if hasattr(types, "BufferType"):
-            obj = buffer(b"test")
-            self.assertIs(obj, serpent.tobytes(obj))
         ser = {'data': 'dGVzdA==', 'encoding': 'base64'}
         out = serpent.tobytes(ser)
         self.assertEqual(b"test", out)
-        if sys.platform == 'cli':
-            self.assertIsInstance(out, str)  # ironpython base64 decodes into str type....
-        else:
-            self.assertIsInstance(out, bytes)
+        self.assertIsInstance(out, bytes)
         with self.assertRaises(TypeError):
             serpent.tobytes({'@@@data': 'dGVzdA==', 'encoding': 'base64'})
         with self.assertRaises(TypeError):
@@ -788,12 +673,12 @@ class TestSpeed(unittest.TestCase):
     def setUp(self):
         self.data = {
             "str": "hello",
-            "unicode": unichr(0x20ac),  # euro-character
+            "unicode": chr(0x20ac),  # euro-character
             "numbers": [123456789012345678901234567890, 999.1234, decimal.Decimal("1.99999999999999999991")],
             "bytes": bytearray(100),
             "list": [1, 2, 3, 4, 5, 6, 7, 8, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9],
             "tuple": (1, 2, 3, 4, 5, 6, 7, 8),
-            "set": set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            "set": {1, 2, 3, 4, 5, 6, 7, 8, 9},
             "dict": dict((i, str(i) * 4) for i in range(10)),
             "exc": ZeroDivisionError("fault"),
             "dates": [
@@ -868,21 +753,21 @@ class TestIndent(unittest.TestCase):
   2,
   3
 )""", ser)
-        data = set([1])
-        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
+        data = {1}
+        ser = serpent.dumps(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   1
 }""", ser)
         data = {"one": 1}
-        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
+        ser = serpent.dumps(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   'one': 1
 }""", ser)
 
-        data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": set([1, 2])}
-        ser = serpent.dumps(data, indent=True, set_literals=True).decode("utf-8")
+        data = {"first": [1, 2, ("a", "b")], "second": {1: False}, "third": {1, 2}}
+        ser = serpent.dumps(data, indent=True).decode("utf-8")
         _, _, ser = ser.partition("\n")
         self.assertEqual("""{
   'first': [
@@ -905,8 +790,6 @@ class TestIndent(unittest.TestCase):
 
 class TestFiledump(unittest.TestCase):
     def testFile(self):
-        if sys.version_info < (3, 2):
-            self.skipTest("testdatafile contains stuff that is not supported by ast.literal_eval on Python < 3.2")
         datafile = "testserpent.utf8.bin"
         if not os.path.exists(datafile):
             mypath = os.path.split(__file__)[0]
@@ -1019,8 +902,7 @@ class TestCustomClasses(unittest.TestCase):
         self.assertEqual(KeysView, classes.pop(0))
         self.assertEqual(ValuesView, classes.pop(0))
         self.assertEqual(ItemsView, classes.pop(0))
-        if sys.version_info >= (2, 7):
-            self.assertEqual(collections.OrderedDict, classes.pop(0))
+        self.assertEqual(collections.OrderedDict, classes.pop(0))
         self.assertEqual(enum.Enum, classes.pop(0))
         self.assertEqual(BaseClass, classes.pop(0))
         self.assertEqual(SubClass, classes.pop(0))
@@ -1164,7 +1046,6 @@ class TestThreading(unittest.TestCase):
 
 
 class TestCollections(unittest.TestCase):
-    @unittest.skipIf(sys.version_info < (2, 7), "collections.OrderedDict is python 2.7+")
     def testOrderedDict(self):
         o = collections.OrderedDict()
         o['apple'] = 1
@@ -1180,21 +1061,7 @@ class TestCollections(unittest.TestCase):
         d = serpent.dumps(p)
         p2 = serpent.loads(d)
         self.assertEqual((11, 22), p2)
-        # the checks below are valid if named tuples are not serialized by the normal tuple serializer:
-        # if sys.version_info < (2, 7) or sys.platform == "cli":
-        #     # named tuple serialization is unfortunately broken on python <2.7 or ironpython; it leaves out the actual values
-        #     self.assertEqual({"__class__": "Point"}, p2)
-        # elif os.name == "java":
-        #     # named tuple serialization is unfortunately broken on jython; it forgets about the order
-        #     self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
-        # elif sys.version_info >= (3, 3) or ((2, 7) <= sys.version_info < (3, 0)):
-        #     # only these versions got it 100% right!
-        #     self.assertEqual({"__class__": "Point", "items": [('x', 11), ('y', 22)]}, p2)
-        # else:
-        #     # other versions forget about the order....
-        #     self.assertEqual({"__class__": "Point", "x": 11, "y": 22}, p2)
 
-    @unittest.skipIf(sys.version_info < (2, 7), "collections.Counter is python 2.7+")
     def testCounter(self):
         c = collections.Counter("even")
         d = serpent.dumps(c)
@@ -1207,7 +1074,6 @@ class TestCollections(unittest.TestCase):
         obj2 = serpent.loads(d)
         self.assertEqual([1, 2, 3], obj2)
 
-    @unittest.skipIf(sys.version_info < (3, 3), "ChainMap is python 3.3+")
     def testChainMap(self):
         c = collections.ChainMap({"a": 1}, {"b": 2}, {"c": 3})
         d = serpent.dumps(c)
@@ -1222,7 +1088,6 @@ class TestCollections(unittest.TestCase):
         dd2 = serpent.loads(d)
         self.assertEqual({'a': 1, 'b': 2}, dd2)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserDict is python 3.0+")
     def testUserDict(self):
         obj = collections.UserDict()
         obj['a'] = 1
@@ -1231,14 +1096,12 @@ class TestCollections(unittest.TestCase):
         obj2 = serpent.loads(d)
         self.assertEqual({'a': 1, 'b': 2}, obj2)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserList is python 3.0+")
     def testUserList(self):
         obj = collections.UserList([1, 2, 3])
         d = serpent.dumps(obj)
         obj2 = serpent.loads(d)
         self.assertEqual([1, 2, 3], obj2)
 
-    @unittest.skipIf(sys.version_info < (3, 0), "collections.UserString is python 3.0+")
     def testUserString(self):
         obj = collections.UserString("test")
         d = serpent.dumps(obj)

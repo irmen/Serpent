@@ -1,4 +1,3 @@
-from __future__ import print_function
 import datetime
 import serpent
 
@@ -13,7 +12,7 @@ def example():
     data = {
         "tuple": (1, 2, 3),
         "date": datetime.datetime.now(),
-        "set": set(['a', 'b', 'c']),
+        "set": {'a', 'b', 'c'},
         "class": CustomClass("Sally", 26)
     }
 

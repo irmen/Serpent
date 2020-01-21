@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 echo "Building and testing..."
 dotnet test -c Release Serpent/Tests
 

@@ -7,7 +7,7 @@ original object tree. As such it is safe to send serpent data to other
 machines over the network for instance (because only 'safe' literals are
 encoded).
 
-Compatible with Python 2.7+ (including 3.x), IronPython 2.7+, Jython 2.7+.
+Compatible with Python 3.5+
 
 Serpent handles several special Python types to make life easier:
 
@@ -20,7 +20,7 @@ Serpent handles several special Python types to make life easier:
  - array.array other typecode --> list
  - Exception  --> dict with some fields of the exception (message, args)
  - collections module types  --> mostly equivalent primitive types or dict
- - enums --> the value of the enum (Python 3.4+ or enum34 library)
+ - enums --> the value of the enum
  - all other types  --> dict with  __getstate__  or vars() of the object
 
 Notes:
@@ -37,29 +37,15 @@ serializer in different threads.
 Because the serialized format is just valid Python source code, it can
 contain comments.
 
-Set literals are not supported on python <3.2 (ast.literal_eval
-limitation). If you need Python < 3.2 compatibility, you'll have to use
-set_literals=False when serializing. Since version 1.6 serpent chooses
-this wisely for you by default, but you can still override it if needed.
-
 Floats +inf and -inf are handled via a trick, Float 'nan' cannot be handled
 and is represented by the special value:  {'__class__':'float','value':'nan'}
 We chose not to encode it as just the string 'NaN' because that could cause
 memory issues when used in multiplications.
 
-Jython's ast module cannot properly parse some literal reprs of unicode strings.
-This is a known bug http://bugs.jython.org/issue2008
-It seems to work when your server is Python 2.x but safest is perhaps to make
-sure your data to parse contains only ascii strings when dealing with Jython.
-Serpent checks for possible problems and will raise an error if it finds one,
-rather than continuing with string data that might be incorrect.
-
 Copyright by Irmen de Jong (irmen@razorvine.net)
 Software license: "MIT software license". See http://opensource.org/licenses/MIT
 """
 
-from __future__ import print_function, division
-import __future__
 import ast
 import base64
 import sys
@@ -74,65 +60,31 @@ import math
 import numbers
 import codecs
 import collections
-if sys.version_info >= (3, 4):
-    from collections.abc import KeysView, ValuesView, ItemsView
-    import enum
-else:
-    from collections import KeysView, ValuesView, ItemsView
-    try:
-        import enum
-    except ImportError:
-        enum = None
+import enum
+from collections.abc import KeysView, ValuesView, ItemsView
 
 
 __version__ = "1.30.dev0"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
-can_use_set_literals = sys.version_info >= (3, 2)  # check if we can use set literals
 
-
-def dumps(obj, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
+def dumps(obj, indent=False, module_in_classname=False):
     """Serialize object tree to bytes"""
-    return Serializer(indent, set_literals, module_in_classname).serialize(obj)
+    return Serializer(indent, module_in_classname).serialize(obj)
 
 
-def dump(obj, file, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
+def dump(obj, file, indent=False, module_in_classname=False):
     """Serialize object tree to a file"""
-    file.write(dumps(obj, indent=indent, set_literals=set_literals, module_in_classname=module_in_classname))
+    file.write(dumps(obj, indent=indent, module_in_classname=module_in_classname))
 
 
 def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
-    if os.name == "java":
-        if type(serialized_bytes) is memoryview:
-            serialized_bytes = serialized_bytes.tobytes()
-        elif type(serialized_bytes) is buffer:
-            serialized_bytes = serialized_bytes[:]
-        serialized = serialized_bytes.decode("utf-8")
-    elif sys.platform == "cli":
-        if type(serialized_bytes) is memoryview:
-            serialized_bytes = serialized_bytes.tobytes()
-        serialized = codecs.decode(serialized_bytes, "utf-8")
-    else:
-        serialized = codecs.decode(serialized_bytes, "utf-8")
+    serialized = codecs.decode(serialized_bytes, "utf-8")
     if '\x00' in serialized:
         raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
-    if sys.version_info < (3, 0):
-        # python 2.x: parse with unicode_literals (promotes all strings to unicode)
-        # note: this doesn't work on jython... see bug http://bugs.jython.org/issue2008
-        # so we add a safety net, to avoid working with incorrectly processed unicode strings
-        serialized = compile(serialized, "<serpent>", mode="eval", flags=ast.PyCF_ONLY_AST | __future__.unicode_literals.compiler_flag)
-        if os.name == "java":
-            for node in ast.walk(serialized):
-                if isinstance(node, ast.Str):
-                    if isinstance(node.s, str) and any(c for c in node.s if c > '\x7f'):
-                        # In this case there is risk of incorrectly parsed unicode data. Play safe and crash.
-                        raise ValueError("cannot properly parse unicode string with ast in Jython, see bug http://bugs.jython.org/issue2008"
-                                         " - use python 2.x server or convert strings to ascii yourself first")
-                    node.s = node.s.decode("unicode-escape")
     try:
-        if os.name != "java" and sys.platform != "cli":
-            gc.disable()
+        gc.disable()
         return ast.literal_eval(serialized)
     finally:
         gc.enable()
@@ -164,12 +116,12 @@ def _reset_special_classes_registry():
     _special_classes_registry[KeysView] = _ser_DictView
     _special_classes_registry[ValuesView] = _ser_DictView
     _special_classes_registry[ItemsView] = _ser_DictView
-    if sys.version_info >= (2, 7):
-        _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
-    if enum is not None:
-        def _ser_Enum(obj, serializer, outputstream, indentlevel):
-            serializer._serialize(obj.value, outputstream, indentlevel)
-        _special_classes_registry[enum.Enum] = _ser_Enum
+    _special_classes_registry[collections.OrderedDict] = _ser_OrderedDict
+
+    def _ser_Enum(obj, serializer, outputstream, indentlevel):
+        serializer._serialize(obj.value, outputstream, indentlevel)
+
+    _special_classes_registry[enum.Enum] = _ser_Enum
 
 
 _reset_special_classes_registry()
@@ -199,12 +151,7 @@ class BytesWrapper(object):
         self.data = data
 
     def __getstate__(self):
-        if sys.platform == "cli":
-            b64 = base64.b64encode(str(self.data))  # weird IronPython bug?
-        elif (os.name == "java" or sys.version_info < (2, 7)) and type(self.data) is bytearray:
-            b64 = base64.b64encode(bytes(self.data))  # Jython bug http://bugs.jython.org/issue2011
-        else:
-            b64 = base64.b64encode(self.data)
+        b64 = base64.b64encode(self.data)
         return {
             "data": b64 if type(b64) is str else b64.decode("ascii"),
             "encoding": "base64"
@@ -227,40 +174,26 @@ class BytesWrapper(object):
         return BytesWrapper(data)
 
 
-_repr_types = set([
-    str,
-    int,
-    bool,
-    type(None)
-])
+_repr_types = {str, int, bool, type(None)}
 
 _translate_types = {
     bytes: BytesWrapper.from_bytes,
     bytearray: BytesWrapper.from_bytearray,
     collections.deque: list,
+    collections.UserDict: dict,
+    collections.UserList: list,
+    collections.UserString: str
 }
-
-if sys.version_info >= (3, 0):
-    _translate_types.update({
-        collections.UserDict: dict,
-        collections.UserList: list,
-        collections.UserString: str
-    })
 
 _bytes_types = [bytes, bytearray, memoryview]
 
 # do some dynamic changes to the types configuration if needed
 if bytes is str:
     del _translate_types[bytes]
-if hasattr(types, "BufferType"):
-    _translate_types[types.BufferType] = BytesWrapper.from_buffer
-    _bytes_types.append(buffer)
 try:
     _translate_types[memoryview] = BytesWrapper.from_memoryview
 except NameError:
     pass
-if sys.platform == "cli":
-    _repr_types.remove(str)  # IronPython needs special str treatment, otherwise it treats unicode wrong
 _bytes_types = tuple(_bytes_types)
 
 
@@ -290,16 +223,14 @@ class Serializer(object):
     """
     dispatch = {}
 
-    def __init__(self, indent=False, set_literals=can_use_set_literals, module_in_classname=False):
+    def __init__(self, indent=False, module_in_classname=False):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
-        setLiterals=use set-literals or not (set to False if you need compatibility with Python < 3.2).
         Serpent chooses a sensible default for you.
         module_in_classname = include module prefix for class names or only use the class name itself
         """
         self.indent = indent
-        self.set_literals = set_literals
         self.module_in_classname = module_in_classname
         self.serialized_obj_ids = set()
         self.special_classes_registry_copy = None
@@ -308,17 +239,10 @@ class Serializer(object):
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
         self.special_classes_registry_copy = _special_classes_registry.copy()   # make it thread safe
-        header = "# serpent utf-8 "
-        if self.set_literals:
-            header += "python3.2\n"   # set-literals require python 3.2+ to deserialize (ast.literal_eval limitation)
-        else:
-            header += "python2.6\n"   # don't change this, otherwise we can't read older serpent strings
+        header = "# serpent utf-8 python3.2\n"
         out = [header]
-        if os.name == "java" and type(obj) is buffer:
-            obj = bytearray(obj)
         try:
-            if os.name != "java" and sys.platform != "cli":
-                gc.disable()
+            gc.disable()
             self.serialized_obj_ids = set()
             self._serialize(obj, out, 0)
         finally:
@@ -327,7 +251,7 @@ class Serializer(object):
         del self.serialized_obj_ids
         return "".join(out).encode("utf-8")
 
-    _shortcut_dispatch_types = frozenset([float, complex, tuple, list, dict, set, frozenset])
+    _shortcut_dispatch_types = {float, complex, tuple, list, dict, set, frozenset}
 
     def _serialize(self, obj, out, level):
         if level > self.maximum_level:
@@ -363,11 +287,6 @@ class Serializer(object):
                 func = Serializer.ser_default_class
         func(self, obj, out, level)
 
-    def ser_builtins_str(self, str_obj, out, level):
-        # special case str, for IronPython where str==unicode and repr() yields undesired result
-        self.ser_builtins_unicode(str_obj, out, level)
-    dispatch[str] = ser_builtins_str
-
     def ser_builtins_float(self, float_obj, out, level):
         if math.isnan(float_obj):
             # there's no literal expression for a float NaN...
@@ -390,21 +309,6 @@ class Serializer(object):
         self.ser_builtins_float(complex_obj.imag, out, level)
         out.append("j)")
     dispatch[complex] = ser_builtins_complex
-
-    if sys.version_info < (3, 0):
-        # this method is used for python 2.x unicode (python 3.x doesn't use this)
-        def ser_builtins_unicode(self, unicode_obj, out, level):
-            z = repr(unicode_obj)
-            if z[0] == 'u':
-                z = z[1:]    # get rid of the unicode 'u' prefix
-            out.append(z)
-        dispatch[unicode] = ser_builtins_unicode
-
-    if sys.version_info < (3, 0):
-        def ser_builtins_long(self, long_obj, out, level):
-            # used with python 2.x
-            out.append(str(long_obj))
-        dispatch[long] = ser_builtins_long
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
         append = out.append
@@ -460,9 +364,7 @@ class Serializer(object):
 
     def _check_hashable_type(self, t):
         if t not in (bool, bytes, str, tuple) and not issubclass(t, numbers.Number):
-            if enum is not None and issubclass(t, enum.Enum):
-                return
-            elif sys.version_info < (3, 0) and t is unicode:
+            if issubclass(t, enum.Enum):
                 return
             raise TypeError("one of the keys in a dict or set is not of a primitive hashable type: " +
                             str(t) + ". Use simple types as keys or use a list or tuple as container.")
@@ -506,11 +408,6 @@ class Serializer(object):
     dispatch[dict] = ser_builtins_dict
 
     def ser_builtins_set(self, set_obj, out, level):
-        if not self.set_literals:
-            if self.indent:
-                set_obj = sorted(set_obj)
-            self._serialize(tuple(set_obj), out, level)     # use a tuple instead of a set literal
-            return
         append = out.append
         serialize = self._serialize
         if self.indent and set_obj:
@@ -558,14 +455,9 @@ class Serializer(object):
         out.append(repr(date_obj.isoformat()))
     dispatch[datetime.date] = ser_datetime_date
 
-    if os.name == "java" or sys.version_info < (2, 7):    # jython bug http://bugs.jython.org/issue2010
-        def ser_datetime_timedelta(self, timedelta_obj, out, level):
-            secs = ((timedelta_obj.days * 86400 + timedelta_obj.seconds) * 10 ** 6 + timedelta_obj.microseconds) / 10 ** 6
-            out.append(repr(secs))
-    else:
-        def ser_datetime_timedelta(self, timedelta_obj, out, level):
-            secs = timedelta_obj.total_seconds()
-            out.append(repr(secs))
+    def ser_datetime_timedelta(self, timedelta_obj, out, level):
+        secs = timedelta_obj.total_seconds()
+        out.append(repr(secs))
     dispatch[datetime.timedelta] = ser_datetime_timedelta
 
     def ser_datetime_time(self, time_obj, out, level):

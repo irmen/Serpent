@@ -3,7 +3,6 @@ Prints a comparison between different serializers.
 Compares results based on size of the output, and time taken to (de)serialize.
 """
 
-from __future__ import print_function
 from timeit import default_timer as perf_timer
 import sys
 import datetime

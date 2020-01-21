@@ -1,10 +1,6 @@
-from __future__ import print_function
 import sys
 import serpent
 import platform
-
-if sys.version_info>=(3,0):
-    unichr = chr
 
 teststrings = [
     u"",
@@ -13,9 +9,9 @@ teststrings = [
     u"\x00\x01\x80\x81\xfe\xff\u20ac\u4444\u0240slashu:\\uend.\\u20ac(no euro!)\\U00022001bigone"
 ]
 
-large = u"".join(unichr(i) for i in range(256))
+large = u"".join(chr(i) for i in range(256))
 teststrings.append(large)
-large = u"".join(unichr(i) for i in range(0x20ac+1))
+large = u"".join(chr(i) for i in range(0x20ac+1))
 teststrings.append(large)
 
 
