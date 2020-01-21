@@ -67,11 +67,6 @@ Serpent handles several special Python types to make life easier:
 
 Notes:
 
-All str will be promoted to unicode. This is done because it is the
-default anyway for Python 3.x, and it solves the problem of the str/unicode
-difference between different Python versions. Also it means the serialized
-output doesn't have those problematic 'u' prefixes on strings.
-
 The serializer is not thread-safe. Make sure you're not making changes
 to the object tree that is being serialized, and don't use the same
 serializer in different threads.
