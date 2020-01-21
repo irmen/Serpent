@@ -39,5 +39,5 @@ matrix:
       dotnet: 2.2
       mono: none
       script:
-       - dotnet restore
+       - dotnet restore dotnet/Serpent
        - dotnet test dotnet/Serpent/Tests
