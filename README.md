@@ -52,7 +52,7 @@ Compatible with Python 3.5+ (use a serpent version before 1.30 for Python 2.7 su
 Serpent handles several special Python types to make life easier:
 
  - str  --> promoted to unicode (see below why this is)
- - bytes, bytearrays, memoryview, buffer  --> string, base-64
+ - bytes, bytearrays, memoryview --> string, base-64
    (you'll have to manually un-base64 them though. Can use serpent.tobytes function)
  - uuid.UUID, datetime.{datetime, date, time, timespan}  --> appropriate string/number
  - decimal.Decimal  --> string (to not lose precision)
