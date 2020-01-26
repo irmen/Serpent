@@ -18,11 +18,7 @@ decoded there (using ast.literal_eval()). It can ofcourse also deserialize
 such a Python expression itself, back into the equivalent .NET datatypes.
 More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpent</Description>
     <Copyright>Copyright Irmen de Jong</Copyright>
-    <!--
     <PackageLicenseExpression>MIT</PackageLicenseExpression> 
-    <PackageLicenseFile>../LICENSE</PackageLicenseFile>
-    -->
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/irmen/serpent</PackageProjectUrl>
     <RepositoryUrl>https://github.com/irmen/Serpent.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
