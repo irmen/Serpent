@@ -43,8 +43,6 @@ Software license: "MIT software license". See http://opensource.org/licenses/MIT
 import ast
 import base64
 import sys
-import types
-import os
 import gc
 import decimal
 import datetime
@@ -58,7 +56,7 @@ import enum
 from collections.abc import KeysView, ValuesView, ItemsView
 
 
-__version__ = "1.30.dev0"
+__version__ = "1.30"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 
