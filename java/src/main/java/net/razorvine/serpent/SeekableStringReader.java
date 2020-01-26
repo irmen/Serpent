@@ -7,7 +7,7 @@
 
 package net.razorvine.serpent;
 
-	
+
 /**
  * A special string reader that is suitable for the parser to read through
  * the expression string. You can rewind it, set bookmarks to flip back to, etc.
@@ -23,9 +23,9 @@ public class SeekableStringReader
 		if(str==null)
 			throw new IllegalArgumentException("str may not be null");
 
-		this.str = str;	
+		this.str = str;
 	}
-	
+
 	/**
 	 * Make a nested reader with its own cursor and bookmark.
 	 * The cursor starts at the same position as the parent.
@@ -43,7 +43,7 @@ public class SeekableStringReader
 	{
 		return cursor<str.length();
 	}
-	
+
 	/**
 	 * What is the next character?
 	 */
@@ -67,7 +67,7 @@ public class SeekableStringReader
 	{
 		return str.charAt(cursor++);
 	}
-	
+
 	/**
 	 * Read a number of characters.
 	 */
@@ -78,12 +78,12 @@ public class SeekableStringReader
 		int safecount = Math.min(count, str.length()-cursor);
 		if(safecount==0 && count>0)
 			throw new ParseException("no more data");
-		
+
 		String result = str.substring(cursor, cursor+safecount);
 		cursor += safecount;
 		return result;
 	}
-	
+
 	/**
 	 * Read everything until one the sentinel, which must exist in the string.
 	 * Sentinel char is read but not returned in the result.
@@ -112,7 +112,7 @@ public class SeekableStringReader
 			if(i>=0)
 				index = Math.min(i, index);
 		}
-			
+
 		if(index>=0 && index<Integer.MAX_VALUE)
 		{
 			String result = str.substring(cursor, index);
@@ -121,7 +121,7 @@ public class SeekableStringReader
 		}
 		throw new ParseException("terminator not found");
 	}
-	
+
 	/**
 	 * Read everything as long as the char occurs in the accepted characters.
 	 */
@@ -137,7 +137,7 @@ public class SeekableStringReader
 		}
 		return str.substring(start, cursor);
 	}
-	
+
 	/**
 	 * Read away any whitespace.
 	 * If a comment follows ('# bla bla') read away that as well
@@ -171,7 +171,7 @@ public class SeekableStringReader
 		cursor = str.length();
 		return result;
 	}
-	
+
 	/**
 	 * Rewind a number of characters.
 	 */
@@ -187,7 +187,7 @@ public class SeekableStringReader
 	{
 		return cursor;
 	}
-	
+
 	/**
 	 * Flip back to previously set bookmark.
 	 */
@@ -195,7 +195,7 @@ public class SeekableStringReader
 	{
 		cursor = bookmark;
 	}
-	
+
 	/**
 	 * Sync the position and bookmark with the current position in another reader.
 	 */
@@ -204,10 +204,10 @@ public class SeekableStringReader
 		bookmark = inner.bookmark;
 		cursor = inner.cursor;
 	}
-	
+
 	/**
 	 * Extract a piece of context around the current cursor (if you set cursor to -1)
-	 * or around a given position in the string (if you set cursor>=0).
+	 * or around a given position in the string (if you set cursor greater or equal to 0).
 	 */
 	public class StringContext
 	{
@@ -227,7 +227,7 @@ public class SeekableStringReader
 		result.right = str.substring(crsr, crsr+rightLen);
 		return result;
 	}
-	
+
 	public void close()
 	{
 		this.str = null;
