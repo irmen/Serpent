@@ -24,7 +24,8 @@ This license, including disclaimer, is available in the 'LICENSE' file.
 
 PYTHON
 ------
-Package can be found on Pypi as 'serpent': https://pypi.python.org/pypi/serpent
+Compatible with Python 3.5+ (use a serpent version before 1.30 for Python 2.7 support)
+It can be found on Pypi as 'serpent': https://pypi.python.org/pypi/serpent
 Example usage can be found in ./tests/example.py
 
 
@@ -47,8 +48,6 @@ Version 1.23 and later require Java 8 (JDK 1.8) at a minimum to compile and run.
 
 SOME MORE DETAILS
 -----------------
-Compatible with Python 3.5+ (use a serpent version before 1.30 for Python 2.7 support)
-
 Serpent handles several special Python types to make life easier:
 
  - bytes, bytearrays, memoryview --> string, base-64
