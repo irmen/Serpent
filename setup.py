@@ -31,6 +31,7 @@ setup(
     name='serpent',
     version=serpent_version,
     py_modules=["serpent"],
+    python_requires='>=3.2',
     license='MIT',
     author='Irmen de Jong',
     author_email='irmen@razorvine.net',
