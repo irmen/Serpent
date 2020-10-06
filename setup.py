@@ -185,6 +185,7 @@ When you run this it prints:
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Software Development"
     ],
     test_suite="setup.serpent_test_suite"
