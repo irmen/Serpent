@@ -3,7 +3,7 @@
 matrix:
   include:
     - language: python
-      python: 3.9
+      python: 3.9.0
       install: pip install pytz attrs .
       script: cd tests && python -E -Wall -tt -bb test_serpent.py
 
