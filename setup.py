@@ -72,7 +72,7 @@ Serpent is more sophisticated than a simple repr() + literal_eval():
 Serpent allows comments in the serialized data (because it is just Python source code).
 Serpent can't serialize object graphs (when an object refers to itself); it will then crash with a ValueError pointing out the problem.
 
-Works with Python 3.5+
+Works with Python 3 recent versions.
 
 **FAQ**
 
