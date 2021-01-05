@@ -7,7 +7,7 @@ original object tree. As such it is safe to send serpent data to other
 machines over the network for instance (because only 'safe' literals are
 encoded).
 
-Compatible with Python 3.5+
+Compatible with recent Python 3 versions
 
 Serpent handles several special Python types to make life easier:
 
