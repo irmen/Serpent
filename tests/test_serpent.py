@@ -423,7 +423,7 @@ class TestBasics(unittest.TestCase):
         self.assertIn(str("text1"), data2)
         self.assertIn(str("text2"), data2)
 
-    def test_bytes(self):
+    def test_bytes_default(self):
         ser = serpent.dumps(bytes(b"abcdef"))
         data = serpent.loads(ser)
         self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
@@ -433,6 +433,17 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(memoryview(b"abcdef"))
         data = serpent.loads(ser)
         self.assertEqual({'encoding': 'base64', 'data': 'YWJjZGVm'}, data)
+
+    def test_bytes_repr(self):
+        ser = serpent.dumps(bytes(b"abcdef\xff"), bytes_repr=True)
+        data = serpent.loads(ser)
+        self.assertEqual(b'abcdef\xff', data)
+        ser = serpent.dumps(bytearray(b"abcdef\xff"), bytes_repr=True)
+        data = serpent.loads(ser)
+        self.assertEqual(b'abcdef\xff', data)
+        ser = serpent.dumps(memoryview(b"abcdef\xff"), bytes_repr=True)
+        data = serpent.loads(ser)
+        self.assertEqual(b'abcdef\xff', data)
 
     def test_exception(self):
         x = ZeroDivisionError("wrong")
