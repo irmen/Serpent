@@ -15,11 +15,6 @@ import sys
 
 serpent_version = re.search(r'^__version__\s*=\s*"(.+)"', open("serpent.py", "rt").read(), re.MULTILINE).groups()[0]
 
-if sys.version_info < (3, 2):
-    raise RuntimeError("This version of serpent ({}) doesn't support this obsolete Python version {}.{}. "
-                       "Either upgrade to a recent Python version or downgrade serpent to a version before 1.30"
-                       .format(serpent_version, sys.version_info.major, sys.version_info.minor))
-
 
 def serpent_test_suite():
     testloader = unittest.TestLoader()

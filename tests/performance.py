@@ -19,8 +19,8 @@ class Person(object):
 guid = uuid.uuid4()
 
 data = {
-    "bytes": b"0123456789abcdefghijklmnopqrstuvwxyz" * 2000,
-    "bytearray": bytearray(b"0123456789abcdefghijklmnopqrstuvwxyz") * 2000,
+    "bytes": bytes(x for x in range(256)) * 300,
+    "bytearray": bytearray(x for x in range(256)) * 300,
     "str": "\"0123456789\"\n'abcdefghijklmnopqrstuvwxyz'\t" * 2000,
     "unicode": u"abcdefghijklmnopqrstuvwxyz\u20ac\u20ac\u20ac\u20ac\u20ac" * 2000,
     "int": [123456789] * 1000,
@@ -57,7 +57,7 @@ import marshal
 serializers["marshal"] = (marshal.dumps, marshal.loads)
 try:
     import msgpack
-    serializers["msgpack"] = (lambda d: msgpack.packb(d, use_bin_type=True), lambda d: msgpack.unpackb(d, encoding="utf-8"))
+    serializers["msgpack"] = (lambda d: msgpack.packb(d, use_bin_type=True), lambda d: msgpack.unpackb(d))
 except ImportError:
     pass
 try:
@@ -111,7 +111,11 @@ def run():
                 for _ in range(repeat):
                     start = perf_timer()
                     for _ in range(number):
-                        deserializer(serialized_data)
+                        deserialized_data = deserializer(serialized_data)
+                        if type(deserialized_data) is dict:
+                            encoding = deserialized_data.get("encoding")
+                            if encoding=="base64":
+                                deserialized_data = serpent.tobytes(deserialized_data)
                     durations_deser.append(perf_timer() - start)
                 duration_ser = min(durations_ser)
                 duration_deser = min(durations_deser)

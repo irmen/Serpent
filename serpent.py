@@ -55,26 +55,36 @@ import collections
 import enum
 from collections.abc import KeysView, ValuesView, ItemsView
 
-
-__version__ = "1.30.2"
+__version__ = "1.40"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 
-def dumps(obj, indent=False, module_in_classname=False):
-    """Serialize object tree to bytes"""
-    return Serializer(indent, module_in_classname).serialize(obj)
+def dumps(obj, indent=False, module_in_classname=False, bytes_repr=False):
+    """
+    Serialize object tree to bytes.
+    indent = indent the output over multiple lines (default=false)
+    module_in_classname = include module prefix for class names or only use the class name itself
+    bytes_repr = should the bytes literal value representation be used instead of base-64 encoding for bytes types?
+    """
+    return Serializer(indent, module_in_classname, bytes_repr).serialize(obj)
 
 
-def dump(obj, file, indent=False, module_in_classname=False):
-    """Serialize object tree to a file"""
-    file.write(dumps(obj, indent=indent, module_in_classname=module_in_classname))
+def dump(obj, file, indent=False, module_in_classname=False, bytes_repr=False):
+    """
+    Serialize object tree to a file.
+    indent = indent the output over multiple lines (default=false)
+    module_in_classname = include module prefix for class names or only use the class name itself
+    bytes_repr = should the bytes literal value representation be used instead of base-64 encoding for bytes types?
+    """
+    file.write(dumps(obj, indent=indent, module_in_classname=module_in_classname, bytes_repr=bytes_repr))
 
 
 def loads(serialized_bytes):
     """Deserialize bytes back to object tree. Uses ast.literal_eval (safe)."""
     serialized = codecs.decode(serialized_bytes, "utf-8")
     if '\x00' in serialized:
-        raise ValueError("The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
+        raise ValueError(
+            "The serpent data contains 0-bytes so it cannot be parsed by ast.literal_eval. Has it been corrupted?")
     try:
         gc.disable()
         return ast.literal_eval(serialized)
@@ -100,7 +110,7 @@ def _ser_DictView(obj, serializer, outputstream, indentlevel):
     serializer.ser_builtins_list(obj, outputstream, indentlevel)
 
 
-_special_classes_registry = collections.OrderedDict()   # must be insert-order preserving to make sure of proper precedence rules
+_special_classes_registry = collections.OrderedDict()  # must be insert-order preserving to make sure of proper precedence rules
 
 
 def _reset_special_classes_registry():
@@ -134,55 +144,34 @@ def register_class(clazz, serializer):
     _special_classes_registry[clazz] = serializer
 
 
-class BytesWrapper(object):
-    """
-    Wrapper for bytes, bytearray etc. to make them appear as base-64 encoded data.
-    You can use the tobytes utility function to decode this back into the actual bytes (or do it manually)
-    """
-    def __init__(self, data):
-        self.data = data
-
-    def __getstate__(self):
-        b64 = base64.b64encode(self.data)
-        return {
-            "data": b64 if type(b64) is str else b64.decode("ascii"),
-            "encoding": "base64"
-        }
-
-    @staticmethod
-    def from_bytes(data):
-        return BytesWrapper(data)
-
-    @staticmethod
-    def from_bytearray(data):
-        return BytesWrapper(data)
-
-    @staticmethod
-    def from_memoryview(data):
-        return BytesWrapper(data.tobytes())
-
-
 _repr_types = {str, int, bool, type(None)}
 
 _translate_types = {
-    bytes: BytesWrapper.from_bytes,
-    bytearray: BytesWrapper.from_bytearray,
     collections.deque: list,
     collections.UserDict: dict,
     collections.UserList: list,
     collections.UserString: str
 }
 
-_bytes_types = [bytes, bytearray, memoryview]
+_bytes_types = (bytes, bytearray, memoryview)
 
-# do some dynamic changes to the types configuration if needed
-if bytes is str:
-    del _translate_types[bytes]
-try:
-    _translate_types[memoryview] = BytesWrapper.from_memoryview
-except NameError:
-    pass
-_bytes_types = tuple(_bytes_types)
+
+def _translate_byte_type(t, data, bytes_repr):
+    if bytes_repr:
+        if t == bytes:
+            return repr(data)
+        elif t == bytearray:
+            return repr(bytes(data))
+        elif t == memoryview:
+            return repr(bytes(data))
+        else:
+            raise TypeError("invalid bytes type")
+    else:
+        b64 = base64.b64encode(data)
+        return repr({
+            "data": b64 if type(b64) is str else b64.decode("ascii"),
+            "encoding": "base64"
+        })
 
 
 def tobytes(obj):
@@ -191,6 +180,10 @@ def tobytes(obj):
     (a dict with base-64 encoded 'data' in it and 'encoding'='base64').
     If obj is already bytes or a byte-like type, return obj unmodified.
     Will raise TypeError if obj is none of the above.
+
+    All this is not required if you called serpent with 'bytes_repr' set to True, since Serpent 1.40
+    that can be used to directly encode bytes into the bytes literal value representation.
+    That will be less efficient than the default base-64 encoding though, but it's a bit more convenient.
     """
     if isinstance(obj, _bytes_types):
         return obj
@@ -198,7 +191,7 @@ def tobytes(obj):
         try:
             return base64.b64decode(obj["data"])
         except TypeError:
-            return base64.b64decode(obj["data"].encode("ascii"))   # needed for certain older versions of pypy
+            return base64.b64decode(obj["data"].encode("ascii"))  # needed for certain older versions of pypy
     raise TypeError("argument is neither bytes nor serpent base64 encoded bytes dict")
 
 
@@ -211,22 +204,23 @@ class Serializer(object):
     """
     dispatch = {}
 
-    def __init__(self, indent=False, module_in_classname=False):
+    def __init__(self, indent=False, module_in_classname=False, bytes_repr=False):
         """
         Initialize the serializer.
         indent=indent the output over multiple lines (default=false)
-        Serpent chooses a sensible default for you.
         module_in_classname = include module prefix for class names or only use the class name itself
+        bytes_repr = should the bytes literal value representation be used instead of base-64 encoding for bytes types?
         """
         self.indent = indent
         self.module_in_classname = module_in_classname
         self.serialized_obj_ids = set()
         self.special_classes_registry_copy = None
         self.maximum_level = min(sys.getrecursionlimit() // 5, 1000)
+        self.bytes_repr = bytes_repr
 
     def serialize(self, obj):
         """Serialize the object tree to bytes."""
-        self.special_classes_registry_copy = _special_classes_registry.copy()   # make it thread safe
+        self.special_classes_registry_copy = _special_classes_registry.copy()  # make it thread safe
         header = "# serpent utf-8 python3.2\n"
         out = [header]
         try:
@@ -243,14 +237,18 @@ class Serializer(object):
 
     def _serialize(self, obj, out, level):
         if level > self.maximum_level:
-            raise ValueError("Object graph nesting too deep. Increase serializer.maximum_level if you think you need more, "
-                             " but this may cause a RecursionError instead if Python's recursion limit doesn't allow it.")
+            raise ValueError(
+                "Object graph nesting too deep. Increase serializer.maximum_level if you think you need more, "
+                " but this may cause a RecursionError instead if Python's recursion limit doesn't allow it.")
         t = type(obj)
+        if t in _bytes_types:
+            out.append(_translate_byte_type(t, obj, self.bytes_repr))
+            return
         if t in _translate_types:
             obj = _translate_types[t](obj)
             t = type(obj)
         if t in _repr_types:
-            out.append(repr(obj))    # just a simple repr() is enough for these objects
+            out.append(repr(obj))  # just a simple repr() is enough for these objects
             return
         if t in self._shortcut_dispatch_types:
             # we shortcut these builtins directly to the dispatch function to avoid type lookup overhead below
@@ -287,6 +285,7 @@ class Serializer(object):
                 out.append("-1e30000")
         else:
             out.append(repr(float_obj))
+
     dispatch[float] = ser_builtins_float
 
     def ser_builtins_complex(self, complex_obj, out, level):
@@ -296,6 +295,7 @@ class Serializer(object):
             out.append("+")
         self.ser_builtins_float(complex_obj.imag, out, level)
         out.append("j)")
+
     dispatch[complex] = ser_builtins_complex
 
     def ser_builtins_tuple(self, tuple_obj, out, level):
@@ -321,6 +321,7 @@ class Serializer(object):
             if len(tuple_obj) > 1:
                 del out[-1]  # undo the last ,
             append(")")
+
     dispatch[tuple] = ser_builtins_tuple
 
     def ser_builtins_list(self, list_obj, out, level):
@@ -348,6 +349,7 @@ class Serializer(object):
                 del out[-1]  # remove the last ,
             append("]")
         self.serialized_obj_ids.discard(id(list_obj))
+
     dispatch[list] = ser_builtins_list
 
     def _check_hashable_type(self, t):
@@ -393,6 +395,7 @@ class Serializer(object):
                 del out[-1]  # remove the last ,
             append("}")
         self.serialized_obj_ids.discard(id(dict_obj))
+
     dispatch[dict] = ser_builtins_dict
 
     def ser_builtins_set(self, set_obj, out, level):
@@ -404,7 +407,7 @@ class Serializer(object):
             append("{\n")
             try:
                 sorted_elts = sorted(set_obj)
-            except TypeError:   # can occur when elements can't be ordered (Python 3.x)
+            except TypeError:  # can occur when elements can't be ordered (Python 3.x)
                 sorted_elts = set_obj
             for elt in sorted_elts:
                 append(indent_chars_inside)
@@ -424,36 +427,44 @@ class Serializer(object):
         else:
             # empty set literal doesn't exist unfortunately, replace with empty tuple
             self.ser_builtins_tuple((), out, level)
+
     dispatch[set] = ser_builtins_set
 
     def ser_builtins_frozenset(self, set_obj, out, level):
         self.ser_builtins_set(set_obj, out, level)
+
     dispatch[frozenset] = ser_builtins_set
 
     def ser_decimal_Decimal(self, decimal_obj, out, level):
         # decimal is serialized as a string to avoid losing precision
         out.append(repr(str(decimal_obj)))
+
     dispatch[decimal.Decimal] = ser_decimal_Decimal
 
     def ser_datetime_datetime(self, datetime_obj, out, level):
         out.append(repr(datetime_obj.isoformat()))
+
     dispatch[datetime.datetime] = ser_datetime_datetime
 
     def ser_datetime_date(self, date_obj, out, level):
         out.append(repr(date_obj.isoformat()))
+
     dispatch[datetime.date] = ser_datetime_date
 
     def ser_datetime_timedelta(self, timedelta_obj, out, level):
         secs = timedelta_obj.total_seconds()
         out.append(repr(secs))
+
     dispatch[datetime.timedelta] = ser_datetime_timedelta
 
     def ser_datetime_time(self, time_obj, out, level):
         out.append(repr(str(time_obj)))
+
     dispatch[datetime.time] = ser_datetime_time
 
     def ser_uuid_UUID(self, uuid_obj, out, level):
         out.append(repr(str(uuid_obj)))
+
     dispatch[uuid.UUID] = ser_uuid_UUID
 
     def ser_exception_class(self, exc_obj, out, level):
@@ -464,6 +475,7 @@ class Serializer(object):
             "attributes": vars(exc_obj)  # add any custom attributes
         }
         self._serialize(value, out, level)
+
     dispatch[BaseException] = ser_exception_class
 
     def ser_array_array(self, array_obj, out, level):
@@ -471,6 +483,7 @@ class Serializer(object):
             self._serialize(array_obj.tounicode(), out, level)
         else:
             self._serialize(array_obj.tolist(), out, level)
+
     dispatch[array.array] = ser_array_array
 
     def ser_default_class(self, obj, out, level):
