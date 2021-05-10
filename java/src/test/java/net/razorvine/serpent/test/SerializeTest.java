@@ -20,6 +20,7 @@ import net.razorvine.serpent.IClassSerializer;
 import net.razorvine.serpent.Parser;
 import net.razorvine.serpent.Serializer;
 
+import net.razorvine.serpent.ast.BytesNode;
 import org.junit.Test;
 
 public class SerializeTest {
@@ -235,7 +236,7 @@ public class SerializeTest {
 
 
 	@Test
-	public void testBytes()
+	public void testBytesDefault()
 	{
 		Serializer serpent = new Serializer(true, false);
 		byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102 };	// abcdef
@@ -296,6 +297,20 @@ public class SerializeTest {
         } catch (IllegalArgumentException x) {
         	//
         }
+	}
+
+
+	@Test
+	public void testBytesRepr()
+	{
+		Serializer serpent = new Serializer(true, false, true);
+		byte[] bytes = new byte[] { 97, 98, 99, 100, 101, 102, 0, -1, '\'', '\"' };	// abcdef\x00\xff'"
+		byte[] ser = serpent.serialize(bytes);
+		assertEquals("b'abcdef\\x00\\xff\\'\"'", S(strip_header(ser)));
+
+		Parser p = new Parser();
+		BytesNode parsed = (BytesNode) p.parse(ser).root;
+		assertArrayEquals(bytes, parsed.toByteArray());
 	}
 
 

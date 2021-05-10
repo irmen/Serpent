@@ -11,6 +11,7 @@ public interface INodeVisitor
 	void visit(DoubleNode value);
 	void visit(BooleanNode value);
 	void visit(StringNode value);
+	void visit(BytesNode value);
 	void visit(SetNode setnode);
 	void visit(TupleNode tuple);
 	void visit(BigIntNode value);

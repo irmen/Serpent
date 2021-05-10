@@ -36,7 +36,7 @@ public class Parser
 			throw new ParseException(e.toString());
 		}
 	}
-	
+
 	/**
 	 * Parse from a string with the Python literal expression
 	 */
@@ -45,11 +45,11 @@ public class Parser
 		Ast ast=new Ast();
 		if(expression==null || expression.length()==0)
 			return ast;
-		
+
 		SeekableStringReader sr = new SeekableStringReader(expression);
 		if(sr.peek()=='#')
 			sr.readUntil('\n');  // skip comment line
-		
+
 		try {
 			ast.root = parseExpr(sr);
 			sr.skipWhitespace();
@@ -61,7 +61,7 @@ public class Parser
 			throw new ParseException(x.getMessage() + " (at position "+sr.bookmark()+"; '"+faultLocation+"')", x);
 		}
 	}
-	
+
 	String extractFaultLocation(SeekableStringReader sr)
 	{
 		SeekableStringReader.StringContext ctx = sr.context(-1, 20);
@@ -132,7 +132,7 @@ public class Parser
 			sr.read();
 			return tuple;		// empty tuple
 		}
-		
+
 		INode firstelement = parseExpr(sr);
 		if(sr.peek() == ',')
 		{
@@ -146,7 +146,7 @@ public class Parser
 			}
 			sr.rewind(1);   // undo the thing that wasn't a )
 		}
-		
+
 		tuple.elements = parseExprList(sr);
 		tuple.elements.add(0, firstelement);
 
@@ -164,9 +164,9 @@ public class Parser
 			closechar = sr.read();
 		if(closechar!=')')
 			throw new ParseException("expected ')'");
-		return tuple;			
+		return tuple;
 	}
-	
+
 	List<INode> parseExprList(SeekableStringReader sr)
 	{
 		//expr_list       = expr { ',' expr } .
@@ -201,7 +201,7 @@ public class Parser
 			}
 		}
 		return kvs;
-	}		
+	}
 
 	KeyValueNode parseKeyValue(SeekableStringReader sr)
 	{
@@ -218,8 +218,8 @@ public class Parser
 		}
 		throw new ParseException("expected ':'");
 	}
-	
-	
+
+
 	SetNode parseSet(SeekableStringReader sr)
 	{
 		// set = '{' expr_list trailing_comma '}' .
@@ -247,7 +247,7 @@ public class Parser
 		setnode.elements = new ArrayList<INode>(h);
 		return setnode;
 	}
-	
+
 	ListNode parseList(SeekableStringReader sr)
 	{
 		// list            = list_empty | list_nonempty .
@@ -262,7 +262,7 @@ public class Parser
 			sr.read();
 			return list;		// empty list
 		}
-		
+
 		list.elements = parseExprList(sr);
 
 		// handle trailing comma if present
@@ -279,14 +279,14 @@ public class Parser
 			throw new ParseException("expected ']'");
 		return list;
 	}
-	
+
 	INode parseDict(SeekableStringReader sr)
 	{
 		//dict            = '{' keyvalue_list trailing_comma '}' .
 		//keyvalue_list   = keyvalue { ',' keyvalue } .
 		//keyvalue        = expr ':' expr .
 		// trailing_comma  = '' | ',' .
-		
+
 		sr.read();	// {
 		sr.skipWhitespace();
 		DictNode dict = new DictNode();
@@ -295,7 +295,7 @@ public class Parser
 			sr.read();
 			return dict;		// empty dict
 		}
-		
+
 		List<INode> elts = parseKeyValueList(sr);
 
 		// handle trailing comma if present
@@ -310,7 +310,7 @@ public class Parser
 		char closechar = sr.read();
 		if(closechar!='}')
 			throw new ParseException("expected '}'");
-		
+
 		// make sure it has dict semantics (remove duplicate keys)
 		Map<INode, INode> fixedDict = new HashMap<INode, INode>(elts.size());
 		for(INode e: elts)
@@ -325,18 +325,18 @@ public class Parser
 			kvnode.value = e.getValue();
 			dict.elements.add(kvnode);
 		}
-		
+
 		// SPECIAL CASE: {'__class__':'float','value':'nan'}  ---> Double.NaN
 		if(dict.elements.size()==2) {
 			if(dict.elements.contains(new KeyValueNode(new StringNode("__class__"), new StringNode("float")))) {
 				if(dict.elements.contains(new KeyValueNode(new StringNode("value"), new StringNode("nan")))) {
 					return new DoubleNode(Double.NaN);
-				}	
+				}
 			}
 		}
 		return dict;
-	}		
-	
+	}
+
 	public INode parseSingle(SeekableStringReader sr)
 	{
 		// single =  int | float | complex | string | bool | none .
@@ -351,6 +351,8 @@ public class Parser
 			case '\'':
 			case '"':
 				return parseString(sr);
+			case 'b':
+				return parseBytes(sr);
 		}
 		// int or float or complex.
 		int bookmark = sr.bookmark();
@@ -366,7 +368,7 @@ public class Parser
 			}
 		}
 	}
-	
+
 	final String FloatCharacters = "-+.eE0123456789";
 	final String IntCharacters = "-0123456789";
 
@@ -402,7 +404,7 @@ public class Parser
 		String numberstr = sr.readWhile(FloatCharacters);
 		if(numberstr.length()==0)
 			throw new ParseException("invalid float character");
-		
+
 		// little bit of a hack:
 		// if the number doesn't contain a decimal point and no 'e'/'E', it is an integer instead.
 		// in that case, we need to reject it as a float.
@@ -436,7 +438,7 @@ public class Parser
 				numberstr = sr.readUntil("+-");
 			}
 			sr.rewind(1); // rewind the +/-
-			
+
 			// because we're a bit more cautious here with reading chars than in the float parser,
 			// it can be that the parser now stopped directly after the 'e' in a number like "3.14e+20".
 			// ("3.14e20" is fine) So, check if the last char is 'e' and if so, continue reading 0..9.
@@ -446,7 +448,7 @@ public class Parser
 					numberstr+=sr.read(1);
 				numberstr += sr.readWhile("0123456789");
 			}
-			
+
 			sr.skipWhitespace();
 			double real;
 			try {
@@ -457,7 +459,7 @@ public class Parser
 			double imaginarypart = parseImaginaryPart(sr);
 			if(sr.read()!=')')
 				throw new ParseException("expected ) to end a complex number");
-			
+
 			ComplexNumberNode c = new ComplexNumberNode();
 			c.real = real;
 			c.imaginary = imaginarypart;
@@ -473,17 +475,17 @@ public class Parser
 			return c;
 		}
 	}
-	
+
 	double parseImaginaryPart(SeekableStringReader sr)
 	{
 		//imaginary       = ['+' | '-' ] ( float | int ) 'j' .
 		if(!sr.hasMore())
 			throw new ParseException("unexpected end of input string");
 		char sign_or_digit = sr.peek();
-		
+
 		if(sign_or_digit=='+')
 			sr.read();   // skip the '+'
-		
+
 		// now an int or float follows.
 		double double_value;
 		int bookmark = sr.bookmark();
@@ -506,7 +508,7 @@ public class Parser
 				throw new ParseException("not an integer for the imaginary part");
 			}
 		}
-		
+
 		// now a 'j' must follow!
 		sr.skipWhitespace();
 		try {
@@ -518,7 +520,7 @@ public class Parser
 		}
 		return double_value;
 	}
-	
+
 	PrimitiveNode<String> parseString(SeekableStringReader sr)
 	{
 		char quotechar = sr.read();   // ' or "
@@ -579,7 +581,66 @@ public class Parser
 		}
 		throw new ParseException("unclosed string");
 	}
-	
+
+	PrimitiveNode<List<Byte>> parseBytes(SeekableStringReader sr)
+	{
+		sr.read();	// skip the 'b'
+		char quotechar = sr.read();   // ' or "
+		List<Byte> bytes = new ArrayList<Byte>();
+		while(sr.hasMore())
+		{
+			char c = sr.read();
+			if(c=='\\')
+			{
+				// backslash unescape
+				c = sr.read();
+				switch(c)
+				{
+					case '\\':
+						bytes.add((byte) '\\');
+						break;
+					case '\'':
+						bytes.add((byte)'\'');
+						break;
+					case '"':
+						bytes.add((byte)'"');
+						break;
+					case 'b':
+						bytes.add((byte)'\b');
+						break;
+					case 'f':
+						bytes.add((byte)'\f');
+						break;
+					case 'n':
+						bytes.add((byte)'\n');
+						break;
+					case 'r':
+						bytes.add((byte)'\r');
+						break;
+					case 't':
+						bytes.add((byte)'\t');
+						break;
+					case 'x':		//  "\x00"
+						bytes.add((byte) Integer.parseInt(sr.read(2), 16));
+						break;
+					default:
+						bytes.add((byte)c);
+						break;
+				}
+			}
+			else if(c==quotechar)
+			{
+				// end of bytes
+				return new BytesNode(bytes);
+			}
+			else
+			{
+				bytes.add((byte)c);
+			}
+		}
+		throw new ParseException("unclosed bytes");
+	}
+
 	PrimitiveNode<Boolean> parseBool(SeekableStringReader sr)
 	{
 		// True,False
@@ -590,7 +651,7 @@ public class Parser
 			return new BooleanNode(false);
 		throw new ParseException("expected bool, True or False");
 	}
-	
+
 	NoneNode parseNone(SeekableStringReader sr)
 	{
 		// None

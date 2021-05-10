@@ -44,6 +44,11 @@ public class Serializer
 	 */
 	public boolean packageInClassName = false;
 
+	/**
+	 * Use bytes literal representation instead of base-64 encoding?
+	 */
+	public boolean bytesRepr = false;
+
 	private static Map<Class<?>, IClassSerializer> classToDictRegistry = new HashMap<Class<?>, IClassSerializer>();
 
 	/**
@@ -62,6 +67,19 @@ public class Serializer
 	{
 		this.indent = indent;
 		this.packageInClassName = packageInClassName;
+	}
+
+	/**
+	 * Create a Serpent serializer with custom options.
+	 * @param indent should the output be indented to make it more readable?
+	 * @param packageInClassName should the package name be included with the class name for classes that are serialized to dict?
+	 * @param bytesRepr use bytes literal representation instead of base-64 encoding for bytes types?
+	 */
+	public Serializer(boolean indent, boolean packageInClassName, boolean bytesRepr)
+	{
+		this.indent = indent;
+		this.packageInClassName = packageInClassName;
+		this.bytesRepr = bytesRepr;
 	}
 
 	/**
@@ -103,7 +121,7 @@ public class Serializer
 		// hashtables/dictionaries -> dict
 		// hashset -> set
 		// array -> tuple
-		// byte arrays --> base64
+		// byte arrays --> base64 or bytes literal
 		// any other collection --> list
 		// date//uuid/exception -> custom mapping
 		// random class --> public javabean properties to dictionary
@@ -115,7 +133,7 @@ public class Serializer
 		// primitive array?
 		if(componentType!=null)
 		{
-			// byte array? encode as base-64
+			// byte array? encode as base-64 or bytes literal
 			if(componentType==Byte.TYPE)
 			{
 				serialize_bytes((byte[])obj, sw, level);
@@ -346,12 +364,51 @@ public class Serializer
 
 	protected void serialize_bytes(byte[] obj, StringWriter sw, int level)
 	{
-		// base-64 struct output
-		String str = Base64.getEncoder().encodeToString(obj);
-		Map<String, String> dict = new HashMap<String, String>();
-		dict.put("data", str);
-		dict.put("encoding", "base64");
-		serialize_dict(dict, sw, level);
+		if(bytesRepr) {
+			// create a 'repr' bytes representation following the same escaping rules as python 3.x repr() does.
+			StringBuilder b=new StringBuilder(obj.length*2);
+			boolean containsSingleQuote=false;
+			boolean containsQuote=false;
+			for (int bb : obj) {
+				containsSingleQuote |= bb == '\'';
+				containsQuote |= bb == '"';
+				if(bb<0)
+					bb=256+bb;
+				b.append(bytesrepr_255[bb]);
+			}
+			handleQuotes(sw, b, containsSingleQuote, containsQuote, true);
+		} else {
+			// base-64 struct output
+			String str = Base64.getEncoder().encodeToString(obj);
+			Map<String, String> dict = new HashMap<String, String>();
+			dict.put("data", str);
+			dict.put("encoding", "base64");
+			serialize_dict(dict, sw, level);
+		}
+	}
+
+	private void handleQuotes(StringWriter sw, StringBuilder b, boolean containsSingleQuote, boolean containsQuote, boolean isBytes) {
+		if(!containsSingleQuote) {
+			b.insert(0, '\'');
+			b.append('\'');
+			if(isBytes)
+				sw.write('b');
+			sw.write(b.toString());
+		} else if (!containsQuote) {
+			b.insert(0, '"');
+			b.append('"');
+			if(isBytes)
+				sw.write('b');
+			sw.write(b.toString());
+		} else {
+			String str2 = b.toString();
+			str2 = str2.replace("'", "\\'");
+			if(isBytes)
+				sw.write('b');
+			sw.write("'");
+			sw.write(str2);
+			sw.write("'");
+		}
 	}
 
 	protected void serialize_dict(Map<?, ?> dict, StringWriter sw,int level)
@@ -584,13 +641,17 @@ public class Serializer
 
 	// the repr translation table for characters 0x00-0xff
 	private final static String[] repr_255;
+	private final static String[] bytesrepr_255;
 	static {
 		repr_255=new String[256];
+		bytesrepr_255=new String[256];
 		for(int c=0; c<32; ++c) {
 			repr_255[c] = String.format("\\x%02x",c);
+			bytesrepr_255[c] = String.format("\\x%02x",c);
 		}
 		for(char c=0x20; c<0x7f; ++c) {
 			repr_255[c] = String.valueOf(c);
+			bytesrepr_255[c] = String.valueOf(c);
 		}
 		for(int c=0x7f; c<=0xa0; ++c) {
 			repr_255[c] = String.format("\\x%02x", c);
@@ -598,12 +659,19 @@ public class Serializer
 		for(char c=0xa1; c<=0xff; ++c) {
 			repr_255[c] = String.valueOf(c);
 		}
+		for(int c=0x7f; c<=0xff; ++c) {
+			bytesrepr_255[c] = String.format("\\x%02x", c);
+		}
 		// odd ones out:
 		repr_255['\t'] = "\\t";
 		repr_255['\n'] = "\\n";
 		repr_255['\r'] = "\\r";
 		repr_255['\\'] = "\\\\";
 		repr_255[0xad] = "\\xad";
+		bytesrepr_255['\t'] = "\\t";
+		bytesrepr_255['\n'] = "\\n";
+		bytesrepr_255['\r'] = "\\r";
+		bytesrepr_255['\\'] = "\\\\";
 	}
 
 	protected void serialize_string(String str, StringWriter sw, int level)
@@ -630,21 +698,7 @@ public class Serializer
 			}
 		}
 
-		if(!containsSingleQuote) {
-			b.insert(0, '\'');
-			b.append('\'');
-			sw.write(b.toString());
-		} else if (!containsQuote) {
-			b.insert(0, '"');
-			b.append('"');
-			sw.write(b.toString());
-		} else {
-			String str2 = b.toString();
-        	str2 = str2.replace("'", "\\'");
-        	sw.write("'");
-        	sw.write(str2);
-        	sw.write("'");
-		}
+		handleQuotes(sw, b, containsSingleQuote, containsQuote, false);
 	}
 
 	protected void serialize_exception(Exception ex, StringWriter sw, int level)

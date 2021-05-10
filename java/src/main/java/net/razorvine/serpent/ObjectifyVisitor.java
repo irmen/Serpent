@@ -24,10 +24,10 @@ public class ObjectifyVisitor implements INodeVisitor
 {
 	Stack<Object> generated = new Stack<Object>();
 	protected IDictToInstance dictConverter = null;
-	
+
 	public ObjectifyVisitor() {
 	}
-	
+
 	public ObjectifyVisitor(IDictToInstance dictConverter) {
 		this.dictConverter = dictConverter;
 	}
@@ -118,6 +118,11 @@ public class ObjectifyVisitor implements INodeVisitor
 		generated.push(value.value);
 	}
 
+	public void visit(BytesNode value)
+	{
+		generated.push(value.value);
+	}
+
 	public void visit(BigIntNode value)
 	{
 		generated.push(value.value);
@@ -145,5 +150,5 @@ public class ObjectifyVisitor implements INodeVisitor
 		}
 		generated.push(array);
 	}
-	
+
 }
