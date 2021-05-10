@@ -56,6 +56,7 @@ namespace Razorvine.Serpent
 			void Visit(DoubleNode value);
 			void Visit(BooleanNode value);
 			void Visit(StringNode value);
+			void Visit(BytesNode value);
 			void Visit(DecimalNode value);
 			void Visit(SetNode setnode);
 			void Visit(TupleNode tuple);
@@ -78,7 +79,7 @@ namespace Razorvine.Serpent
 		}
 		
 		[SuppressMessage("ReSharper", "UnusedMember.Global")]
-		public abstract class PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>> where T: IComparable
+		public abstract class PrimitiveNode<T> : INode, IComparable<PrimitiveNode<T>>
 		{
 			public readonly T Value;
 			protected PrimitiveNode(T value)
@@ -104,7 +105,11 @@ namespace Razorvine.Serpent
 			
 			public int CompareTo(PrimitiveNode<T> other)
 			{
-				return Value.CompareTo(other.Value);
+				var cv = Value as IComparable;
+				var otherCv = other.Value as IComparable;
+				if (cv != null && otherCv != null)
+					return cv.CompareTo(otherCv);
+				return 0;
 			}
 			
 			public override string ToString()
@@ -212,6 +217,17 @@ namespace Razorvine.Serpent
 				visitor.Visit(this);
 			}
 		}
+		
+		public class BytesNode: PrimitiveNode<byte[]>
+		{
+			public BytesNode(byte[] value) : base(value)
+			{
+			}
+			public override void Accept(INodeVisitor visitor)
+			{
+				visitor.Visit(this);
+			}
+		}		
 		
 		public class DecimalNode: PrimitiveNode<decimal>
 		{

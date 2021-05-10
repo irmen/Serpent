@@ -94,6 +94,11 @@ namespace Razorvine.Serpent
 			_result.AppendFormat("string '{0}'", value.Value);
 		}
 		
+		public void Visit(Ast.BytesNode value)
+		{
+			_result.AppendFormat("bytes {0}", value.Value);
+		}		
+		
 		public void Visit(Ast.DecimalNode value)
 		{
 			_result.AppendFormat("decimal {0}", value.Value);

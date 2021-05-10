@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Xunit;
-using Hashtable = System.Collections.Hashtable;
-using IDictionary = System.Collections.IDictionary;
+
 // ReSharper disable CheckNamespace
 // ReSharper disable InconsistentNaming
 // ReSharper disable MemberCanBeMadeStatic.Local
@@ -330,7 +330,7 @@ namespace Razorvine.Serpent.Test
 		}
 
 		[Fact]
-		public void TestBytes()
+		public void TestBytesDefault()
 		{
 			Serializer serpent = new Serializer(true);
 			byte[] bytes = { 97, 98, 99, 100, 101, 102 };	// abcdef
@@ -374,6 +374,19 @@ namespace Razorvine.Serpent.Test
             Assert.Throws<ArgumentException>(()=>Parser.ToBytes(dict));
             Assert.Throws<ArgumentException>(()=>Parser.ToBytes(12345));
             Assert.Throws<ArgumentException>(()=>Parser.ToBytes(null));
+		}
+
+		[Fact]
+		public void TestBytesRepr()
+		{
+			Serializer serpent = new Serializer(indent: true, bytesRepr:true);
+			byte[] bytes = { 97, 98, 99, 100, 101, 102, 0, 255, (byte)'\'', (byte)'\"' };	// abcdef\x00\xff'"
+			var ser = serpent.Serialize(bytes);
+			Assert.Equal("b'abcdef\\x00\\xff\\'\"'", S(strip_header(ser)));
+
+			Parser p = new Parser();
+			Ast.BytesNode parsed = (Ast.BytesNode) p.Parse(ser).Root;
+			Assert.Equal(bytes, parsed.Value);
 		}
 		
 		[Fact]

@@ -108,6 +108,11 @@ namespace Razorvine.Serpent
 			_generated.Push(value.Value);
 		}
 		
+		public void Visit(Ast.BytesNode value)
+		{
+			_generated.Push(value.Value);
+		}
+		
 		public void Visit(Ast.DecimalNode value)
 		{
 			_generated.Push(value.Value);

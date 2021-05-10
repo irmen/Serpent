@@ -335,6 +335,8 @@ namespace Razorvine.Serpent
 				case '\'':
 				case '"':
 					return ParseString(sr);
+				case 'b':
+					return ParseBytes(sr);
 			}
 			// int or float or complex.
 			int bookmark = sr.Bookmark();
@@ -578,6 +580,71 @@ namespace Razorvine.Serpent
 				}
 			}
 			throw new ParseException("unclosed string");
+		}
+
+		private Ast.PrimitiveNode<byte[]> ParseBytes(SeekableStringReader sr)
+		{
+			sr.Read();		// skip the 'b'
+			char quotechar = sr.Read();   // ' or "
+			var bytes = new List<byte>();
+			while(sr.HasMore())
+			{
+				char c = sr.Read();
+				if(c=='\\')
+				{
+					// backslash unescape
+					c = sr.Read();
+					switch(c)
+					{
+						case '\\':
+							bytes.Add((byte)'\\');
+							break;
+						case '\'':
+							bytes.Add((byte)'\'');
+							break;
+						case '"':
+							bytes.Add((byte)'"');
+							break;
+						case 'a':
+							bytes.Add((byte)'\a');
+							break;
+						case 'b':
+							bytes.Add((byte)'\b');
+							break;
+						case 'f':
+							bytes.Add((byte)'\f');
+							break;
+						case 'n':
+							bytes.Add((byte)'\n');
+							break;
+						case 'r':
+							bytes.Add((byte)'\r');
+							break;
+						case 't':
+							bytes.Add((byte)'\t');
+							break;
+						case 'v':
+							bytes.Add((byte)'\v');
+							break;
+						case 'x':		//  "\x00"
+							bytes.Add(byte.Parse(sr.Read(2), NumberStyles.HexNumber));
+							break;
+						default:
+							bytes.Add((byte)c);
+							break;
+					}
+				}
+				else if(c==quotechar)
+				{
+					// end of bytes
+					return new Ast.BytesNode(bytes.ToArray());
+				}
+				else
+				{
+					bytes.Add((byte)c);
+				}
+			}
+			throw new ParseException("unclosed bytes");
 		}
 
 		private Ast.PrimitiveNode<bool> ParseBool(SeekableStringReader sr)

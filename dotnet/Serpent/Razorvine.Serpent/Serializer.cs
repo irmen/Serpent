@@ -29,6 +29,12 @@ namespace Razorvine.Serpent
 		/// include namespace prefix for classes that are serialized to dict?
 		/// </summary>
 		public bool NamespaceInClassName;
+
+		/// <summary>
+		/// Use bytes literal representation instead of base-64 encoding?
+		/// </summary>
+		public bool BytesRepr;
+		
 		
 		/// <summary>
 		/// The maximum nesting level of the object graphs that you want to serialize.
@@ -46,10 +52,12 @@ namespace Razorvine.Serpent
 		/// </summary>
 		/// <param name="indent">indent the output over multiple lines (default=false)</param>
 		/// <param name="namespaceInClassName">include namespace prefix for class names or only use the class name itself</param>
-		public Serializer(bool indent=false, bool namespaceInClassName=false)
+		/// <param name="bytesRepr">use bytes literal representation instead of base-64 encoding for bytes types? (default=false)</param>
+		public Serializer(bool indent=false, bool namespaceInClassName=false, bool bytesRepr=false)
 		{
 			Indent = indent;
 			NamespaceInClassName = namespaceInClassName;
+			BytesRepr = bytesRepr;
 		}
 		
 		/// <summary>
@@ -310,26 +318,78 @@ namespace Razorvine.Serpent
 		
 		protected void Serialize_bytes(byte[] data, TextWriter tw, int level)
 		{
-			// base-64 struct output
-			string str = Convert.ToBase64String(data);
-			var dict = new Dictionary<string,string>
+			if (BytesRepr)
 			{
-				{"data", str},	
-				{"encoding", "base64"}
-			};
-			Serialize_dict(dict, tw, level);
+				// create a 'repr' bytes representation following the same escaping rules as python 3.x repr() does.
+				StringBuilder b=new StringBuilder(data.Length*2);
+				bool containsSingleQuote=false;
+				bool containsQuote=false;
+				foreach(byte bb in data)
+				{
+					containsSingleQuote |= bb=='\'';
+					containsQuote |= bb=='"';
+				
+					b.Append(BytesRepr255[bb]);
+				}
+				HandleQuotes(tw, containsSingleQuote, b, containsQuote, true);
+			}
+			else
+			{
+				// base-64 struct output
+				string str = Convert.ToBase64String(data);
+				var dict = new Dictionary<string, string>
+				{
+					{"data", str},
+					{"encoding", "base64"}
+				};
+				Serialize_dict(dict, tw, level);
+			}
 		}
-		
-		
+
+		private static void HandleQuotes(TextWriter tw, bool containsSingleQuote, StringBuilder b, bool containsQuote, bool isBytes)
+		{
+			if (!containsSingleQuote)
+			{
+				b.Insert(0, '\'');
+				b.Append('\'');
+				if(isBytes)
+					tw.Write('b');
+				tw.Write(b.ToString());
+			}
+			else if (!containsQuote)
+			{
+				b.Insert(0, '"');
+				b.Append('"');
+				if(isBytes)
+					tw.Write('b');
+				tw.Write(b.ToString());
+			}
+			else
+			{
+				string str2 = b.ToString();
+				str2 = str2.Replace("'", "\\'");
+				if(isBytes)
+					tw.Write('b');
+				tw.Write("'");
+				tw.Write(str2);
+				tw.Write("'");
+			}
+		}
+
+
 		// the repr translation table for characters 0x00-0xff
 		private static readonly string[] Repr255;
+		private static readonly string[] BytesRepr255;
 		static Serializer() {
 			Repr255=new string[256];
+			BytesRepr255=new string[256];
 			for(int c=0; c<32; ++c) {
 				Repr255[c] = "\\x"+c.ToString("x2");
+				BytesRepr255[c] = "\\x"+c.ToString("x2");
 			}
 			for(int c=0x20; c<0x7f; ++c) {
 				Repr255[c] = Convert.ToString((char)c);
+				BytesRepr255[c] = Convert.ToString((char)c);
 			}
 			for(int c=0x7f; c<=0xa0; ++c) {
 				Repr255[c] = "\\x"+c.ToString("x2");
@@ -337,12 +397,19 @@ namespace Razorvine.Serpent
 			for(int c=0xa1; c<=0xff; ++c) {
 				Repr255[c] = Convert.ToString((char)c);
 			}
+			for(int c=0x7f; c<=0xff; ++c) {
+				BytesRepr255[c] = "\\x"+c.ToString("x2");
+			}
 			// odd ones out:
 			Repr255['\t'] = "\\t";
 			Repr255['\n'] = "\\n";
 			Repr255['\r'] = "\\r";
 			Repr255['\\'] = "\\\\";
 			Repr255[0xad] = "\\xad";
+			BytesRepr255['\t'] = "\\t";
+			BytesRepr255['\n'] = "\\n";
+			BytesRepr255['\r'] = "\\r";
+			BytesRepr255['\\'] = "\\\\";
 		}
 	
 		// ReSharper disable once UnusedParameter.Global
@@ -370,22 +437,7 @@ namespace Razorvine.Serpent
 					}
 				}
 			}
-	
-			if(!containsSingleQuote) {
-				b.Insert(0, '\'');
-				b.Append('\'');
-				tw.Write(b.ToString());
-			} else if (!containsQuote) {
-				b.Insert(0, '"');
-				b.Append('"');
-				tw.Write(b.ToString());
-			} else {
-				string str2 = b.ToString();
-	        	str2 = str2.Replace("'", "\\'");
-	        	tw.Write("'");
-	        	tw.Write(str2);
-	        	tw.Write("'");
-			}
+			HandleQuotes(tw, containsSingleQuote, b, containsQuote, false);
 		}
 
 		protected void Serialize_datetime(DateTime dt, TextWriter tw, int level)
