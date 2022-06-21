@@ -15,14 +15,13 @@ install:
 	python setup.py install
 
 test:
-	python setup.py test
+	pytest -v tests
 
 lint:
 	pycodestyle
 
 clean:
-	@echo "Removing tox dirs, logfiles, .pyo/.pyc files..."
-	rm -rf .tox
+	@echo "Cleaning up..."
 	find . -name __pycache__ -print0 | xargs -0 rm -rf
 	find . -name \*_log -print0 | xargs -0  rm -f
 	find . -name \*.log -print0 | xargs -0  rm -f

@@ -55,7 +55,7 @@ import collections
 import enum
 from collections.abc import KeysView, ValuesView, ItemsView
 
-__version__ = "1.40"
+__version__ = "1.41-dev"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 
