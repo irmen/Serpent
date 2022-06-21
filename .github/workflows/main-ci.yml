@@ -60,6 +60,7 @@ jobs:
     name: build, pack, test .Net
     runs-on: ubuntu-latest
     env:
+      SOLUTION_FILE_PATH: 'dotnet/Serpent'
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       DOTNET_NOLOGO: true
