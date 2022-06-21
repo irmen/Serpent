@@ -31,7 +31,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-python:
 
     runs-on: ubuntu-latest
     strategy:
@@ -55,3 +55,24 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v tests
+
+  test-dotnet:
+    name: build, pack, test .Net
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install latest .NET SDK
+        uses: Elskom/setup-latest-dotnet@main
+
+      - name: Restore, Build, test, and pack
+        uses: Elskom/build-dotnet@main
+        with:
+          TEST: true
+          PACK: true
+          PUSH: false
