@@ -60,7 +60,6 @@ jobs:
     name: build, pack, test .Net
     runs-on: ubuntu-latest
     env:
-      SOLUTION_FILE_PATH: 'dotnet/Serpent'
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       DOTNET_NOLOGO: true
@@ -74,6 +73,7 @@ jobs:
       - name: Restore, Build, test, and pack
         uses: Elskom/build-dotnet@main
         with:
+          SOLUTION_FILE_PATH: 'dotnet/Serpent'
           TEST: true
           PACK: true
           PUSH: false
