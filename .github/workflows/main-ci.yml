@@ -69,7 +69,7 @@ jobs:
       - name: Install .Net
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.17'
+          dotnet-version: '5.0.408'
 
 #      - name: Install latest .NET SDK
 #        uses: Elskom/setup-latest-dotnet@main
