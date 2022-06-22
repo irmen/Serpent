@@ -485,33 +485,28 @@ class TestBasics(unittest.TestCase):
             'attributes': {}
         }, data)
 
-    def test_class(self):
-        class Class1(object):
-            def __init__(self):
-                self.attr = 1
-
-        class Class2(object):
-            def __getstate__(self):
-                return {"attr": 42}
-
-        class SlotsClass(object):
-            __slots__ = ["attr"]
-
-            def __init__(self):
-                self.attr = 1
-
+    def test_class_regular(self):
         c = Class1()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
         self.assertEqual({'__class__': 'Class1', 'attr': 1}, data)
+
+    def test_class_getstate(self):
         c = Class2()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
-        self.assertEqual({'attr': 42}, data)
+        if sys.version_info[:2] >= (3, 11):
+            self.assertEqual({'__class__': 'Class2', 'attr': 42}, data)
+        else:
+            self.assertEqual({'attr': 42}, data)
+
+    def test_class_slots(self):
         c = SlotsClass()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
         self.assertEqual({'__class__': 'SlotsClass', 'attr': 1}, data)
+
+    def test_class_pprinter(self):
         import pprint
         p = pprint.PrettyPrinter(stream="dummy", width=99)
         ser = serpent.dumps(p)
@@ -1148,6 +1143,20 @@ class DataclassesTests(unittest.TestCase):
         item2 = serpent.loads(ser)
         self.assertDictEqual({"__class__": "InventoryItem", "name": "television", "quantity_on_hand": 5,
                               "unit_price": 1899.95, "untyped": "untyped"}, item2)
+
+class Class1(object):
+    def __init__(self):
+        self.attr = 1
+
+class Class2(object):
+    def __getstate__(self):
+        return {"attr": 42}
+
+class SlotsClass(object):
+    __slots__ = ["attr"]
+
+    def __init__(self):
+        self.attr = 1
 
 
 if __name__ == '__main__':
