@@ -495,10 +495,7 @@ class TestBasics(unittest.TestCase):
         c = Class2()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
-        if sys.version_info[:2] >= (3, 11):
-            self.assertEqual({'__class__': 'Class2', 'attr': 42}, data)
-        else:
-            self.assertEqual({'attr': 42}, data)
+        self.assertEqual({'attr': 42}, data)
 
     def test_class_slots(self):
         c = SlotsClass()

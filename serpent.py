@@ -491,30 +491,17 @@ class Serializer(object):
             raise ValueError("Circular reference detected (class)")
         self.serialized_obj_ids.add(id(obj))
         try:
-            try:
+            # note: python 3.11+ object itself now has __getstate__
+            has_own_getstate = (
+                hasattr(type(obj), '__getstate__')
+                and type(obj).__getstate__ is not getattr(object, '__getstate__', None)
+            )
+            if has_own_getstate:
                 value = obj.__getstate__()
-                if value is None and isinstance(obj, tuple):
-                    # collections.namedtuple specialcase (if it is not handled by the tuple serializer)
-                    value = {
-                        "__class__": self.get_class_name(obj),
-                        "items": list(obj._asdict().items())
-                    }
                 if isinstance(value, dict):
-                    if sys.version_info[:2] >= (3, 11) and "__class__" not in value:
-                        # python 3.11 introduced a default __getstate__ on object,
-                        # so we miss out on the "__class__" attribute. Add this manually.
-                        value["__class__"] = self.get_class_name(obj)
                     self.ser_builtins_dict(value, out, level)
                     return
-                elif isinstance(value, tuple) and value[0] is None:
-                    value = value[1]
-                    if sys.version_info[:2] >= (3, 11) and "__class__" not in value:
-                        # python 3.11 introduced a default __getstate__ on object,
-                        # so we miss out on the "__class__" attribute. Add this manually.
-                        value["__class__"] = self.get_class_name(obj)
-                    self.ser_builtins_dict(value, out, level)
-                    return
-            except AttributeError:
+            else:
                 try:
                     value = dict(vars(obj))  # make sure we can serialize anything that resembles a dict
                     value["__class__"] = self.get_class_name(obj)
