@@ -15,7 +15,7 @@ install:
 	python setup.py install
 
 test:
-	pytest -v tests
+	PYTHONPATH=. pytest -v tests
 
 lint:
 	pycodestyle
