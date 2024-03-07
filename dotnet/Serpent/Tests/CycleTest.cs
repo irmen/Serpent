@@ -123,7 +123,7 @@ namespace Razorvine.Serpent.Test
             try
             {
                 ser.Serialize(array);
-                Assert.True(false, "should fail");
+                Assert.Fail("should fail");
             }
             catch (ArgumentException x)
             {
