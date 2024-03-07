@@ -1,11 +1,19 @@
 ﻿using System;
 using Xunit;
+using Xunit.Abstractions;
+
 // ReSharper disable CheckNamespace
 
 namespace Razorvine.Serpent.Test
 {
 
 public class SlowPerformanceTest {
+	private readonly ITestOutputHelper _testOutputHelper;
+
+	public SlowPerformanceTest(ITestOutputHelper testOutputHelper)
+	{
+		_testOutputHelper = testOutputHelper;
+	}
 
 	// tests some performance regressions when they occur
 
@@ -22,11 +30,11 @@ public class SlowPerformanceTest {
 		DateTime start = DateTime.Now;
 		var data = serpent.Serialize(array);
 		double duration = (DateTime.Now - start).TotalMilliseconds;
-		Console.WriteLine(""+duration+"  datalen="+data.Length);
+		_testOutputHelper.WriteLine(""+duration+"  datalen="+data.Length);
 		start = DateTime.Now;
 		var values = (object[]) parser.Parse(data).GetData();
 		duration = (DateTime.Now - start).TotalMilliseconds;
-		Console.WriteLine(""+duration+"  valuelen="+values.Length);
+		_testOutputHelper.WriteLine(""+duration+"  valuelen="+values.Length);
 	}
 
 	[Fact(Skip="number parse performance in long lists has been resolved")]
@@ -42,11 +50,11 @@ public class SlowPerformanceTest {
 		DateTime start = DateTime.Now;
 		var data = serpent.Serialize(array);
 		double duration = (DateTime.Now - start).TotalMilliseconds;
-		Console.WriteLine(""+duration+"  datalen="+data.Length);
+		_testOutputHelper.WriteLine(""+duration+"  datalen="+data.Length);
 		start = DateTime.Now;
 		var values = (object[]) parser.Parse(data).GetData();
 		duration = (DateTime.Now - start).TotalMilliseconds;
-		Console.WriteLine(""+duration+"  valuelen="+values.Length);
+		_testOutputHelper.WriteLine(""+duration+"  valuelen="+values.Length);
 	}	
 }
 }

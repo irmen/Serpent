@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Linq;
 
 namespace Razorvine.Serpent
 {
@@ -46,9 +47,8 @@ namespace Razorvine.Serpent
 		public void Visit(Ast.DictNode dict)
 		{
 			IDictionary obj = new Dictionary<object, object>(dict.Elements.Count);
-			foreach(var node in dict.Elements)
+			foreach (var kv in dict.Elements.Cast<Ast.KeyValueNode>())
 			{
-				var kv = (Ast.KeyValueNode) node;
 				kv.Key.Accept(this);
 				object key = _generated.Pop();
 				kv.Value.Accept(this);

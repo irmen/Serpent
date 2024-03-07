@@ -15,10 +15,7 @@ namespace Razorvine.Serpent
 	
 		public SeekableStringReader(string str)
 		{
-			if(str==null)
-				throw new ArgumentNullException(nameof(str));
-	
-			_str = str;	
+			_str = str ?? throw new ArgumentNullException(nameof(str));	
 		}
 		
 		/// <summary>
@@ -123,11 +120,12 @@ namespace Razorvine.Serpent
 					ReadUntil('\n');
 					return;
 				}
-				if(!char.IsWhiteSpace(c))
-				{
-					Rewind(1);
-					return;
-				}
+
+				if (char.IsWhiteSpace(c)) 
+					continue;
+
+				Rewind(1);
+				return;
 			}
 		}
 

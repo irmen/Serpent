@@ -105,26 +105,23 @@ namespace Razorvine.Serpent
 			
 			public int CompareTo(PrimitiveNode<T> other)
 			{
-				var cv = Value as IComparable;
-				var otherCv = other.Value as IComparable;
-				if (cv != null && otherCv != null)
+				if (Value is IComparable cv && other.Value is IComparable otherCv)
 					return cv.CompareTo(otherCv);
 				return 0;
 			}
 			
 			public override string ToString()
 			{
-				var s = Value as string;
-				if(s != null)
+				if(Value is string s)
 				{
 					var sb=new StringBuilder();
 					sb.Append("'");
-					foreach(var c in s)
+					foreach(char c in s)
 					{
 						switch(c)
 						{
 							case '\\':
-								sb.Append("\\\\");
+								sb.Append(@"\\");
 								break;
 							case '\'':
 								sb.Append("\\'");
@@ -296,10 +293,10 @@ namespace Razorvine.Serpent
 			public override int GetHashCode()
 			{
 				int hashCode = 0;
-				unchecked {
+				unchecked
+				{
 					// ReSharper disable once NonReadonlyMemberInGetHashCode
-					foreach(var elt in Elements)
-						hashCode += 1000000007 * elt.GetHashCode();
+					hashCode += Elements.Sum(elt => 1000000007 * elt.GetHashCode());
 				}
 				return hashCode;
 			}
@@ -373,10 +370,10 @@ namespace Razorvine.Serpent
 		{
 			public override bool Equals(object obj)
 			{
-				if(!(obj is UnorderedSequenceNode))
+				if(!(obj is UnorderedSequenceNode node))
 					return false;
 				var set1 = ElementsAsSet();
-				var set2 = ((UnorderedSequenceNode) obj).ElementsAsSet();
+				var set2 = node.ElementsAsSet();
 				return set1.SetEquals(set2);
 			}
 			

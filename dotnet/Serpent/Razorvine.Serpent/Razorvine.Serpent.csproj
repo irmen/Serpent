@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>6</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <Authors>Irmen de Jong</Authors>
     <Product>Serpent Python literal expression serialization</Product>
     <PackageId>Razorvine.Serpent</PackageId>
-    <Version>1.40.0</Version>
-    <AssemblyVersion>1.40.0.0</AssemblyVersion>
-    <FileVersion>1.40.0.0</FileVersion>
+    <Version>1.50.0</Version>
+    <AssemblyVersion>1.50.0.0</AssemblyVersion>
+    <FileVersion>1.50.0.0</FileVersion>
     <SignAssembly>true</SignAssembly>
     <DelaySign>false</DelaySign>
     <AssemblyOriginatorKeyFile>Serpent.snk</AssemblyOriginatorKeyFile>
@@ -23,6 +23,9 @@ More info for the Python version is on Pypi: https://pypi.python.org/pypi/serpen
     <RepositoryUrl>https://github.com/irmen/Serpent.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>serialization python pyro</PackageTags>
-    <PackageReleaseNotes>assembly is now strong-name signed (so other strong-named assemblies can reference it, most notably, Razorvine.Pyrolite)</PackageReleaseNotes>
+    <PackageReleaseNotes>c# language level update with some refactorings</PackageReleaseNotes>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
+  </ItemGroup>
 </Project>

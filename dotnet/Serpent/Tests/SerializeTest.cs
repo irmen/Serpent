@@ -13,7 +13,7 @@ namespace Razorvine.Serpent.Test
 {
 	public class SerializeTest
 	{
-		private byte[] strip_header(byte[] data)
+		private static byte[] strip_header(byte[] data)
 		{
 			int start=Array.IndexOf(data, (byte)10); // the newline after the header
 			if(start<0)
@@ -54,13 +54,13 @@ namespace Razorvine.Serpent.Test
 		{
 			Serializer ser=new Serializer();
 			var result = ser.Serialize("blerp");
-			result=strip_header(result);
+			result= strip_header(result);
 			Assert.Equal(B("'blerp'"), result);
 			result = ser.Serialize(new Guid("f1f8d00e-49a5-4662-ac1d-d5f0426ed293"));
-			result=strip_header(result);
+			result= strip_header(result);
 			Assert.Equal(B("'f1f8d00e-49a5-4662-ac1d-d5f0426ed293'"), result);
 			result = ser.Serialize(123456789.987654321987654321987654321987654321m);
-			result=strip_header(result);
+			result= strip_header(result);
 			Assert.Equal(B("'123456789.98765432198765432199'"), result);
 		}
 
@@ -69,7 +69,7 @@ namespace Razorvine.Serpent.Test
 		{
 			Serializer ser = new Serializer();
 			var data = ser.Serialize(null);
-			data=strip_header(data);
+			data= strip_header(data);
 			Assert.Equal(B("None"),data);
 		}
 		
@@ -177,7 +177,7 @@ namespace Razorvine.Serpent.Test
 	        data = strip_header(ser);
 	        Assert.Equal(B("'1234.9999999999'"), data);
 			ser = serpent.Serialize(123456789.987654321987654321987654321987654321m);
-			data=strip_header(ser);
+			data= strip_header(ser);
 			Assert.Equal(B("'123456789.98765432198765432199'"), data);
 	        ComplexNumber cplx = new ComplexNumber(2.2, 3.3);
 	        ser = serpent.Serialize(cplx);
@@ -221,7 +221,7 @@ namespace Razorvine.Serpent.Test
 		public void TestList()
 		{
 			Serializer serpent = new Serializer();
-			IList<object> list = new List<object>();
+			var list = new List<object>();
 			
 			// test empty list
 			var ser = strip_header(serpent.Serialize(list));
@@ -299,17 +299,17 @@ namespace Razorvine.Serpent.Test
 			};
 			
 			ser = serpent.Serialize(ht);
-			Assert.Equal((int)'}', ser[ser.Length-1]);
-			Assert.NotEqual((int)',', ser[ser.Length-2]);
+			Assert.Equal((int)'}', ser[^1]);
+			Assert.NotEqual((int)',', ser[^2]);
 			parsed = p.Parse(ser).Root.ToString();
             Assert.Equal(69, parsed.Length);
             
             // test indentation
             serpent.Indent=true;
             ser = serpent.Serialize(ht);
-			Assert.Equal((int)'}', ser[ser.Length-1]);
-			Assert.Equal((int)'\n', ser[ser.Length-2]);
-			Assert.NotEqual((int)',', ser[ser.Length-3]);
+			Assert.Equal((int)'}', ser[^1]);
+			Assert.Equal((int)'\n', ser[^2]);
+			Assert.NotEqual((int)',', ser[^3]);
 			string ser_str = S(strip_header(ser));
 			Assert.Contains("'name': 'Sally'", ser_str);
 			Assert.Contains("'status': False", ser_str);
@@ -326,7 +326,7 @@ namespace Razorvine.Serpent.Test
             };
             ser = serpent.Serialize(mydict);
             ser_str = S(strip_header(ser));
-            Assert.True(ser_str=="{2:'two',1:'one'}" || ser_str=="{1:'one',2:'two'}");
+            Assert.True(ser_str is "{2:'two',1:'one'}" or "{1:'one',2:'two'}");
 		}
 
 		[Fact]
@@ -400,17 +400,17 @@ namespace Razorvine.Serpent.Test
 			ser = strip_header(ser);
 			Assert.Equal("[42,43]", S(ser));
 			
-			ser=strip_header(serpent.Serialize(new [] {42}));
+			ser= strip_header(serpent.Serialize(new [] {42}));
 			Assert.Equal("(42,)", S(ser));
-			ser=strip_header(serpent.Serialize(new [] {42, 43}));
+			ser= strip_header(serpent.Serialize(new [] {42, 43}));
 			Assert.Equal("(42,43)", S(ser));
 			
 			serpent.Indent=true;
 			ser = strip_header(serpent.Serialize(intlist));
 			Assert.Equal("[\n  42,\n  43\n]", S(ser));
-			ser=strip_header(serpent.Serialize(new [] {42}));
+			ser= strip_header(serpent.Serialize(new [] {42}));
 			Assert.Equal("(\n  42,\n)", S(ser));
-			ser=strip_header(serpent.Serialize(new [] {42, 43}));
+			ser= strip_header(serpent.Serialize(new [] {42, 43}));
 			Assert.Equal("(\n  42,\n  43\n)", S(ser));
 		}
 		

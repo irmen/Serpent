@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace Razorvine.Serpent
@@ -49,8 +50,7 @@ namespace Razorvine.Serpent
 
 		private string ExtractFaultLocation(SeekableStringReader sr)
 		{
-			string left, right;
-			sr.Context(-1, 20, out left, out right);
+			sr.Context(-1, 20, out string left, out string right);
 			return $"...{left}>>><<<{right}...";
 		}
 
@@ -295,9 +295,8 @@ namespace Razorvine.Serpent
 			
 			// make sure it has dict semantics (remove duplicate keys)
 			var fixedDict = new Dictionary<Ast.INode, Ast.INode>(elts.Count);
-			foreach(var node in elts)
+			foreach (var kv in elts.Cast<Ast.KeyValueNode>())
 			{
-				var kv = (Ast.KeyValueNode) node;
 				fixedDict[kv.Key] = kv.Value;
 			}
 
@@ -486,18 +485,19 @@ namespace Razorvine.Serpent
 			} catch (ParseException) {
 				sr.FlipBack(bookmark);
 				var integerPart = ParseInt(sr);
-				var integerNode = integerPart as Ast.IntegerNode;
-				if (integerNode != null)
+				if (integerPart is Ast.IntegerNode integerNode)
 					doubleValue = integerNode.Value;
-				else {
-					var longNode = integerPart as Ast.LongNode;
-					if (longNode != null)
-						doubleValue = longNode.Value;
-					else {
-						var decimalNode = integerPart as Ast.DecimalNode;
-						if (decimalNode != null)
+				else
+				{
+					switch (integerPart)
+					{
+						case Ast.LongNode longNode:
+							doubleValue = longNode.Value;
+							break;
+						case Ast.DecimalNode decimalNode:
 							doubleValue = Convert.ToDouble(decimalNode.Value);
-						else
+							break;
+						default:
 							throw new ParseException("not an integer for the imaginary part");
 					}
 				}
@@ -693,54 +693,47 @@ namespace Razorvine.Serpent
     	/// If it is something else, throw an ArgumentException
 		/// </summary>
 		public static byte[] ToBytes(object obj) {
-			Hashtable hashtable  = obj as Hashtable;
-			if(hashtable!=null)
+			switch (obj)
 			{
-				string data = null;
-				string encoding = null;
-				if(hashtable.Contains("data")) data = (string)hashtable["data"];
-				if(hashtable.Contains("encoding")) encoding = (string)hashtable["encoding"];
-				if(data==null || "base64"!=encoding)
+				case Hashtable hashtable:
 				{
-					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					string data = null;
+					string encoding = null;
+					if(hashtable.Contains("data")) data = (string)hashtable["data"];
+					if(hashtable.Contains("encoding")) encoding = (string)hashtable["encoding"];
+					if(data==null || "base64"!=encoding)
+					{
+						throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					}
+					return Convert.FromBase64String(data);
 				}
-				return Convert.FromBase64String(data);
-			}
-			
-			var dict = obj as IDictionary<string,string>;
-			if(dict!=null)
-			{
-				string data;
-				string encoding;
-				bool hasData = dict.TryGetValue("data", out data);
-				bool hasEncoding = dict.TryGetValue("encoding", out encoding);
-				if(!hasData || !hasEncoding || encoding!="base64")
+				case IDictionary<string, string> dict:
 				{
-					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					bool hasData = dict.TryGetValue("data", out string data);
+					bool hasEncoding = dict.TryGetValue("encoding", out string encoding);
+					if(!hasData || !hasEncoding || encoding!="base64")
+					{
+						throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					}
+					return Convert.FromBase64String(data);
 				}
-				return Convert.FromBase64String(data);
-			}
-			var dict2 = obj as IDictionary<object,object>;
-			if(dict2!=null)
-			{
-				object dataobj;
-				object encodingobj;
-				bool hasData = dict2.TryGetValue("data", out dataobj);
-				bool hasEncoding = dict2.TryGetValue("encoding", out encodingobj);
-				string data = (string)dataobj;
-				string encoding = (string)encodingobj;
-				if(!hasData || !hasEncoding || encoding!="base64")
+				case IDictionary<object, object> dict2:
 				{
-					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					bool hasData = dict2.TryGetValue("data", out object dataobj);
+					bool hasEncoding = dict2.TryGetValue("encoding", out object encodingobj);
+					string data = (string)dataobj;
+					string encoding = (string)encodingobj;
+					if(!hasData || !hasEncoding || encoding!="base64")
+					{
+						throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
+					}
+					return Convert.FromBase64String(data);
 				}
-				return Convert.FromBase64String(data);
-			}			
-			var bytearray = obj as byte[];
-			if(bytearray!=null)
-			{
-				return bytearray;
+				case byte[] bytearray:
+					return bytearray;
+				default:
+					throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
 			}
-			throw new ArgumentException("argument is neither bytearray nor serpent base64 encoded bytes dict");
 		}
 	}
 }

@@ -376,7 +376,7 @@ namespace Razorvine.Serpent.Test
             Assert.Equal("'\\''", p.Parse("'\\''").Root.ToString());
             Assert.Equal("'\"'", p.Parse("'\\\"'").Root.ToString());
             Assert.Equal("'\"'", p.Parse("'\"'").Root.ToString());
-            Assert.Equal("'\\\\'", p.Parse("'\\\\'").Root.ToString());
+            Assert.Equal(@"'\\'", p.Parse(@"'\\'").Root.ToString());
             Assert.Equal("None", p.Parse("None").Root.ToString());
             const string ustr = "'\u20ac\u2603'";
             Assert.Equal(ustr, p.Parse(ustr).Root.ToString());
@@ -527,8 +527,8 @@ namespace Razorvine.Serpent.Test
             var p = new Parser();
             Assert.Equal(new Ast.StringNode("hello"), p.Parse("'hello'").Root);
             Assert.Equal(new Ast.StringNode("hello"), p.Parse("\"hello\"").Root);
-            Assert.Equal(new Ast.StringNode("\\"), p.Parse("'\\\\'").Root);
-            Assert.Equal(new Ast.StringNode("\\"), p.Parse("\"\\\\\"").Root);
+            Assert.Equal(new Ast.StringNode("\\"), p.Parse(@"'\\'").Root);
+            Assert.Equal(new Ast.StringNode("\\"), p.Parse(@"""\\""").Root);
             Assert.Equal(new Ast.StringNode("'"), p.Parse("\"'\"").Root);
             Assert.Equal(new Ast.StringNode("\""), p.Parse("'\"'").Root);
             Assert.Equal(new Ast.StringNode("tab\tnewline\n."), p.Parse("'tab\\tnewline\\n.'").Root);
@@ -764,12 +764,12 @@ namespace Razorvine.Serpent.Test
             var seq = node as Ast.SequenceNode;
             if (seq != null)
             {
-                sb.AppendLine(string.Format("{0} (seq)", node.GetType()));
+                sb.AppendLine($"{node.GetType()} (seq)");
                 foreach (var child in seq.Elements) Walk(child, sb);
             }
             else
             {
-                sb.AppendLine(string.Format("{0} = {1}", node.GetType(), node.ToString()));
+                sb.AppendLine($"{node.GetType()} = {node.ToString()}");
             }
         }
 

@@ -52,9 +52,8 @@ public class ComplexNumber {
 	#region Equals and GetHashCode implementation
 	public override bool Equals(object obj)
 	{
-		if(!(obj is ComplexNumber))
+		if(!(obj is ComplexNumber other))
 			return false;
-		ComplexNumber other = (ComplexNumber) obj;
 		// ReSharper disable CompareOfFloatsByEqualityOperator
 		return Real==other.Real && Imaginary==other.Imaginary;
 	}

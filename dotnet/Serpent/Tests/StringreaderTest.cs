@@ -118,8 +118,7 @@ namespace Razorvine.Serpent.Test
 		{
 			SeekableStringReader s = new SeekableStringReader("abcdefghijklmnopqrstuvwxyz");
 			s.Read(10);
-			string left, right;
-			s.Context(-1, 5, out left, out right);
+			s.Context(-1, 5, out var left, out var right);
 			Assert.Equal("fghij", left);
 			Assert.Equal("klmno", right);
 			s.Context(-1, 12, out left, out right);

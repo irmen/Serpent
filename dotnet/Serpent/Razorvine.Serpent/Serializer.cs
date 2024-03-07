@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -97,80 +98,81 @@ namespace Razorvine.Serpent
 			// random class --> public properties to dict
 			// primitive types --> simple mapping
 			
-			Type t = obj?.GetType();
+			var t = obj?.GetType();
 			
-			if(obj==null)
+			switch (obj)
 			{
-				tw.Write("None");
-			}
-			else if(obj is string)
-			{
-				Serialize_string((string)obj, tw, level);
-			}
-			else if(t.IsPrimitive)
-			{
-				Serialize_primitive(obj, tw, level);
-			}
-			else if(obj is decimal)
-			{
-				Serialize_decimal((decimal)obj, tw, level);
-			}
-			else if(obj is Enum)
-			{
-				Serialize_string(obj.ToString(), tw, level);
-			}
-			else if(obj is IDictionary)
-			{
-				Serialize_dict((IDictionary)obj, tw, level);
-			}
-			else if(t.IsGenericType && t.GetGenericTypeDefinition() == typeof(HashSet<>))
-			{
-				IEnumerable x = (IEnumerable) obj;
-				var list = new List<object>();
-				foreach(object elt in x)
-					list.Add(elt);
-				var setvalues = list.ToArray();
-				Serialize_set(setvalues, tw, level);
-			}
-			else if(obj is byte[])
-			{
-				Serialize_bytes((byte[])obj, tw, level);
-			}
-			else if(obj is Array)
-			{
-				Serialize_tuple((ICollection) obj, tw, level);
-			}
-			else if(obj is ICollection)
-			{
-				Serialize_list((ICollection) obj, tw, level);
-			}
-			else if(obj is DateTimeOffset)
-			{
-				Serialize_datetimeoffset((DateTimeOffset)obj, tw, level);
-			}
-			else if(obj is DateTime)
-			{
-				Serialize_datetime((DateTime)obj, tw, level);
-			}
-			else if(obj is TimeSpan)
-			{
-				Serialize_timespan((TimeSpan)obj, tw, level);
-			}
-			else if(obj is Exception)
-			{
-				Serialize_exception((Exception)obj, tw, level);
-			}
-			else if(obj is Guid)
-			{
-				Serialize_guid((Guid) obj, tw, level);
-			}
-			else if(obj is ComplexNumber)
-			{
-				Serialize_complex((ComplexNumber) obj, tw, level);
-			}
-			else
-			{
-				Serialize_class(obj, tw, level);
+				case null:
+					tw.Write("None");
+					break;
+				case string str:
+					Serialize_string(str, tw, level);
+					break;
+				default:
+				{
+					if(t.IsPrimitive)
+					{
+						Serialize_primitive(obj, tw, level);
+					}
+					else switch (obj)
+					{
+						case decimal dec:
+							Serialize_decimal(dec, tw, level);
+							break;
+						case Enum _:
+							Serialize_string(obj.ToString(), tw, level);
+							break;
+						case IDictionary dict:
+							Serialize_dict(dict, tw, level);
+							break;
+						default:
+						{
+							if(t.IsGenericType && t.GetGenericTypeDefinition() == typeof(HashSet<>))
+							{
+								var x = (IEnumerable) obj;
+								object[] setValues = x.Cast<object>().ToArray();
+								Serialize_set(setValues, tw, level);
+							}
+							else switch (obj)
+							{
+								case byte[] b:
+									Serialize_bytes(b, tw, level);
+									break;
+								case Array a:
+									Serialize_tuple(a, tw, level);
+									break;
+								case ICollection c:
+									Serialize_list(c, tw, level);
+									break;
+								case DateTimeOffset dto:
+									Serialize_datetimeoffset(dto, tw, level);
+									break;
+								case DateTime dt:
+									Serialize_datetime(dt, tw, level);
+									break;
+								case TimeSpan ts:
+									Serialize_timespan(ts, tw, level);
+									break;
+								case Exception ex:
+									Serialize_exception(ex, tw, level);
+									break;
+								case Guid guid:
+									Serialize_guid(guid, tw, level);
+									break;
+								case ComplexNumber cn:
+									Serialize_complex(cn, tw, level);
+									break;
+								default:
+									Serialize_class(obj, tw, level);
+									break;
+							}
+
+							break;
+						}
+					}
+
+					break;
+				}
 			}
 		}
 			
@@ -195,8 +197,8 @@ namespace Razorvine.Serpent
 		
 		protected int DictentryCompare(DictionaryEntry d1, DictionaryEntry d2)
 		{
-			IComparable c1 = d1.Key as IComparable;
-			IComparable c2 = d2.Key as IComparable;
+			var c1 = d1.Key as IComparable;
+			var c2 = d2.Key as IComparable;
 			
 			return c1?.CompareTo(c2) ?? 0;
 		}
@@ -211,7 +213,7 @@ namespace Razorvine.Serpent
 			int counter=0;
 			if(Indent)
 			{
-				string innerindent = string.Join("  ", new string[level+2]);
+				string innerIndent = string.Join("  ", new string[level+2]);
 				tw.Write("{\n");
 				var entries = new DictionaryEntry[dict.Count];
 				dict.CopyTo(entries, 0);
@@ -224,7 +226,7 @@ namespace Razorvine.Serpent
 				}
 				foreach(DictionaryEntry x in entries)
 				{
-					tw.Write(innerindent);
+					tw.Write(innerIndent);
 					Serialize(x.Key, tw, level+1);
 					tw.Write(": ");
 					Serialize(x.Value, tw, level+1);
@@ -275,7 +277,7 @@ namespace Razorvine.Serpent
 			else
 			{
 				// empty set literal doesn't exist, replace with empty tuple
-				Serialize_tuple(new object[0], tw, level+1);
+				Serialize_tuple(Array.Empty<object>(), tw, level+1);
 			}
 		}
 		
@@ -287,10 +289,10 @@ namespace Razorvine.Serpent
 			if(Indent)
 			{
 				tw.Write("\n");
-				string innerindent = string.Join("  ", new string[level+1]);
+				string innerIndent = string.Join("  ", new string[level+1]);
 				foreach(object e in elements)
 				{
-					tw.Write(innerindent);
+					tw.Write(innerIndent);
 					Serialize(e, tw, level);
 					count++;
 					if(count<elements.Count)
@@ -404,12 +406,12 @@ namespace Razorvine.Serpent
 			Repr255['\t'] = "\\t";
 			Repr255['\n'] = "\\n";
 			Repr255['\r'] = "\\r";
-			Repr255['\\'] = "\\\\";
+			Repr255['\\'] = @"\\";
 			Repr255[0xad] = "\\xad";
 			BytesRepr255['\t'] = "\\t";
 			BytesRepr255['\n'] = "\\n";
 			BytesRepr255['\r'] = "\\r";
-			BytesRepr255['\\'] = "\\\\";
+			BytesRepr255['\\'] = @"\\";
 		}
 	
 		// ReSharper disable once UnusedParameter.Global
@@ -460,8 +462,7 @@ namespace Razorvine.Serpent
 		protected void Serialize_exception(Exception exc, TextWriter tw, int level)
 		{
 			IDictionary dict;
-			Func<object, IDictionary> converter;
-			ClassToDictRegistry.TryGetValue(exc.GetType(), out converter);
+			ClassToDictRegistry.TryGetValue(exc.GetType(), out var converter);
 			
 			if(converter!=null)
 			{
@@ -494,32 +495,32 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_primitive(object obj, TextWriter tw, int level)
 		{
-			if(obj is float)
+			switch (obj)
 			{
-				float f = (float)obj;
-				double d = f;
-				Serialize_primitive(d, tw, level);
-			}
-			else if(obj is double)
-			{
-				double d = (double) obj;
-				if(double.IsPositiveInfinity(d)) {
+				case float f:
+				{
+					double d = f;
+					// ReSharper disable once TailRecursiveCall
+					Serialize_primitive(d, tw, level);
+					break;
+				}
+				case double d when double.IsPositiveInfinity(d):
 					// output a literal expression that overflows the float and results in +/-INF
 					tw.Write("1e30000");
-				}
-				else if(double.IsNegativeInfinity(d)) {
+					break;
+				case double d when double.IsNegativeInfinity(d):
 					tw.Write("-1e30000");
-				}
-				else if(double.IsNaN(d)) {
+					break;
+				case double d when double.IsNaN(d):
 					// there's no literal expression for a float NaN...
 					tw.Write("{'__class__':'float','value':'nan'}");
-				} else {
+					break;
+				case double d:
+					tw.Write(Convert.ToString(d, CultureInfo.InvariantCulture));
+					break;
+				default:
 					tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
-				}
-			}
-			else
-			{
-				tw.Write(Convert.ToString(obj, CultureInfo.InvariantCulture));
+					break;
 			}
 		}
 
@@ -576,12 +577,13 @@ namespace Razorvine.Serpent
 		// ReSharper disable once InconsistentNaming
 		protected Func<object, IDictionary> GetCustomConverter(Type obj_type)
 		{
-			Func<object, IDictionary> converter;
-			if(ClassToDictRegistry.TryGetValue(obj_type, out converter))
+			if(ClassToDictRegistry.TryGetValue(obj_type, out var converter))
 				return converter;  // exact match
 			
 			// check if there's a custom converter registered for an interface or abstract base class
 			// that this object implements or inherits from.
+
+			// ReSharper disable once LoopCanBeConvertedToQuery
 			foreach(var x in ClassToDictRegistry) {
 				if(x.Key.IsAssignableFrom(obj_type)) {
 					return x.Value;

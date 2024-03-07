@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 // ReSharper disable CheckNamespace
 
@@ -16,10 +17,17 @@ namespace Razorvine.Serpent.Test
 	/// </summary>
 	public class Example
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public Example(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
         [Fact(Skip = "this is an example")]
         public void ExampleUsage()
         {
-            Console.WriteLine("using serpent library version {0}", LibraryVersion.Version);
+            _testOutputHelper.WriteLine("using serpent library version {0}", LibraryVersion.Version);
 
             var data = new Dictionary<string, object>
             {
@@ -39,20 +47,20 @@ namespace Razorvine.Serpent.Test
             var serpent = new Serializer(true);
             var ser = serpent.Serialize(data);
             // print it on the screen, but normally you'd store byte bytes in a file or transfer them across a network connection
-            Console.WriteLine("Serialized:");
-            Console.WriteLine(Encoding.UTF8.GetString(ser));
+            _testOutputHelper.WriteLine("Serialized:");
+            _testOutputHelper.WriteLine(Encoding.UTF8.GetString(ser));
 
             // parse the serialized bytes back into an abstract syntax tree of the datastructure
             var parser = new Parser();
             var ast = parser.Parse(ser);
-            Console.WriteLine("\nParsed AST:");
-            Console.WriteLine(ast.Root.ToString());
+            _testOutputHelper.WriteLine("\nParsed AST:");
+            _testOutputHelper.WriteLine(ast.Root.ToString());
 
             // print debug representation
             var dv = new DebugVisitor();
             ast.Accept(dv);
-            Console.WriteLine("DEBUG string representation:");
-            Console.WriteLine(dv.ToString());
+            _testOutputHelper.WriteLine("DEBUG string representation:");
+            _testOutputHelper.WriteLine(dv.ToString());
 
             // turn the Ast into regular .net objects
             var dict = (IDictionary) ast.GetData();
@@ -62,29 +70,29 @@ namespace Razorvine.Serpent.Test
             // var dict = (IDictionary) visitor.GetObject();
 
             // print the results
-            Console.WriteLine("PARSED results:");
-            Console.Write("tuple items: ");
+            _testOutputHelper.WriteLine("PARSED results:");
+            _testOutputHelper.WriteLine("tuple items: ");
             var tuple = (object[]) dict["tuple"];
-            Console.WriteLine(string.Join(", ", tuple.Select(e => e.ToString()).ToArray()));
-            Console.WriteLine("date: {0}", dict["date"]);
-            Console.Write("set items: ");
+            _testOutputHelper.WriteLine(string.Join(", ", tuple.Select(e => e.ToString()).ToArray()));
+            _testOutputHelper.WriteLine("date: {0}", dict["date"]);
+            _testOutputHelper.WriteLine("set items: ");
             var set = (HashSet<object>) dict["set"];
-            Console.WriteLine(string.Join(", ", set.Select(e => e.ToString()).ToArray()));
-            Console.WriteLine("class attributes:");
+            _testOutputHelper.WriteLine(string.Join(", ", set.Select(e => e.ToString()).ToArray()));
+            _testOutputHelper.WriteLine("class attributes:");
             var clazz = (IDictionary) dict["class"]; // custom classes are serialized as dicts
-            Console.WriteLine("  type: {0}", clazz["__class__"]);
-            Console.WriteLine("  name: {0}", clazz["name"]);
-            Console.WriteLine("  age: {0}", clazz["age"]);
+            _testOutputHelper.WriteLine("  type: {0}", clazz["__class__"]);
+            _testOutputHelper.WriteLine("  name: {0}", clazz["name"]);
+            _testOutputHelper.WriteLine("  age: {0}", clazz["age"]);
 
-            Console.WriteLine("");
+            _testOutputHelper.WriteLine("");
 
             // parse and print the example file
             ser = File.ReadAllBytes("testserpent.utf8.bin");
             ast = parser.Parse(ser);
             dv = new DebugVisitor();
             ast.Accept(dv);
-            Console.WriteLine("DEBUG string representation of the test file:");
-            Console.WriteLine(dv.ToString());
+            _testOutputHelper.WriteLine("DEBUG string representation of the test file:");
+            _testOutputHelper.WriteLine(dv.ToString());
         }
 
         [Serializable]

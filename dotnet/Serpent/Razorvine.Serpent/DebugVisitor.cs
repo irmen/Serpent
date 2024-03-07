@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Text;
 
 namespace Razorvine.Serpent
@@ -35,9 +36,8 @@ namespace Razorvine.Serpent
 		{
 			_result.AppendLine("(dict");
 			_indent++;
-			foreach(var node in dict.Elements)
+			foreach (var kv in dict.Elements.Cast<Ast.KeyValueNode>())
 			{
-				var kv = (Ast.KeyValueNode) node;
 				Indent();
 				kv.Key.Accept(this);
 				_result.Append(" = ");
