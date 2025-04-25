@@ -156,7 +156,7 @@ namespace Razorvine.Serpent
 					return sb.ToString();
 				}
 
-				if (!(Value is double) && !(Value is float)) 
+				if (Value is not double && Value is not float) 
 					return Value.ToString();
 				
 				var d = Convert.ToString(Value, CultureInfo.InvariantCulture);
@@ -268,7 +268,7 @@ namespace Razorvine.Serpent
 		
 		public class NoneNode: INode
 		{
-			public static readonly NoneNode Instance = new NoneNode();
+			public static readonly NoneNode Instance = new();
 			private NoneNode()
 			{
 			}
@@ -286,7 +286,7 @@ namespace Razorvine.Serpent
 		
 		public abstract class SequenceNode: INode
 		{
-			public List<INode> Elements = new List<INode>();
+			public List<INode> Elements = new();
 			public virtual char OpenChar => '?';
 			public virtual char CloseChar => '?';
 
@@ -370,7 +370,7 @@ namespace Razorvine.Serpent
 		{
 			public override bool Equals(object obj)
 			{
-				if(!(obj is UnorderedSequenceNode node))
+				if(obj is not UnorderedSequenceNode node)
 					return false;
 				var set1 = ElementsAsSet();
 				var set2 = node.ElementsAsSet();

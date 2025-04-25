@@ -38,7 +38,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestHeader()
 		{
-			Serializer ser = new Serializer();
+			var ser = new Serializer();
 			var data = ser.Serialize(null);
 			Assert.Equal(35, data[0]);
 			string strdata = S(data);
@@ -52,7 +52,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestStuff()
 		{
-			Serializer ser=new Serializer();
+			var ser=new Serializer();
 			var result = ser.Serialize("blerp");
 			result= strip_header(result);
 			Assert.Equal(B("'blerp'"), result);
@@ -67,7 +67,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestNull()
 		{
-			Serializer ser = new Serializer();
+			var ser = new Serializer();
 			var data = ser.Serialize(null);
 			data= strip_header(data);
 			Assert.Equal(B("None"),data);
@@ -76,7 +76,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestStrings()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var ser = serpent.Serialize("hello");
 			var data = strip_header(ser);
 			Assert.Equal(B("'hello'"), data);
@@ -91,7 +91,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestUnicodeEscapes()
 		{
-			Serializer serpent=new Serializer();
+			var serpent=new Serializer();
 			
 			// regular escaped chars first
 		  	var ser = serpent.Serialize("\b\r\n\f\t \\");
@@ -157,7 +157,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestNumbers()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var ser = serpent.Serialize(12345);
 			var data = strip_header(ser);
 			Assert.Equal(B("12345"), data);
@@ -179,7 +179,7 @@ namespace Razorvine.Serpent.Test
 			ser = serpent.Serialize(123456789.987654321987654321987654321987654321m);
 			data= strip_header(ser);
 			Assert.Equal(B("'123456789.98765432198765432199'"), data);
-	        ComplexNumber cplx = new ComplexNumber(2.2, 3.3);
+	        var cplx = new ComplexNumber(2.2, 3.3);
 	        ser = serpent.Serialize(cplx);
 	        data = strip_header(ser);
 	        Assert.Equal(B("(2.2+3.3j)"), data);
@@ -196,7 +196,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestDoubleNanInf()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var doubles = new object[] {double.PositiveInfinity, double.NegativeInfinity, double.NaN,
 			        float.PositiveInfinity, float.NegativeInfinity, float.NaN,
 			        new ComplexNumber(double.PositiveInfinity, 3.4)};
@@ -208,7 +208,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestBool()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var ser = serpent.Serialize(true);
 			var data = strip_header(ser);
 			Assert.Equal(B("True"),data);
@@ -220,7 +220,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestList()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var list = new List<object>();
 			
 			// test empty list
@@ -246,7 +246,7 @@ namespace Razorvine.Serpent.Test
 		public void TestSet()
 		{
 			// test with set literals
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var set = new HashSet<object>();
 			
 			// test empty set
@@ -271,8 +271,8 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestDictionary()
 		{
-			Serializer serpent = new Serializer();
-			Parser p = new Parser();
+			var serpent = new Serializer();
+			var p = new Parser();
 			
 			// test empty dict
 			IDictionary ht = new Hashtable();
@@ -332,12 +332,12 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestBytesDefault()
 		{
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			byte[] bytes = { 97, 98, 99, 100, 101, 102 };	// abcdef
 			var ser = serpent.Serialize(bytes);
 			Assert.Equal("{\n  'data': 'YWJjZGVm',\n  'encoding': 'base64'\n}", S(strip_header(ser)));
 
-			Parser p = new Parser();
+			var p = new Parser();
 			string parsed = p.Parse(ser).Root.ToString();
             Assert.Equal(39, parsed.Length);
 
@@ -379,13 +379,13 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestBytesRepr()
 		{
-			Serializer serpent = new Serializer(indent: true, bytesRepr:true);
+			var serpent = new Serializer(indent: true, bytesRepr:true);
 			byte[] bytes = { 97, 98, 99, 100, 101, 102, 0, 255, (byte)'\'', (byte)'\"' };	// abcdef\x00\xff'"
 			var ser = serpent.Serialize(bytes);
 			Assert.Equal("b'abcdef\\x00\\xff\\'\"'", S(strip_header(ser)));
 
-			Parser p = new Parser();
-			Ast.BytesNode parsed = (Ast.BytesNode) p.Parse(ser).Root;
+			var p = new Parser();
+			var parsed = (Ast.BytesNode) p.Parse(ser).Root;
 			Assert.Equal(bytes, parsed.Value);
 		}
 		
@@ -395,7 +395,7 @@ namespace Razorvine.Serpent.Test
 			ICollection<int> intlist = new LinkedList<int>();
 			intlist.Add(42);
 			intlist.Add(43);
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var ser = serpent.Serialize(intlist);
 			ser = strip_header(ser);
 			Assert.Equal("[42,43]", S(ser));
@@ -431,7 +431,7 @@ namespace Razorvine.Serpent.Test
 			         });
 			dict.Add("third", new HashSet<int> { 3, 4} );
 
-			Serializer serpent = new Serializer {Indent = true};
+			var serpent = new Serializer {Indent = true};
 			var ser = strip_header(serpent.Serialize(dict));
 			string txt=@"{
   'first': [
@@ -462,7 +462,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestSorting()
 		{
-			Serializer serpent=new Serializer();
+			var serpent=new Serializer();
 			object data = new List<int> { 3, 2, 1};
 			var ser = strip_header(serpent.Serialize(data));
 			Assert.Equal("[3,2,1]", S(ser));
@@ -506,7 +506,7 @@ namespace Razorvine.Serpent.Test
 		public void TestClass()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			
 			var obj = new SerializeTestClass
 			{
@@ -522,7 +522,7 @@ namespace Razorvine.Serpent.Test
 		public void TestClass2()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), null);
-			Serializer serpent = new Serializer(true, namespaceInClassName: true);
+			var serpent = new Serializer(true, namespaceInClassName: true);
 			object obj = new SerializeTestClass
 			{
 				i = 99,
@@ -535,7 +535,7 @@ namespace Razorvine.Serpent.Test
 
 		private IDictionary testclassConverter(object obj)
 		{
-			SerializeTestClass o = (SerializeTestClass) obj;
+			var o = (SerializeTestClass) obj;
 			IDictionary result = new Hashtable();
 			result["__class@__"] = o.GetType().Name+"@";
 			result["i@"] = o.i;
@@ -548,7 +548,7 @@ namespace Razorvine.Serpent.Test
 		public void TestCustomClassDict()
 		{
 			Serializer.RegisterClass(typeof(SerializeTestClass), testclassConverter);
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			
 			var obj = new SerializeTestClass
 			{
@@ -563,7 +563,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestStruct()
 		{
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			
 			var obj2 = new SerializeTestStruct
 			{
@@ -578,7 +578,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestStruct2()
 		{
-			Serializer serpent = new Serializer(true, namespaceInClassName: true);
+			var serpent = new Serializer(true, namespaceInClassName: true);
 			
 			var obj2 = new SerializeTestStruct
 			{
@@ -593,7 +593,7 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestAnonymousClass()
 		{
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			object obj = new {
 				Name="Harry",
 				Age=33,
@@ -607,9 +607,9 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestDateTime()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			
-			DateTime date = new DateTime(2013, 1, 20, 23, 59, 45, 999, DateTimeKind.Local);
+			var date = new DateTime(2013, 1, 20, 23, 59, 45, 999, DateTimeKind.Local);
 			var ser = strip_header(serpent.Serialize(date));
 			Assert.Equal("'2013-01-20T23:59:45.999'", S(ser));
 			
@@ -625,7 +625,7 @@ namespace Razorvine.Serpent.Test
 			ser = strip_header(serpent.Serialize(date));
 			Assert.Equal("'2013-01-20T23:59:45'", S(ser));
 		
-			TimeSpan timespan = new TimeSpan(1, 10, 20, 30, 999);
+			var timespan = new TimeSpan(1, 10, 20, 30, 999);
 			ser = strip_header(serpent.Serialize(timespan));
 			Assert.Equal("123630.999", S(ser));
 		}
@@ -633,9 +633,9 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestDateTimeOffset()
 		{
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 
-			DateTimeOffset date = new DateTimeOffset(2013, 1, 20, 23, 59, 45, 999, TimeSpan.FromHours(+2));
+			var date = new DateTimeOffset(2013, 1, 20, 23, 59, 45, 999, TimeSpan.FromHours(+2));
 			var ser = strip_header(serpent.Serialize(date));
 			Assert.Equal("'2013-01-20T23:59:45.999+02:00'", S(ser));
 			
@@ -648,7 +648,7 @@ namespace Razorvine.Serpent.Test
 		public void TestException()
 		{
 			Exception x = new ApplicationException("errormessage");
-			Serializer serpent = new Serializer(true);
+			var serpent = new Serializer(true);
 			var ser = strip_header(serpent.Serialize(x));
 			Assert.Equal("{\n  '__class__': 'ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 
@@ -661,7 +661,7 @@ namespace Razorvine.Serpent.Test
 		public void TestExceptionWithNamespace()
 		{
 			Exception x = new ApplicationException("errormessage");
-			Serializer serpent = new Serializer(true, namespaceInClassName: true);
+			var serpent = new Serializer(true, namespaceInClassName: true);
 			var ser = strip_header(serpent.Serialize(x));
 			Assert.Equal("{\n  '__class__': 'System.ApplicationException',\n  '__exception__': True,\n  'args': (\n    'errormessage',\n  ),\n  'attributes': {}\n}", S(ser));
 		}
@@ -674,7 +674,7 @@ namespace Razorvine.Serpent.Test
 		public void TestEnum()
 		{
 			const FooType e = FooType.Jarjar;
-			Serializer serpent = new Serializer();
+			var serpent = new Serializer();
 			var ser = strip_header(serpent.Serialize(e));
 			Assert.Equal("'Jarjar'", S(ser));
 		}
@@ -702,8 +702,8 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void testAbstractBaseClassHierarchyPickler()
 		{
-			ConcreteSubClass c = new ConcreteSubClass();
-			Serializer serpent = new Serializer();
+			var c = new ConcreteSubClass();
+			var serpent = new Serializer();
 			serpent.Serialize(c);
 			
 			Serializer.RegisterClass(typeof(AbstractBaseClass), AnyClassSerializer);
@@ -714,9 +714,9 @@ namespace Razorvine.Serpent.Test
 		[Fact]
 		public void TestInterfaceHierarchyPickler()
 		{
-			BaseClassWithInterface b = new BaseClassWithInterface();
-			SubClassWithInterface sub = new SubClassWithInterface();
-			Serializer serpent = new Serializer();
+			var b = new BaseClassWithInterface();
+			var sub = new SubClassWithInterface();
+			var serpent = new Serializer();
 			serpent.Serialize(b);
 			serpent.Serialize(sub);
 			Serializer.RegisterClass(typeof(IBaseInterface), AnyClassSerializer);

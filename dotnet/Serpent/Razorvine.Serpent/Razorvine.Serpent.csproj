@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>9</LangVersion>
     <Authors>Irmen de Jong</Authors>
     <Product>Serpent Python literal expression serialization</Product>
     <PackageId>Razorvine.Serpent</PackageId>
-    <Version>1.42.0</Version>
-    <AssemblyVersion>1.42.0.0</AssemblyVersion>
-    <FileVersion>1.42.0.0</FileVersion>
+    <Version>1.43.0</Version>
+    <AssemblyVersion>1.43.0.0</AssemblyVersion>
+    <FileVersion>1.43.0.0</FileVersion>
     <SignAssembly>true</SignAssembly>
     <DelaySign>false</DelaySign>
     <AssemblyOriginatorKeyFile>Serpent.snk</AssemblyOriginatorKeyFile>

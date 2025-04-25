@@ -74,13 +74,11 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public byte[] Serialize(object obj)
 		{
-			using(StringWriter tw = new StringWriter())
-			{
-				tw.Write("# serpent utf-8 python3.2\n");
-				Serialize(obj, tw, 0);
-				tw.Flush();
-				return Encoding.UTF8.GetBytes(tw.ToString());
-			}
+			using var tw = new StringWriter();
+			tw.Write("# serpent utf-8 python3.2\n");
+			Serialize(obj, tw, 0);
+			tw.Flush();
+			return Encoding.UTF8.GetBytes(tw.ToString());
 		}
 		
 		protected void Serialize(object obj, TextWriter tw, int level)
@@ -119,7 +117,7 @@ namespace Razorvine.Serpent
 						case decimal dec:
 							Serialize_decimal(dec, tw, level);
 							break;
-						case Enum _:
+						case Enum:
 							Serialize_string(obj.ToString(), tw, level);
 							break;
 						case IDictionary dict:
@@ -224,7 +222,7 @@ namespace Razorvine.Serpent
 				} catch (ArgumentException) {
 					// ignore sorting of incomparable elements
 				}
-				foreach(DictionaryEntry x in entries)
+				foreach(var x in entries)
 				{
 					tw.Write(innerIndent);
 					Serialize(x.Key, tw, level+1);
@@ -236,7 +234,6 @@ namespace Razorvine.Serpent
 				}
 				tw.Write("\n");
 				tw.Write(string.Join("  ", new string[level+1]));
-				tw.Write("}");
 			}
 			else
 			{
@@ -250,8 +247,9 @@ namespace Razorvine.Serpent
 					if(counter<dict.Count)
 						tw.Write(",");
 				}
-				tw.Write("}");
 			}
+
+			tw.Write("}");
 		}
 		
 		protected void Serialize_set(object[] set, TextWriter tw, int level)
@@ -323,7 +321,7 @@ namespace Razorvine.Serpent
 			if (BytesRepr)
 			{
 				// create a 'repr' bytes representation following the same escaping rules as python 3.x repr() does.
-				StringBuilder b=new StringBuilder(data.Length*2);
+				var b=new StringBuilder(data.Length*2);
 				bool containsSingleQuote=false;
 				bool containsQuote=false;
 				foreach(byte bb in data)
@@ -419,7 +417,7 @@ namespace Razorvine.Serpent
 		protected void Serialize_string(string str, TextWriter tw, int level)
 		{
 			// create a 'repr' string representation following the same escaping rules as python 3.x repr() does.
-			StringBuilder b=new StringBuilder(str.Length*2);
+			var b=new StringBuilder(str.Length*2);
 			bool containsSingleQuote=false;
 			bool containsQuote=false;
 			foreach(char c in str)
@@ -511,7 +509,7 @@ namespace Razorvine.Serpent
 				case double d when double.IsNegativeInfinity(d):
 					tw.Write("-1e30000");
 					break;
-				case double d when double.IsNaN(d):
+				case double.NaN:
 					// there's no literal expression for a float NaN...
 					tw.Write("{'__class__':'float','value':'nan'}");
 					break;
@@ -536,7 +534,7 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_class(object obj, TextWriter tw, int level)
 		{
-			Type objType = obj.GetType();
+			var objType = obj.GetType();
 			
 			IDictionary dict;
 			var converter = GetCustomConverter(objType);

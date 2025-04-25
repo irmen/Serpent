@@ -25,9 +25,9 @@ public class SlowPerformanceTest {
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345.987654;
 		
-		Serializer serpent = new Serializer();
-		Parser parser = new Parser();
-		DateTime start = DateTime.Now;
+		var serpent = new Serializer();
+		var parser = new Parser();
+		var start = DateTime.Now;
 		var data = serpent.Serialize(array);
 		double duration = (DateTime.Now - start).TotalMilliseconds;
 		_testOutputHelper.WriteLine(""+duration+"  datalen="+data.Length);
@@ -45,9 +45,9 @@ public class SlowPerformanceTest {
 		for(int i=0; i<amount; ++i)
 			array[i] = 12345;
 		
-		Serializer serpent = new Serializer();
-		Parser parser = new Parser();
-		DateTime start = DateTime.Now;
+		var serpent = new Serializer();
+		var parser = new Parser();
+		var start = DateTime.Now;
 		var data = serpent.Serialize(array);
 		double duration = (DateTime.Now - start).TotalMilliseconds;
 		_testOutputHelper.WriteLine(""+duration+"  datalen="+data.Length);

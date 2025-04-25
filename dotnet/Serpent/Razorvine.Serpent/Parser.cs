@@ -28,11 +28,11 @@ namespace Razorvine.Serpent
 		/// </summary>
 		public Ast Parse(string expression)
 		{
-			Ast ast=new Ast();
+			var ast=new Ast();
 			if(string.IsNullOrEmpty(expression))
 				return ast;
 			
-			SeekableStringReader sr = new SeekableStringReader(expression);
+			var sr = new SeekableStringReader(expression);
 			if(sr.Peek()=='#')
 				sr.ReadUntil('\n');  // skip comment line
 			
@@ -95,7 +95,7 @@ namespace Razorvine.Serpent
 						int bm = sr.Bookmark();
 						string betweenparens = sr.ReadUntil(')', '\n').TrimEnd();
 						sr.FlipBack(bm);
-						return betweenparens.EndsWith("j") ? (Ast.INode) ParseComplex(sr) : ParseTuple(sr);
+						return betweenparens.EndsWith("j") ? ParseComplex(sr) : ParseTuple(sr);
 					}
 				default:
 					throw new ParseException("invalid sequencetype char");
@@ -112,14 +112,14 @@ namespace Razorvine.Serpent
 
 			sr.Read();	// (
 			sr.SkipWhitespace();
-			Ast.TupleNode tuple = new Ast.TupleNode();
+			var tuple = new Ast.TupleNode();
 			if(sr.Peek() == ')')
 			{
 				sr.Read();
 				return tuple;		// empty tuple
 			}
 			
-			Ast.INode firstelement = ParseExpr(sr);
+			var firstelement = ParseExpr(sr);
 			if(sr.Peek() == ',')
 			{
 				sr.Read();
@@ -191,10 +191,10 @@ namespace Razorvine.Serpent
 		private Ast.KeyValueNode ParseKeyValue(SeekableStringReader sr)
 		{
 			//keyvalue        = expr ':' expr .
-			Ast.INode key = ParseExpr(sr);
+			var key = ParseExpr(sr);
 			if (!sr.HasMore() || sr.Peek() != ':') throw new ParseException("expected ':'");
 			sr.Read(); // :
-			Ast.INode value = ParseExpr(sr);
+			var value = ParseExpr(sr);
 			return new Ast.KeyValueNode
 			{
 				Key = key,
@@ -208,7 +208,7 @@ namespace Razorvine.Serpent
 			// trailing_comma  = '' | ',' .			
 			sr.Read();	// {
 			sr.SkipWhitespace();
-			Ast.SetNode setnode = new Ast.SetNode();
+			var setnode = new Ast.SetNode();
 			var elts = ParseExprList(sr);
 
 			// handle trailing comma if present
@@ -238,7 +238,7 @@ namespace Razorvine.Serpent
 			// trailing_comma  = '' | ',' .
 			sr.Read();	// [
 			sr.SkipWhitespace();
-			Ast.ListNode list = new Ast.ListNode();
+			var list = new Ast.ListNode();
 			if(sr.Peek() == ']')
 			{
 				sr.Read();
@@ -271,7 +271,7 @@ namespace Razorvine.Serpent
 			
 			sr.Read();	// {
 			sr.SkipWhitespace();
-			Ast.DictNode dict = new Ast.DictNode();
+			var dict = new Ast.DictNode();
 			if(sr.Peek() == '}')
 			{
 				sr.Read();
@@ -518,7 +518,7 @@ namespace Razorvine.Serpent
 		private Ast.PrimitiveNode<string> ParseString(SeekableStringReader sr)
 		{
 			char quotechar = sr.Read();   // ' or "
-			StringBuilder sb = new StringBuilder(10);
+			var sb = new StringBuilder(10);
 			while(sr.HasMore())
 			{
 				char c = sr.Read();
