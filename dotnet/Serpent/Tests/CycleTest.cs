@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Xunit;
+using Xunit.Abstractions;
 
 // ReSharper disable CheckNamespace
 // ReSharper disable InconsistentNaming
@@ -10,6 +11,13 @@ namespace Razorvine.Serpent.Test
 {
     public class CycleTest
     {
+        private readonly ITestOutputHelper _out;
+
+        public CycleTest(ITestOutputHelper testOutputHelper)
+        {
+            _out = testOutputHelper;
+        }
+
         [Fact]
         public void testTupleOk()
         {
@@ -84,7 +92,10 @@ namespace Razorvine.Serpent.Test
 
             try
             {
-                ser.Serialize(d);
+                byte[] data = ser.Serialize(d);
+
+                _out.WriteLine("data: " + data.Length + " bytes");
+                _out.WriteLine("this object should hot have been serialized because it contains a circular object reference!");
                 throw new Exception("should not reach this");
             }
             catch (ArgumentException x)

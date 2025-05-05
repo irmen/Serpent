@@ -40,7 +40,7 @@ namespace Razorvine.Serpent
 		/// <summary>
 		/// The maximum nesting level of the object graphs that you want to serialize.
 		/// This limit has been set to avoid troublesome stack overflow errors.
-		/// (If it is reached, an IllegalArgumentException is thrown instead with a clear message) 
+		/// (If it is reached, an ArgumentException is thrown instead with a clear message) 
 		/// </summary>
 		public int MaximumLevel = 500;     // avoids stackoverflow errors
 		
