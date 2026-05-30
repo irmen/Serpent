@@ -504,9 +504,19 @@ public class Serializer
 
 	protected void serialize_complex(ComplexNumber cplx, StringWriter sw, int level)
 	{
+		if(Double.isNaN(cplx.real) || Double.isNaN(cplx.imaginary))
+		{
+			sw.write("{'__class__':'complex','real':");
+			serialize_primitive(cplx.real, sw, level);
+			sw.write(",'imag':");
+			serialize_primitive(cplx.imaginary, sw, level);
+			sw.write("}");
+			return;
+		}
+
 		sw.write("(");
 		serialize_primitive(cplx.real, sw, level);
-		if(cplx.imaginary>=0)
+		if(cplx.imaginary>=0 && Math.copySign(1.0, cplx.imaginary) > 0)
 			sw.write("+");
 		serialize_primitive(cplx.imaginary, sw, level);
 		sw.write("j)");
@@ -588,7 +598,7 @@ public class Serializer
 	}
 
 	protected IClassSerializer getCustomConverter(Class<?> type) {
-		IClassSerializer converter = classToDictRegistry.get(type.getClass());
+		IClassSerializer converter = classToDictRegistry.get(type);
 		if(converter!=null) {
 			return converter; // exact match
 		}

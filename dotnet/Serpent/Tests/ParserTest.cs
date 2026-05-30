@@ -73,6 +73,14 @@ namespace Razorvine.Serpent.Test
         }
 
         [Fact]
+        public void TestNestedComplex()
+        {
+            var p = new Parser();
+            p.Parse("((1, 2j), 3)");
+            p.Parse("(1, (2, 3j))");
+        }
+
+        [Fact]
         public void TestWeirdFloats()
         {
             var p = new Parser();
@@ -480,6 +488,11 @@ namespace Razorvine.Serpent.Test
             cplx.Real = -3.2e-32;
             cplx.Imaginary = -9.9e-44;
             Assert.Equal(cplx, p.Parse("(-3.2e-32-9.9e-44j)").Root);
+
+            // new cases
+            cplx.Real = 1.0;
+            cplx.Imaginary = -0.0;
+            Assert.Equal(cplx, p.Parse("(1.0-0.0j)").Root);
         }
 
         [Fact]

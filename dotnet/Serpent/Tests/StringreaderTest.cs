@@ -32,6 +32,16 @@ namespace Razorvine.Serpent.Test
 		}
 		
 		[Fact]
+		public void TestSkipMultipleComments()
+		{
+			using(var s = new SeekableStringReader("# comment 1\n# comment 2\n# comment 3\n[1,2,3]"))
+			{
+				s.SkipWhitespace();
+				Assert.Equal('[', s.Peek());
+			}
+		}
+
+		[Fact]
 		public void TestRead()
 		{
 			var s = new SeekableStringReader("hello");

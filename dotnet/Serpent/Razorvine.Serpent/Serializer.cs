@@ -524,9 +524,19 @@ namespace Razorvine.Serpent
 
 		protected void Serialize_complex(ComplexNumber cplx, TextWriter tw, int level)
 		{
+			if(double.IsNaN(cplx.Real) || double.IsNaN(cplx.Imaginary))
+			{
+				tw.Write("{'__class__':'complex','real':");
+				Serialize_primitive(cplx.Real, tw, level);
+				tw.Write(",'imag':");
+				Serialize_primitive(cplx.Imaginary, tw, level);
+				tw.Write("}");
+				return;
+			}
+
 			tw.Write("(");
 			Serialize_primitive(cplx.Real, tw, level);
-			if(cplx.Imaginary>=0)
+			if(cplx.Imaginary>=0 && BitConverter.DoubleToInt64Bits(cplx.Imaginary) >= 0)
 				tw.Write("+");
 			Serialize_primitive(cplx.Imaginary, tw, level);
 			tw.Write("j)");

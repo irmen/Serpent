@@ -81,6 +81,38 @@ public class SerializeTest {
 
 
 	@Test
+	public void testCustomConverter()
+	{
+		class MyClass implements Serializable {
+			public String name = "test";
+		}
+		
+		class MyConverter implements IClassSerializer {
+			public Map<String, Object> convert(Object obj) {
+				Map<String, Object> result = new HashMap<>();
+				result.put("__class__", "ConvertedMyClass");
+				return result;
+			}
+		}
+
+		class ObjectConverter implements IClassSerializer {
+			public Map<String, Object> convert(Object obj) {
+				Map<String, Object> result = new HashMap<>();
+				result.put("__class__", "ConvertedObject");
+				return result;
+			}
+		}
+
+		Serializer.registerClass(MyClass.class, new MyConverter());
+		
+		Serializer ser = new Serializer();
+		byte[] data = ser.serialize(new MyClass());
+		String result = S(data);
+		
+		assertTrue(result.contains("ConvertedMyClass"));
+	}
+
+	@Test
 	public void testException()
 	{
 		Serializer.registerClass(IllegalArgumentException.class, null);
@@ -404,6 +436,10 @@ public class SerializeTest {
         ser = serpent.serialize(cplx);
         data = strip_header(ser);
         assertEquals("(-2.5-3.9j)", S(data));
+        cplx = new ComplexNumber(1.0, -0.0);
+        ser = serpent.serialize(cplx);
+        data = strip_header(ser);
+        assertEquals("(1.0-0.0j)", S(data));
 	}
 
 	@Test
@@ -412,10 +448,11 @@ public class SerializeTest {
 		Serializer serpent = new Serializer();
 		Object[] doubles = new Object[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN,
 				Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NaN,
-		        new ComplexNumber(Double.POSITIVE_INFINITY, 3.3)};
+		        new ComplexNumber(Double.POSITIVE_INFINITY, 3.3),
+		        new ComplexNumber(1.0, Double.NaN)};
 		byte[] ser = serpent.serialize(doubles);
 		byte[] data = strip_header(ser);
-		assertEquals("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.3j))", S(data));
+		assertEquals("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.3j),{'__class__':'complex','real':1.0,'imag':{'__class__':'float','value':'nan'}})", S(data));
 	}
 
 	@Test

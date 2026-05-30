@@ -46,6 +46,14 @@ public class StringreaderTest
 	}
 	
 	@Test
+	public void testSkipMultipleComments()
+	{
+		SeekableStringReader s = new SeekableStringReader("# comment 1\n# comment 2\n# comment 3\n[1,2,3]");
+		s.skipWhitespace();
+		assertEquals('[', s.peek());
+	}
+
+	@Test
 	public void testRanges()
 	{
 		SeekableStringReader s = new SeekableStringReader("hello");

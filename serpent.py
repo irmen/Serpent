@@ -55,7 +55,7 @@ import collections
 import enum
 from collections.abc import KeysView, ValuesView, ItemsView
 
-__version__ = "1.42"
+__version__ = "1.43"
 __all__ = ["dump", "dumps", "load", "loads", "register_class", "unregister_class", "tobytes"]
 
 
@@ -99,11 +99,17 @@ def load(file):
 
 
 def _ser_OrderedDict(obj, serializer, outputstream, indentlevel):
-    obj = {
-        "__class__": "collections.OrderedDict" if serializer.module_in_classname else "OrderedDict",
-        "items": list(obj.items())
-    }
-    serializer._serialize(obj, outputstream, indentlevel)
+    if id(obj) in serializer.serialized_obj_ids:
+        raise ValueError("Circular reference detected (OrderedDict)")
+    serializer.serialized_obj_ids.add(id(obj))
+    try:
+        obj = {
+            "__class__": "collections.OrderedDict" if serializer.module_in_classname else "OrderedDict",
+            "items": list(obj.items())
+        }
+        serializer._serialize(obj, outputstream, indentlevel)
+    finally:
+        serializer.serialized_obj_ids.discard(id(obj))
 
 
 def _ser_DictView(obj, serializer, outputstream, indentlevel):
@@ -289,9 +295,16 @@ class Serializer(object):
     dispatch[float] = ser_builtins_float
 
     def ser_builtins_complex(self, complex_obj, out, level):
+        if math.isnan(complex_obj.real) or math.isnan(complex_obj.imag):
+            out.append("{'__class__':'complex','real':")
+            self.ser_builtins_float(complex_obj.real, out, level)
+            out.append(",'imag':")
+            self.ser_builtins_float(complex_obj.imag, out, level)
+            out.append("}")
+            return
         out.append("(")
         self.ser_builtins_float(complex_obj.real, out, level)
-        if complex_obj.imag >= 0:
+        if complex_obj.imag >= 0 and math.copysign(1.0, complex_obj.imag) > 0:
             out.append("+")
         self.ser_builtins_float(complex_obj.imag, out, level)
         out.append("j)")
@@ -499,6 +512,9 @@ class Serializer(object):
             if has_own_getstate:
                 value = obj.__getstate__()
                 if isinstance(value, dict):
+                    if "__class__" not in value:
+                        value = value.copy()
+                        value["__class__"] = self.get_class_name(obj)
                     self.ser_builtins_dict(value, out, level)
                     return
             else:

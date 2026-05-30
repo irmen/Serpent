@@ -7,7 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="java" />
-        <module name="Serpent" />
+        <module name="serpent" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
@@ -17,6 +17,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="Serpent" options="-Xlint:all" />
+      <module name="serpent" options="-Xlint:all" />
     </option>
   </component>
 </project>

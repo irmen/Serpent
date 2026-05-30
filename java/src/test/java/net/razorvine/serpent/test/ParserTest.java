@@ -102,6 +102,14 @@ public class ParserTest
 	}
 	
 	@Test
+	public void TestNestedComplex()
+	{
+		Parser p = new Parser();
+		p.parse("((1, 2j), 3)");
+		p.parse("(1, (2, 3j))");
+	}
+
+	@Test
 	public void TestWeirdFloats()
 	{
 		Parser p = new Parser();
@@ -478,6 +486,11 @@ public class ParserTest
 		cplx.real = -3.2e-32;
 		cplx.imaginary = -9.9e-44;
 		assertEquals(cplx, p.parse("(-3.2e-32-9.9e-44j)").root);		
+		
+		// new cases
+		cplx.real = 1.0;
+		cplx.imaginary = -0.0;
+		assertEquals(cplx, p.parse("(1.0-0.0j)").root);
 	}
 
 	@Test

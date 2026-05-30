@@ -149,8 +149,13 @@ public class SeekableStringReader
 			char c=read();
 			if(c=='#')
 			{
-				readUntil('\n');
-				return;
+				try {
+					readUntil('\n');
+				} catch (ParseException x) {
+					// terminator not found, this is fine (comment until end of string)
+					cursor = str.length();
+				}
+				continue;
 			}
 			if(!Character.isWhitespace(c))
 			{

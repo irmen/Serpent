@@ -107,9 +107,15 @@ public class Parser
 				// if the last character before the closing parenthesis is a 'j', it is a complex number
 				{
 					int bm = sr.bookmark();
-					String betweenparens = sr.readUntil(")\n").trim();
+					String betweenparens = sr.readUntil(")\n");
 					sr.flipBack(bm);
-					return betweenparens.endsWith("j") ? parseComplex(sr) : parseTuple(sr);
+					String trimmed = betweenparens.trim();
+					if(trimmed.endsWith("j") && trimmed.indexOf(',')<0 && (trimmed.indexOf('(')<0 || trimmed.lastIndexOf('(')==0))
+					{
+						// complex number
+						return parseComplex(sr);
+					}
+					return parseTuple(sr);
 				}
 			default:
 				throw new ParseException("invalid sequencetype char");
@@ -644,19 +650,17 @@ public class Parser
 	PrimitiveNode<Boolean> parseBool(SeekableStringReader sr)
 	{
 		// True,False
-		String b = sr.readUntil('e');
-		if(b.equals("Tru"))
-			return new BooleanNode(true);
-		if(b.equals("Fals"))
-			return new BooleanNode(false);
+		String b = sr.peek()=='T'? sr.read(4) : sr.read(5);
+		if(b.equals("True") || b.equals("False"))
+			return new BooleanNode(b.equals("True"));
 		throw new ParseException("expected bool, True or False");
 	}
 
 	NoneNode parseNone(SeekableStringReader sr)
 	{
 		// None
-		String n = sr.readUntil('e');
-		if(n.equals("Non"))
+		String n = sr.read(4);
+		if(n.equals("None"))
 			return NoneNode.Instance;
 		throw new ParseException("expected None");
 	}

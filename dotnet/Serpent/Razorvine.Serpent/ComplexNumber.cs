@@ -22,7 +22,7 @@ public class ComplexNumber {
 	{
 		var sb=new StringBuilder();
 		sb.Append(Real);
-		if(Imaginary>0)
+		if(Imaginary>=0 && BitConverter.DoubleToInt64Bits(Imaginary) >= 0)
 			sb.Append('+');
 		return sb.Append(Imaginary).Append('i').ToString();
 	}

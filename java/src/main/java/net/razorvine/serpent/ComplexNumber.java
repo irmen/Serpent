@@ -29,7 +29,7 @@ public class ComplexNumber implements Serializable {
 	{
 		StringBuilder sb=new StringBuilder();
 		sb.append(real);
-		if(imaginary>0)
+		if(imaginary>=0 && Math.copySign(1.0, imaginary) > 0)
 			sb.append('+');
 		return sb.append(imaginary).append('i').toString();
 	}

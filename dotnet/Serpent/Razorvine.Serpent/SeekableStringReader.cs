@@ -117,8 +117,13 @@ namespace Razorvine.Serpent
 				char c=Read();
 				if(c=='#')
 				{
-					ReadUntil('\n');
-					return;
+					try {
+						ReadUntil('\n');
+					} catch (ParseException) {
+						// terminator not found, this is fine (comment until end of string)
+						_cursor = _str.Length;
+					}
+					continue;
 				}
 
 				if (char.IsWhiteSpace(c)) 

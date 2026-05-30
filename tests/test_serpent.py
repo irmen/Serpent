@@ -299,6 +299,12 @@ class TestBasics(unittest.TestCase):
         ser = serpent.dumps(2 - 3j)
         data = strip_header(ser)
         self.assertEqual(b"(2.0-3.0j)", data)
+        ser = serpent.dumps(complex(1.0, -0.0))
+        data = strip_header(ser)
+        self.assertEqual(b"(1.0-0.0j)", data)
+        ser = serpent.dumps(complex(float('nan'), 1.0))
+        data = strip_header(ser)
+        self.assertIn(b"'__class__':'complex'", data)
 
     def test_bool(self):
         ser = serpent.dumps(True)
@@ -495,7 +501,18 @@ class TestBasics(unittest.TestCase):
         c = Class2()
         ser = serpent.dumps(c)
         data = serpent.loads(ser)
-        self.assertEqual({'attr': 42}, data)
+        self.assertEqual({'__class__': 'Class2', 'attr': 42}, data)
+
+    def test_class_getstate_dict(self):
+        class MyObj:
+            def __init__(self, val):
+                self.val = val
+            def __getstate__(self):
+                return {"val": self.val}
+        obj = MyObj(42)
+        ser = serpent.dumps(obj).decode('utf-8')
+        self.assertIn("'__class__':'MyObj'", ser)
+        self.assertIn("'val':42", ser)
 
     def test_class_slots(self):
         c = SlotsClass()
@@ -971,6 +988,13 @@ class TestCyclic(unittest.TestCase):
         with self.assertRaises(ValueError) as e:
             serpent.dumps(d)
         self.assertEqual("Circular reference detected (class)", str(e.exception))
+
+    def testOrderedDictCycle(self):
+        od = collections.OrderedDict()
+        od['self'] = od
+        with self.assertRaises(ValueError) as e:
+            serpent.dumps(od)
+        self.assertEqual("Circular reference detected (OrderedDict)", str(e.exception))
 
     # noinspection PyUnreachableCode
     def testMaxLevel(self):

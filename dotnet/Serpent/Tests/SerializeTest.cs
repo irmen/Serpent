@@ -191,6 +191,10 @@ namespace Razorvine.Serpent.Test
 	        ser = serpent.Serialize(cplx);
 	        data = strip_header(ser);
 	        Assert.Equal(B("(-2-3j)"), data);
+	        cplx = new ComplexNumber(1.0, -0.0);
+	        ser = serpent.Serialize(cplx);
+	        data = strip_header(ser);
+	        Assert.Equal(B("(1-0j)"), data);
 		}
 				
 		[Fact]
@@ -199,10 +203,11 @@ namespace Razorvine.Serpent.Test
 			var serpent = new Serializer();
 			var doubles = new object[] {double.PositiveInfinity, double.NegativeInfinity, double.NaN,
 			        float.PositiveInfinity, float.NegativeInfinity, float.NaN,
-			        new ComplexNumber(double.PositiveInfinity, 3.4)};
+			        new ComplexNumber(double.PositiveInfinity, 3.4),
+			        new ComplexNumber(1.0, double.NaN)};
 			var ser = serpent.Serialize(doubles);
 			var data = strip_header(ser);
-			Assert.Equal("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.4j))", S(data));
+			Assert.Equal("(1e30000,-1e30000,{'__class__':'float','value':'nan'},1e30000,-1e30000,{'__class__':'float','value':'nan'},(1e30000+3.4j),{'__class__':'complex','real':1,'imag':{'__class__':'float','value':'nan'}})", S(data));
 		}
 
 		[Fact]

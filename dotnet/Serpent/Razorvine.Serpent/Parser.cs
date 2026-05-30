@@ -93,9 +93,15 @@ namespace Razorvine.Serpent
 					// if the last character before the closing parenthesis is a 'j', it is a complex number
 					{
 						int bm = sr.Bookmark();
-						string betweenparens = sr.ReadUntil(')', '\n').TrimEnd();
+						string betweenparens = sr.ReadUntil(')', '\n');
 						sr.FlipBack(bm);
-						return betweenparens.EndsWith("j") ? ParseComplex(sr) : ParseTuple(sr);
+						string trimmed = betweenparens.Trim();
+						if(trimmed.EndsWith("j") && trimmed.IndexOf(',')<0 && (trimmed.IndexOf('(')<0 || trimmed.LastIndexOf('(')==0))
+						{
+							// complex number
+							return ParseComplex(sr);
+						}
+						return ParseTuple(sr);
 					}
 				default:
 					throw new ParseException("invalid sequencetype char");
@@ -650,23 +656,17 @@ namespace Razorvine.Serpent
 		private Ast.PrimitiveNode<bool> ParseBool(SeekableStringReader sr)
 		{
 			// True,False
-			string b = sr.ReadUntil('e');
-			switch (b)
-			{
-				case "Tru":
-					return new Ast.BooleanNode(true);
-				case "Fals":
-					return new Ast.BooleanNode(false);
-			}
-
+			string b = sr.Peek() == 'T' ? sr.Read(4) : sr.Read(5);
+			if(b == "True" || b == "False")
+				return new Ast.BooleanNode(b == "True");
 			throw new ParseException("expected bool, True or False");
 		}
 
 		private Ast.NoneNode ParseNone(SeekableStringReader sr)
 		{
 			// None
-			string n = sr.ReadUntil('e');
-			if(n=="Non")
+			string n = sr.Read(4);
+			if(n == "None")
 				return Ast.NoneNode.Instance;
 			throw new ParseException("expected None");
 		}
