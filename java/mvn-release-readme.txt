@@ -1,6 +1,10 @@
 Making a release to Sonatype Nexus/maven central:
 
 
+First make sure that JAVA_HOME is set (needed for the javadoc tool)
+For example:  export JAVA_HOME=/usr/lib/jvm/java-21-openjdk/
+
+
 $ mvn release:clean release:prepare release:perform
 
 
